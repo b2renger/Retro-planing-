@@ -326,3 +326,66 @@ grepping the chunks for `ExcelJS`/`jszip` markers (main chunk: none).
 ### Orchestrator lesson (00:15)
 Never `git add -A` while an agent is writing — it swept a half-written `src/hooks/cloudClient.ts` into a
 docs commit (f5a912d). Commit docs with explicit paths while any agent is running.
+
+## 2026-09-21 — Timeline rebuild + edit-task modal (DONE, not committed)
+
+### Files added
+Pure modules (all unit-tested, `src/**/*.test.ts` is what vitest collects):
+- `src/components/timeline/scale.ts` — the real pixels-per-day scale. `ZOOM_PX_PER_DAY` (day 34 / week 13 /
+  month 5), `daysBetween`, `shiftDay`, `xForDay`, `dayAtX`, `barGeometry` (inclusive, 1 day = 1×pxPerDay),
+  `rangeWidth`, `deltaDaysFromPx` (symmetric snap — `Math.round` alone gives `-0` at exactly half a day),
+  `moveInterval`, `resizeInterval` (clamped to ≥1 day), `axisTicks`, `formatDay`/`formatDayRange`,
+  `resolveLocale()` = browser locale with `FALLBACK_LOCALE = 'en-GB'`.
+- `src/components/timeline/layout.ts` — `packLanes` (greedy first-fit; a shared boundary day counts as an
+  overlap), `buildRowLayout` (absolute `top`/`height` per row; the frozen label column and the grid read the
+  same layout, which is what lets the arrows share the bars' coordinate space), `rowCenterY`,
+  `stackMilestoneFlags` (stagger over N levels, then collapse into the previous chip's `+N`).
+- `src/components/timeline/dependencies.ts` — `dependencyLinks` (dedupes, drops unknown/self, flags a
+  violation when `predecessor.dueDate > successor.startDate`), `wouldCreateCycle`, `dependencyCandidates`.
+- `src/components/editTask/draft.ts` — `TaskDraft`, `toDraft`, `validateDraft`, `applyDraft`, `moveChecklistItem`.
+- Tests: `scale.test.ts` (19), `layout.test.ts` (17, incl. a regression test that the sample project's
+  overlapping media tasks really need >1 lane), `dependencies.test.ts` (14), `editTask/draft.test.ts` (14).
+
+React layer:
+- `src/components/timeline/useTimelineScale.ts` — one memo: `buildGanttModel` + `computeCriticalPath` +
+  filters + lane packing + row layout + visible dependency links + milestone flag placement.
+- `src/components/timeline/useBarDrag.ts` — pointer (not mouse) drag/resize, 4 px threshold so a click stays
+  a click, whole-day snapping, Escape cancels without committing, `consumeClick()` guard.
+- `GanttChart.tsx`, `GanttRow.tsx` (PhaseBar / TaskBar / RowLabel), `TimelineToolbar.tsx`,
+  `TargetDateControl.tsx`, `MilestoneRunway.tsx`, `WorkloadCurve.tsx`, `TaskInspector.tsx`,
+  `TimelineNotices.tsx` (warning strip + empty state).
+- `src/components/EditTaskModal.tsx` (287 lines) + `editTask/ChipEditor.tsx`, `editTask/ChecklistEditor.tsx`,
+  `editTask/DependencyPicker.tsx`.
+- `src/components/taskFields.ts` — the ONE status/priority list (`TASK_STATUSES` wraps `STATUS_LABELS` from
+  `services/export/common`), status accents, `PHASE_PALETTE` for a newly created phase.
+
+### Files changed
+- `src/components/RetroplanningTimeline.tsx` 839 → 229 lines: view state + facade wiring only.
+- `src/App.tsx` mounts `<EditTaskModal />`; `TaskBoard.tsx` (columns and both selects now come from
+  `TASK_STATUSES`, so `blocked` finally has a column; title + row action open the editor; the unconfirmed
+  table delete is gone — delete lives in the editor behind a confirm); `ImmediateActionView.tsx` (title
+  opens the editor).
+
+### Audit §2 defects fixed
+Real zoom (px/day, horizontal scroll, frozen labels) · lanes (no hidden tasks) · dependency arrows with
+violation styling + tooltip · critical path from `computeCriticalPath` (stored flag demoted to a manual
+override, both explained in the legend) · drag/resize of tasks and phases (`updatePhaseDates` is wired at
+last) · inspector reads the live task by id · `in-review` present everywhere · milestone flags staggered
+with a `+N` overflow · one locale via `Intl` · "6d Buffer" / "Zero Critical Path Slacks" / the static
+buffer bar replaced by `computeProjectHealth` · `buildGanttModel` warnings surfaced · empty state.
+
+### Still open (deliberately out of scope)
+- `ProjectHeader.tsx` still shows "Buffer Safety … (6d margin)" and "Zero Slack"; `HardwareMediaView.tsx`
+  still has its hardcoded strings. They should read `computeProjectHealth` the same way.
+- `CreateTaskModal.tsx` still invents a checklist/deliverables and reads `MOCK_USERS`; it is the obvious
+  next file — it can now reuse `editTask/draft.ts` and `taskFields.ts`.
+- `TaskBoard`/`ImmediateActionView` still resolve assignees through `MOCK_USERS`.
+- No DOM test harness exists (vitest is `environment: 'node'` and collects `*.test.ts` only), so the drag
+  gestures, keyboard nudge and the modal have no automated coverage — only the pure maths behind them.
+
+### Verified
+`npx tsc --noEmit` clean · `npx vitest run` **410 passed / 36 files** (was 346/32; +64) ·
+`npx vite build` clean (index 699 kB, export chunk unchanged) ·
+`grep -rn "bg-\[#" src/components` empty · `grep -rn "MOCK_USERS" src/components/timeline
+src/components/EditTaskModal.tsx src/components/editTask` empty · every new file < 310 lines.
+Not committed, as instructed.

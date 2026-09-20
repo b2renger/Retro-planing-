@@ -32,6 +32,7 @@ export const ImmediateActionView: React.FC = () => {
     resolveClarification,
     setActiveViewTab,
     setIsCreateTaskModalOpen,
+    setEditingTaskId,
     activeAiProvider,
   } = useApp();
   const activeProject = useActiveProject();
@@ -270,9 +271,14 @@ export const ImmediateActionView: React.FC = () => {
 
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-xs font-semibold text-fg hover:text-purple-600 dark:hover:text-purple-300 transition-colors break-words">
+                            <button
+                              type="button"
+                              onClick={() => setEditingTaskId(task.id)}
+                              title="Edit this task"
+                              className="text-left text-xs font-semibold text-fg hover:text-purple-600 dark:hover:text-purple-300 transition-colors break-words"
+                            >
                               {task.title}
-                            </span>
+                            </button>
 
                             {phase && (
                               <span

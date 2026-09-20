@@ -11,18 +11,19 @@ import {
   AlertTriangle,
   ChevronRight,
   MoreHorizontal,
-  Trash2,
+  Pencil,
   User,
   Zap,
 } from 'lucide-react';
 import { Task, TaskStatus, TaskPriority } from '../types';
+import { TASK_STATUSES, TASK_STATUS_ACCENTS, TASK_STATUS_LABELS } from './taskFields';
 
 export const TaskBoard: React.FC = () => {
   const {
     updateTaskStatus,
     toggleChecklistItem,
-    deleteTask,
     setIsCreateTaskModalOpen,
+    setEditingTaskId,
   } = useApp();
   const activeProject = useActiveProject();
 
@@ -30,12 +31,11 @@ export const TaskBoard: React.FC = () => {
   const [selectedPhase, setSelectedPhase] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const columns: { id: TaskStatus; label: string; color: string }[] = [
-    { id: 'todo', label: 'To Do', color: 'border-line-strong' },
-    { id: 'in-progress', label: 'In Progress', color: 'border-blue-500/40' },
-    { id: 'in-review', label: 'In Review / QA', color: 'border-purple-500/40' },
-    { id: 'done', label: 'Done', color: 'border-emerald-500/40' },
-  ];
+  const columns: { id: TaskStatus; label: string; color: string }[] = TASK_STATUSES.map((id) => ({
+    id,
+    label: TASK_STATUS_LABELS[id],
+    color: TASK_STATUS_ACCENTS[id],
+  }));
 
   const filteredTasks = activeProject.tasks.filter((t) => {
     const matchesPhase = selectedPhase === 'all' || t.phaseId === selectedPhase;
@@ -118,7 +118,7 @@ export const TaskBoard: React.FC = () => {
 
       {/* Kanban View */}
       {viewMode === 'kanban' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5 items-start">
           {columns.map((col) => {
             const colTasks = filteredTasks.filter((t) => t.status === col.id);
             return (
@@ -153,9 +153,14 @@ export const TaskBoard: React.FC = () => {
                           className="bg-elevated/70 hover:bg-elevated border border-line hover:border-purple-300 dark:hover:border-purple-500/30 rounded-xl p-3.5 space-y-2.5 transition-all shadow-sm group"
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <span className="font-semibold text-xs text-fg group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
+                            <button
+                              type="button"
+                              onClick={() => setEditingTaskId(task.id)}
+                              title="Edit this task"
+                              className="text-left font-semibold text-xs text-fg group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors"
+                            >
                               {task.title}
-                            </span>
+                            </button>
                             <span
                               className={`text-[9px] font-semibold px-1.5 py-0.2 rounded uppercase shrink-0 ${
                                 task.priority === 'urgent'
@@ -221,10 +226,11 @@ export const TaskBoard: React.FC = () => {
                               onChange={(e) => updateTaskStatus(task.id, e.target.value as TaskStatus)}
                               className="bg-line/80 text-fg text-[10px] rounded px-2 py-0.5 border border-line-strong focus:outline-none focus:border-purple-500"
                             >
-                              <option value="todo" className="bg-card">To Do</option>
-                              <option value="in-progress" className="bg-card">In Progress</option>
-                              <option value="in-review" className="bg-card">In Review</option>
-                              <option value="done" className="bg-card">Done</option>
+                              {TASK_STATUSES.map((s) => (
+                                <option key={s} value={s} className="bg-card">
+                                  {TASK_STATUS_LABELS[s]}
+                                </option>
+                              ))}
                             </select>
                           </div>
                         </div>
@@ -290,21 +296,23 @@ export const TaskBoard: React.FC = () => {
                         onChange={(e) => updateTaskStatus(t.id, e.target.value as TaskStatus)}
                         className="bg-elevated text-fg text-xs rounded px-2 py-1 border border-line-strong"
                       >
-                        <option value="todo" className="bg-card">To Do</option>
-                        <option value="in-progress" className="bg-card">In Progress</option>
-                        <option value="in-review" className="bg-card">In Review</option>
-                        <option value="done" className="bg-card">Done</option>
+                        {TASK_STATUSES.map((s) => (
+                          <option key={s} value={s} className="bg-card">
+                            {TASK_STATUS_LABELS[s]}
+                          </option>
+                        ))}
                       </select>
                     </td>
                     <td className="p-3.5 font-mono text-amber-600 dark:text-amber-400">{t.dueDate}</td>
                     <td className="p-3.5 font-mono">{t.estimatedHours}h</td>
                     <td className="p-3.5 text-right">
                       <button
-                        onClick={() => deleteTask(t.id)}
-                        className="p-1 text-fg-muted hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                        title="Delete Task"
+                        onClick={() => setEditingTaskId(t.id)}
+                        className="inline-flex items-center gap-1 p-1 text-fg-muted hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
+                        title="Edit or delete this task"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Pencil className="w-3.5 h-3.5" />
+                        <span className="text-[11px]">Edit</span>
                       </button>
                     </td>
                   </tr>

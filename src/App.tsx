@@ -14,6 +14,7 @@ import { TeamCollaborationView } from './components/TeamCollaborationView';
 import { AiAssistantModal } from './components/AiAssistantModal';
 import { CloudPanel } from './components/CloudPanel';
 import { CreateTaskModal } from './components/CreateTaskModal';
+import { EditTaskModal } from './components/EditTaskModal';
 import { CreateProjectModal } from './components/CreateProjectModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { TutorialDrawer } from './components/TutorialDrawer';
@@ -83,6 +84,7 @@ const AppContent: React.FC = () => {
           <AiAssistantModal />
           <CloudPanel />
           <CreateTaskModal />
+          <EditTaskModal />
           <TutorialDrawer />
           <InviteCollaboratorsModal />
         </>
