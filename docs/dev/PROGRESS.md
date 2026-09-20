@@ -52,3 +52,46 @@ Usage limits are the binding constraint, not time. Therefore:
 3. **Design for sequential resumption.** Split work so it can stop at any file boundary. If you run low
    on context, stop early, write the handoff note, and report what remains rather than rushing the rest.
 4. One agent at a time. Small fixes are done by the orchestrator with sed/Edit, never delegated.
+
+## 2026-09-20 23:00 — HANDOFF: all service layers landed, UI wiring is what remains
+Committed and pushed: 9e60058. Gate is green: 307 tests, `tsc --noEmit` clean, `vite build` clean,
+`electron-builder --dir --mac --arm64` produced an app whose ad-hoc signature passes
+`codesign --verify --deep --strict`.
+
+### What exists (all tested, most NOT reachable from the UI yet)
+- `src/services/ai/**` (119 tests) — Gemini/OpenAI/Anthropic/Mistral/openai-compatible/**llmonlan**.
+  Entry points: `client.ts` chat/chatJson/listModels/testConnection, `tasks.ts` crunchMarkdownNotes/
+  analyzeDependencies/askAssistant, `farms.ts` discoverFarms/probeFarm/farmToProviderConfig,
+  `registry.ts` PROVIDER_CATALOG (drives the settings form: requiresKey/requiresBaseUrl/canListModels).
+- `src/services/cloud/**` (93 tests) — googleDrive.ts / oneDrive.ts implement CloudProvider;
+  `oauth.ts runAuthFlow(providerId, {clientId, clientSecret?})`; `syncEngine.ts syncProject/
+  bootstrapProjectFolder/listCloudProjects`; `memoryProvider.ts` for UI dev without credentials.
+- `src/services/export/**` (45 tests) — `buildGanttModel` + `computeCriticalPath` (reuse in the timeline!),
+  projectToXlsx, tasksToCsv, projectToMarkdown, ganttToSvg, downloadBytes, exportToGoogleSheets/OneDrive.
+  **Import the barrel dynamically** (`await import('../services/export')`) — exceljs is ~324 kB gzip.
+- `src/state/**` (42 tests) + `src/context/AppContext.tsx` rewritten. Read `docs/dev/STATE-API.md` FIRST:
+  it is the contract every UI change must use. `useActiveProject()` inside project views, `useApp()` elsewhere.
+- `electron/**` (8 tests) — bridge is live; `window.desktop` types in `src/types/desktop.d.ts`.
+
+### Known temporary things to clean during the UI pass (from the state agent's own report)
+- `src/components/CloudPanel.tsx` is a placeholder; `ApiSettingsModal.tsx` is a stub bound to `isSettingsOpen`.
+- `InteractiveTourGuide.tsx` unmounted from App.tsx — delete it or adopt it as the single tutorial surface.
+- Raw ISO timestamps render in NotificationCenter / TeamCollaborationView / HistoryAuditView.
+- `MOCK_USERS` still imported by ImmediateActionView, TaskBoard, HistoryAuditView, RetroplanningTimeline
+  (should use `teamMembers`). CreateProjectModal still hardcodes Oct/Nov phases.
+- `geminiService.ts` survives as a types-only shim (CrunchResult/DependencyAnalysisResult) — move those
+  types into `src/services/ai/types.ts` and delete it.
+- Unused lucide imports after button removals; `noUnusedLocals` is off.
+
+### NEXT PHASES, strictly sequential, one agent each
+1. **Theme pass** — semantic tokens in index.css (`bg-app/bg-card/bg-elevated/bg-input/bg-code/border-line/
+   fg/fg-muted`), replace 82x `#0D121F`, 21x `#141B2D`, 21x `#131927`, `text-slate-1xx`, `border-white/N`
+   across ALL components. Worst offenders: ProjectHeader, RetroplanningTimeline, Navbar right half, every modal.
+   Acceptance: `grep -rn "bg-\[#" src/components` returns nothing; both themes readable.
+2. **Settings UI** — AI providers (add/edit/remove, key, base URL, model picker via listModels, Test
+   connection, default) + LlmOnLan Scan button (desktop only) + Cloud sync (client id, Connect, folder, status).
+   Replaces the ApiSettingsModal stub. This is what makes the LlmOnLan feature visible to the user.
+3. **CloudPanel + export menu** — real sync panel on syncEngine; export menu wired to the export barrel.
+4. **Timeline honesty + task edit modal** — use buildGanttModel/computeCriticalPath, real zoom, lanes for
+   overlapping tasks, dependency arrows, edit-task modal, shift-all date control.
+5. **Final gate** — npm test, tsc, build:all, package:mac (arm64+x64) + package:win, docs/HUMAN-TESTS.md.
