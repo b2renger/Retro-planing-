@@ -1,0 +1,6 @@
+{
+  "name": "RetroPlan Studio",
+  "description": "Collaborative designer task management and visual retroplanning timeline studio with real-time sync, markdown structuring, and specialist Gemini AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

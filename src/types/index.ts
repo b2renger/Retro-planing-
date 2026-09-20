@@ -1,0 +1,239 @@
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  role: string;
+  color: string;
+  status: 'active' | 'reviewing' | 'offline' | 'crunching';
+  currentDocumentId?: string;
+  currentTaskId?: string;
+}
+
+export interface GoogleAccount {
+  isSignedIn: boolean;
+  name: string;
+  email: string;
+  avatar: string;
+  accessToken?: string;
+  grantedScopes: string[];
+  connectedAt?: string;
+}
+
+export interface ApiSettings {
+  useCustomKey: boolean;
+  apiKey: string;
+  selectedModel: string;
+  status: 'connected' | 'unconfigured' | 'testing' | 'invalid';
+  latencyMs?: number;
+  lastValidated?: string;
+}
+
+export interface Workspace {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  projectIds: string[];
+  members: User[];
+}
+
+export type TaskStatus = 'todo' | 'in-progress' | 'in-review' | 'blocked' | 'done';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface TaskChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface Task {
+  id: string;
+  projectId: string;
+  phaseId: string;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assigneeId: string;
+  startDate: string; // YYYY-MM-DD
+  dueDate: string;   // YYYY-MM-DD
+  estimatedHours: number;
+  actualHours?: number;
+  dependencies: string[]; // IDs of tasks this task depends on
+  deliverables: string[];
+  checklist: TaskChecklistItem[];
+  tags: string[];
+  markdownRef?: string;
+  isCriticalPath?: boolean;
+}
+
+export interface Phase {
+  id: string;
+  name: string;
+  color: string;
+  startDate: string;
+  endDate: string;
+  order: number;
+  bufferDays: number;
+  isCriticalPath: boolean;
+}
+
+export interface Milestone {
+  id: string;
+  title: string;
+  targetDate: string;
+  isHardDeadline: boolean;
+  completed: boolean;
+  description: string;
+  deliverableCount: number;
+}
+
+export interface MarkdownDoc {
+  id: string;
+  title: string;
+  path: string; // e.g. "briefs/client_kickoff.md"
+  content: string;
+  lastModified: string;
+  lastModifiedBy: string;
+  tags: string[];
+  autoStructured?: boolean;
+  linkedTaskIds?: string[];
+  yamlFrontmatter?: Record<string, any>;
+}
+
+export interface HistoryEntry {
+  id: string;
+  timestamp: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  actionType: 'create' | 'update' | 'delete' | 'ai_restructure' | 'status_change' | 'retroplan_shift' | 'comment';
+  targetType: 'task' | 'project' | 'document' | 'milestone' | 'timeline';
+  targetTitle: string;
+  description: string;
+  diff?: {
+    field: string;
+    oldVal: string;
+    newVal: string;
+  };
+}
+
+export interface Comment {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  timestamp: string;
+  content: string;
+  targetType: 'task' | 'milestone' | 'document' | 'project';
+  targetId: string;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  type: 'deadline_warning' | 'status_update' | 'ai_insight' | 'dependency_blocked' | 'mention';
+  read: boolean;
+  projectId?: string;
+  taskId?: string;
+}
+
+export interface ClarificationQuestion {
+  id: string;
+  question: string;
+  reason: string;
+  suggestedOptions: string[];
+  resolved: boolean;
+  userResponse?: string;
+}
+
+export interface HardwareItem {
+  id: string;
+  name: string;
+  category: 'Projection' | 'Audio' | 'Media Server & Network' | 'Rigging & Power';
+  quantity: number;
+  specs: string;
+  status: 'booked' | 'pending' | 'delivered' | 'tested';
+  vendor?: string;
+  notes?: string;
+}
+
+export interface MediaAssetItem {
+  id: string;
+  title: string;
+  type: 'video' | 'sound';
+  format: string;
+  duration: string;
+  status: 'planning' | 'in-production' | 'rendered' | 'approved';
+  description: string;
+}
+
+export interface Project {
+  id: string;
+  workspaceId: string;
+  title: string;
+  clientName: string;
+  description: string;
+  status: 'on-track' | 'at-risk' | 'in-review' | 'completed';
+  targetDeliveryDate: string; // Target launch date for retroplanning
+  startDate: string;
+  phases: Phase[];
+  tasks: Task[];
+  milestones: Milestone[];
+  documents: MarkdownDoc[];
+  history: HistoryEntry[];
+  comments: Comment[];
+  clarificationQuestions: ClarificationQuestion[];
+  retroplanningScore: number; // 0-100%
+  tags: string[];
+  hardwareItems?: HardwareItem[];
+  mediaAssets?: MediaAssetItem[];
+  driveSynced?: boolean;
+  driveFolderId?: string;
+  driveFolderName?: string;
+  driveFolderUrl?: string;
+  driveLastSyncedAt?: string;
+  driveSyncStatus?: 'synced' | 'syncing' | 'unlinked' | 'error';
+  isTutorialTemplate?: boolean;
+}
+
+export interface CollaboratorPermissions {
+  canEditTimeline: boolean;
+  canManageTasks: boolean;
+  canEditDocs: boolean;
+  canSyncDrive: boolean;
+  isAdmin: boolean;
+}
+
+export interface TeamInvitation {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  permissions: CollaboratorPermissions;
+  invitedAt: string;
+  invitedBy: string;
+  status: 'pending' | 'accepted' | 'expired';
+  token: string;
+  note?: string;
+}
+
+export interface TutorialStep {
+  id: string;
+  title: string;
+  description: string;
+  targetTab: ViewTab;
+  actionRequired: string;
+  completed: boolean;
+  featureHighlight?: string;
+  demoActionKey?: string;
+  keyBenefits?: string[];
+  targetElementId?: string;
+  actionPrompt?: string;
+}
+
+export type ViewTab = 'immediate' | 'retroplanning' | 'hardware' | 'tasks' | 'markdown' | 'collaboration' | 'history';
