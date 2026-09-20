@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useActiveProject } from '../context/AppContext';
 import { Sparkles, Send, X, Bot, User } from 'lucide-react';
-import { askGeminiAssistant } from '../services/geminiService';
+import { askAssistant } from '../services/ai/tasks';
 
 export const GeminiAssistantModal: React.FC = () => {
   const {
-    activeProject,
     isAiAssistantOpen,
     setIsAiAssistantOpen,
+    activeAiProvider,
   } = useApp();
+  const activeProject = useActiveProject();
 
   const [messages, setMessages] = useState<
     { role: 'user' | 'assistant'; content: string; timestamp: string }[]
@@ -49,13 +50,8 @@ export const GeminiAssistantModal: React.FC = () => {
     setLoading(true);
 
     try {
-      const reply = await askGeminiAssistant(userMessage, {
-        id: activeProject.id,
-        title: activeProject.title,
-        targetDeliveryDate: activeProject.targetDeliveryDate,
-        status: activeProject.status,
-        retroplanningScore: activeProject.retroplanningScore,
-      });
+      const outcome = await askAssistant({ query: userMessage, projectContext: activeProject }, activeAiProvider);
+      const reply = outcome.reply;
 
       setMessages([
         ...newMessages,

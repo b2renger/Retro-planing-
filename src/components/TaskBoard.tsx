@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useActiveProject } from '../context/AppContext';
 import { MOCK_USERS } from '../data/mockData';
 import {
   Kanban,
@@ -19,12 +19,12 @@ import { Task, TaskStatus, TaskPriority } from '../types';
 
 export const TaskBoard: React.FC = () => {
   const {
-    activeProject,
     updateTaskStatus,
     toggleChecklistItem,
     deleteTask,
     setIsCreateTaskModalOpen,
   } = useApp();
+  const activeProject = useActiveProject();
 
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
   const [selectedPhase, setSelectedPhase] = useState<string>('all');

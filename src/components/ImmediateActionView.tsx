@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useActiveProject } from '../context/AppContext';
 import { MOCK_USERS } from '../data/mockData';
 import {
   AlertTriangle,
@@ -22,20 +22,19 @@ import {
   Database,
 } from 'lucide-react';
 import { Task } from '../types';
-import { suggestDependencies } from '../services/geminiService';
+import { analyzeDependencies } from '../services/ai/tasks';
 
 export const ImmediateActionView: React.FC = () => {
   const {
-    activeProject,
     currentUser,
     updateTaskStatus,
     toggleChecklistItem,
     resolveClarification,
     setActiveViewTab,
     setIsCreateTaskModalOpen,
-    setIsDatabaseTesterOpen,
-    apiSettings,
+    activeAiProvider,
   } = useApp();
+  const activeProject = useActiveProject();
 
   const [aiChecking, setAiChecking] = useState(false);
   const [aiAuditReport, setAiAuditReport] = useState<string | null>(null);
@@ -87,30 +86,25 @@ export const ImmediateActionView: React.FC = () => {
     setAiChecking(true);
     setAiAuditReport(null);
     try {
-      const customKey = apiSettings.useCustomKey ? apiSettings.apiKey : undefined;
-      const res = await suggestDependencies(
-        activeProject.tasks,
-        activeProject.targetDeliveryDate,
-        customKey,
-        apiSettings.selectedModel
+      const res = await analyzeDependencies(
+        { tasks: activeProject.tasks, targetDeliveryDate: activeProject.targetDeliveryDate, projectName: activeProject.title },
+        activeAiProvider
       );
 
       const report =
-        `✨ Gemini Retroplan Intelligence (${apiSettings.selectedModel}):\n` +
-        `• Target launch deadline: ${activeProject.targetDeliveryDate} (Buffer Score: ${activeProject.retroplanningScore}% Safe)\n` +
-        `• Critical path: ${criticalPathTasks.length} tasks locked on the zero-float delivery spine.\n` +
-        `• Strategic Next Steps:\n` +
-        (res.suggestions && res.suggestions.length > 0
-          ? res.suggestions.map((s: { reason: string }) => `  - ${s.reason}`).join('\n')
-          : `  - Complete "Checkout Flow Wireframes & UX Audit" to avoid compressing the Design Token handoff buffer.`);
+        `${res.fallback ? 'Local heuristic (no AI provider answered)' : `AI analysis (${res.source})`}:\n` +
+        `- Target delivery: ${activeProject.targetDeliveryDate}\n` +
+        `- Critical path: ${criticalPathTasks.length} task(s) flagged.\n` +
+        (res.analysis.executiveSummary ? `- Summary: ${res.analysis.executiveSummary}\n` : '') +
+        `- Suggested dependencies:\n` +
+        (res.analysis.dependencySuggestions.length > 0
+          ? res.analysis.dependencySuggestions.map((s) => `  - ${s.reason}`).join('\n')
+          : '  - none') +
+        (res.error ? `\n- Provider error: ${res.error}` : '');
 
       setAiAuditReport(report);
     } catch (e) {
-      setAiAuditReport(
-        `Gemini Schedule Assessment:\n` +
-          `• Backward scheduling buffer is HEALTHY (6 days safety margin).\n` +
-          `• Priority Action: Ensure Checkout Flow Wireframes pass design review before UI kit sprint commences.`
-      );
+      setAiAuditReport(`Analysis failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setAiChecking(false);
     }
@@ -150,16 +144,6 @@ export const ImmediateActionView: React.FC = () => {
 
           {/* Quick AI Audit Action & DB Live Tests */}
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setIsDatabaseTesterOpen(true)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold transition-all cursor-pointer"
-              title="Test database durability and zero data loss live in production"
-            >
-              <Database className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span>Test DB Live</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-            </button>
-
             <button
               id="run-ai-health-audit-btn"
               onClick={handleRunAiAudit}

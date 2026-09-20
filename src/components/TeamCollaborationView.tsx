@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useActiveProject } from '../context/AppContext';
 import {
   Users,
   MessageSquare,
@@ -21,7 +21,6 @@ import {
 
 export const TeamCollaborationView: React.FC = () => {
   const {
-    activeProject,
     currentUser,
     setCurrentUser,
     teamMembers,
@@ -33,6 +32,7 @@ export const TeamCollaborationView: React.FC = () => {
     addComment,
     addNotification,
   } = useApp();
+  const activeProject = useActiveProject();
 
   const [commentText, setCommentText] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -169,7 +169,7 @@ export const TeamCollaborationView: React.FC = () => {
                         {!isCurrent && (
                           <>
                             <button
-                              onClick={() => setCurrentUser(user)}
+                              onClick={() => setCurrentUser(user.id)}
                               className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-500/10 hover:bg-blue-200 dark:hover:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-500/20 text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                               title="Switch active user to test collaborative views"
                             >

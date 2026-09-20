@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useActiveProject, computeProjectHealth } from '../context/AppContext';
 import {
   Calendar,
   Clock,
@@ -28,20 +28,20 @@ import { ViewTab } from '../types';
 export const ProjectHeader: React.FC = () => {
   const {
     projects,
-    activeProject,
     setActiveProjectId,
     activeViewTab,
     setActiveViewTab,
     setIsCreateTaskModalOpen,
     setIsCreateProjectModalOpen,
-    setIsDatabaseTesterOpen,
     setIsInviteModalOpen,
-    setIsInteractiveDemoOpen,
-    setIsDriveModalOpen,
+    setIsTutorialDrawerOpen,
+    setIsCloudPanelOpen,
     teamMembers,
   } = useApp();
+  const activeProject = useActiveProject();
 
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
+  const health = computeProjectHealth(activeProject);
 
   // Calculate days remaining to target delivery date
   const calculateDaysRemaining = (targetDateStr: string) => {
@@ -232,14 +232,14 @@ export const ProjectHeader: React.FC = () => {
             {/* Dedicated Google Drive Project Folder */}
             <button
               id="header-drive-folder-btn"
-              onClick={() => setIsDriveModalOpen(true)}
+              onClick={() => setIsCloudPanelOpen(true)}
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-xs font-semibold transition-colors"
-              title={`Open dedicated Google Drive folder: ${activeProject.title}`}
+              title="Cloud folder for this project"
             >
               <HardDrive className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-              <span className="hidden sm:inline">Drive Folder</span>
-              <span className="sm:hidden">Drive</span>
-              {activeProject.driveSynced && (
+              <span className="hidden sm:inline">Cloud</span>
+              <span className="sm:hidden">Cloud</span>
+              {activeProject.cloud && (
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               )}
             </button>
@@ -247,9 +247,9 @@ export const ProjectHeader: React.FC = () => {
             {/* Interactive Demo Launcher */}
             <button
               id="header-interactive-tour-btn"
-              onClick={() => setIsInteractiveDemoOpen(true)}
+              onClick={() => setIsTutorialDrawerOpen(true)}
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-300 text-xs font-semibold transition-colors"
-              title="Launch full interactive tour with live demonstration of all features"
+              title="Open the guided tour"
             >
               <GraduationCap className="w-3.5 h-3.5 text-purple-400 shrink-0" />
               <span className="hidden sm:inline">Feature Tour</span>
@@ -257,16 +257,6 @@ export const ProjectHeader: React.FC = () => {
             </button>
 
             {/* Live Database Status & Durability Test Suite */}
-            <button
-              onClick={() => setIsDatabaseTesterOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-colors"
-              title="Click to run 8 live production tests (Rétroplanning math, task state machine, storage durability)"
-            >
-              <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="hidden sm:inline">DB Active</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            </button>
-
             <button
               onClick={() => setActiveViewTab('markdown')}
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-300 text-xs font-semibold transition-colors"
@@ -315,7 +305,7 @@ export const ProjectHeader: React.FC = () => {
                 {activeProject.retroplanningScore}% Safe
               </span>
               <span className="text-[10px] text-slate-400">
-                (6d margin)
+                ({health.slackDays >= 0 ? `${health.slackDays}d slack` : `${-health.slackDays}d over target`}, {health.overdueTasks} overdue)
               </span>
             </div>
           </div>
@@ -330,7 +320,7 @@ export const ProjectHeader: React.FC = () => {
               <span className="font-semibold text-rose-300 text-xs sm:text-sm">
                 {criticalTasks} Tasks Locked
               </span>
-              <span className="text-[10px] text-slate-400">Zero Slack</span>
+              <span className="text-[10px] text-slate-400">{health.scheduleEndsAfterTarget ? 'Schedule overruns target' : 'Within target'}</span>
             </div>
           </div>
 

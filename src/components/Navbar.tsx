@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { MOCK_USERS } from '../data/mockData';
 import {
   Sparkles,
   Layers,
@@ -30,26 +29,22 @@ export const Navbar: React.FC = () => {
   const {
     currentUser,
     setCurrentUser,
-    theme,
-    toggleTheme,
+    resolvedTheme,
+    setTheme,
+    teamMembers,
+    activeAiProvider,
     workspaces,
     activeWorkspace,
     setActiveWorkspaceId,
     unreadCount,
-    googleAccount,
-    apiSettings,
     activeViewTab,
     setActiveViewTab,
-    setIsDriveModalOpen,
+    setIsCloudPanelOpen,
     setIsAiAssistantOpen,
     setIsCreateProjectModalOpen,
-    setIsApiSettingsOpen,
-    setIsGoogleLoginOpen,
-    setIsImplementationPlanOpen,
+    setIsSettingsOpen,
     setIsTutorialDrawerOpen,
-    setIsDatabaseTesterOpen,
     setIsInviteModalOpen,
-    setIsInteractiveDemoOpen,
   } = useApp();
 
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
@@ -152,68 +147,24 @@ export const Navbar: React.FC = () => {
             <span>Invite</span>
           </button>
 
-          <button
-            id="nav-feature-tour-btn"
-            onClick={() => setIsInteractiveDemoOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-slate-200 text-xs font-medium transition-colors"
-            title="Interactive Feature Demonstration & Tour"
-          >
-            <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
-            <span>Feature Tour</span>
-          </button>
-
-          <button
-            onClick={() => setIsDatabaseTesterOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-medium transition-colors"
-            title="Live Database Durability & Verification Test"
-          >
-            <Database className="w-3.5 h-3.5 text-emerald-400" />
-            <span>DB Tests</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          </button>
-
-          <button
-            onClick={() => setIsImplementationPlanOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-slate-200 text-xs font-medium transition-colors"
-            title="Goal Delta & Implementation Plan Review"
-          >
-            <ClipboardList className="w-3.5 h-3.5 text-blue-400" />
-            <span>Audit Plan</span>
-          </button>
         </div>
 
         {/* Right Controls: Streamlined & Clean */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* API Key Status (Desktop) */}
           <button
-            onClick={() => setIsApiSettingsOpen(true)}
+            onClick={() => setIsSettingsOpen(true)}
             className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 text-slate-300 text-xs font-medium transition-colors"
             title="Gemini API Key & Model Settings"
           >
             <Key className="w-3.5 h-3.5 text-amber-400" />
             <span className="font-mono text-[11px] text-slate-300">
-              {apiSettings.selectedModel.replace('gemini-', '')}
+              {activeAiProvider ? activeAiProvider.model : 'No AI provider'}
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           </button>
 
           {/* Google Workspace Connection (Desktop) */}
-          <button
-            onClick={() => setIsGoogleLoginOpen(true)}
-            className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 text-slate-300 text-xs font-medium transition-colors"
-            title="Google Drive & Workspace Auth"
-          >
-            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
-              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
-              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
-              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
-            </svg>
-            <span className="text-[11px]">
-              {googleAccount.isSignedIn ? 'Connected' : 'Google'}
-            </span>
-          </button>
-
           {/* Gemini AI Copilot Button - Visible everywhere with adaptive label */}
           <button
             id="gemini-assistant-btn"
@@ -228,12 +179,12 @@ export const Navbar: React.FC = () => {
           {/* Theme Switcher Button */}
           <button
             id="theme-toggle-btn"
-            onClick={toggleTheme}
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             className="p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-700/50 dark:border-white/10 text-slate-300 hover:text-white transition-all flex items-center justify-center"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             aria-label="Toggle theme"
           >
-            {theme === 'dark' ? (
+            {resolvedTheme === 'dark' ? (
               <Sun className="w-4 h-4 text-amber-400" />
             ) : (
               <Moon className="w-4 h-4 text-slate-300" />
@@ -243,7 +194,7 @@ export const Navbar: React.FC = () => {
           {/* Google Drive Sync Modal (Desktop) */}
           <button
             id="google-drive-sync-btn"
-            onClick={() => setIsDriveModalOpen(true)}
+            onClick={() => setIsCloudPanelOpen(true)}
             className="hidden md:flex p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 text-slate-300 transition-colors"
             title="Google Drive Sync & Export"
           >
@@ -293,11 +244,11 @@ export const Navbar: React.FC = () => {
                 <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 px-2 py-1 uppercase tracking-wider">
                   Switch Collaborator Persona
                 </div>
-                {MOCK_USERS.map((user) => (
+                {teamMembers.map((user) => (
                   <button
                     key={user.id}
                     onClick={() => {
-                      setCurrentUser(user);
+                      setCurrentUser(user.id);
                       setIsUserMenuOpen(false);
                     }}
                     className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs text-left transition-colors cursor-pointer ${
@@ -415,11 +366,11 @@ export const Navbar: React.FC = () => {
               Switch Persona
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {MOCK_USERS.map((user) => (
+              {teamMembers.map((user) => (
                 <button
                   key={user.id}
                   onClick={() => {
-                    setCurrentUser(user);
+                    setCurrentUser(user.id);
                     setIsMobileMenuOpen(false);
                   }}
                   className={`flex items-center gap-2 p-2 rounded-xl text-left border text-xs transition-colors ${
@@ -444,20 +395,6 @@ export const Navbar: React.FC = () => {
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  setIsDatabaseTesterOpen(true);
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-xs text-emerald-200"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Database className="w-4 h-4 text-emerald-400" />
-                  <span>Database Durability & Live Tests</span>
-                </div>
-                <span className="text-[10px] text-emerald-400 font-semibold">Test Live</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
                   setIsTutorialDrawerOpen(true);
                 }}
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-[#0D121F] border border-white/10 text-xs text-slate-200"
@@ -472,21 +409,7 @@ export const Navbar: React.FC = () => {
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  setIsImplementationPlanOpen(true);
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-[#0D121F] border border-white/10 text-xs text-slate-200"
-              >
-                <div className="flex items-center gap-2.5">
-                  <ClipboardList className="w-4 h-4 text-blue-400" />
-                  <span>Goal Delta & Implementation Review</span>
-                </div>
-                <span className="text-[10px] text-blue-400">Audit</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  setIsApiSettingsOpen(true);
+                  setIsSettingsOpen(true);
                 }}
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-[#0D121F] border border-white/10 text-xs text-slate-200"
               >
@@ -494,22 +417,9 @@ export const Navbar: React.FC = () => {
                   <Key className="w-4 h-4 text-amber-400" />
                   <span>Gemini API & Model Config</span>
                 </div>
-                <span className="text-[10px] font-mono text-emerald-400">{apiSettings.selectedModel}</span>
+                <span className="text-[10px] font-mono text-emerald-400">{activeAiProvider ? activeAiProvider.model : 'Not configured'}</span>
               </button>
 
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  setIsGoogleLoginOpen(true);
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-[#0D121F] border border-white/10 text-xs text-slate-200"
-              >
-                <div className="flex items-center gap-2.5">
-                  <HardDrive className="w-4 h-4 text-emerald-400" />
-                  <span>Google Workspace & Drive Sync</span>
-                </div>
-                <span className="text-[10px] text-slate-400">{googleAccount.isSignedIn ? 'Connected' : 'Not Connected'}</span>
-              </button>
             </div>
           </div>
         </div>

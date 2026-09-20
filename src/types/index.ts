@@ -1,3 +1,9 @@
+import type { AiProviderConfig } from '../services/ai/types';
+import type { CloudAccount, CloudProviderId } from '../services/cloud/types';
+import type { SyncState } from '../services/cloud/syncEngine';
+
+export type { AiProviderConfig, CloudAccount, CloudProviderId, SyncState };
+
 export interface User {
   id: string;
   name: string;
@@ -10,24 +16,7 @@ export interface User {
   currentTaskId?: string;
 }
 
-export interface GoogleAccount {
-  isSignedIn: boolean;
-  name: string;
-  email: string;
-  avatar: string;
-  accessToken?: string;
-  grantedScopes: string[];
-  connectedAt?: string;
-}
-
-export interface ApiSettings {
-  useCustomKey: boolean;
-  apiKey: string;
-  selectedModel: string;
-  status: 'connected' | 'unconfigured' | 'testing' | 'invalid';
-  latencyMs?: number;
-  lastValidated?: string;
-}
+export type Theme = 'dark' | 'light' | 'system';
 
 export interface Workspace {
   id: string;
@@ -105,7 +94,7 @@ export interface MarkdownDoc {
 
 export interface HistoryEntry {
   id: string;
-  timestamp: string;
+  timestamp: string; // ISO 8601
   userId: string;
   userName: string;
   userAvatar: string;
@@ -125,7 +114,7 @@ export interface Comment {
   authorId: string;
   authorName: string;
   authorAvatar: string;
-  timestamp: string;
+  timestamp: string; // ISO 8601
   content: string;
   targetType: 'task' | 'milestone' | 'document' | 'project';
   targetId: string;
@@ -135,7 +124,7 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  timestamp: string;
+  timestamp: string; // ISO 8601
   type: 'deadline_warning' | 'status_update' | 'ai_insight' | 'dependency_blocked' | 'mention';
   read: boolean;
   projectId?: string;
@@ -172,6 +161,17 @@ export interface MediaAssetItem {
   description: string;
 }
 
+/** Link between a project and its folder on a cloud provider (written by the sync layer). */
+export interface ProjectCloudLink {
+  providerId: CloudProviderId;
+  folderId: string;
+  docsFolderId: string;
+  exportsFolderId?: string;
+  projectFileId?: string;
+  syncState: SyncState;
+  lastSyncAt?: string; // ISO 8601
+}
+
 export interface Project {
   id: string;
   workspaceId: string;
@@ -188,17 +188,28 @@ export interface Project {
   history: HistoryEntry[];
   comments: Comment[];
   clarificationQuestions: ClarificationQuestion[];
-  retroplanningScore: number; // 0-100%
+  /**
+   * 0-100. Derived: `clamp(0, 100, 100 - 10 * overdueTasks - (scheduleEndsAfterTarget ? 30 : 0))`,
+   * recomputed by the reducer on every mutation. Prefer `computeProjectHealth()` in the UI.
+   */
+  retroplanningScore: number;
   tags: string[];
   hardwareItems?: HardwareItem[];
   mediaAssets?: MediaAssetItem[];
-  driveSynced?: boolean;
-  driveFolderId?: string;
-  driveFolderName?: string;
-  driveFolderUrl?: string;
-  driveLastSyncedAt?: string;
-  driveSyncStatus?: 'synced' | 'syncing' | 'unlinked' | 'error';
+  cloud?: ProjectCloudLink;
   isTutorialTemplate?: boolean;
+  /** @deprecated Legacy Drive fields from the v4 store; never written any more. Kept only so old exports still parse. */
+  driveSynced?: boolean;
+  /** @deprecated See `driveSynced`. */
+  driveFolderId?: string;
+  /** @deprecated See `driveSynced`. */
+  driveFolderName?: string;
+  /** @deprecated See `driveSynced`. */
+  driveFolderUrl?: string;
+  /** @deprecated See `driveSynced`. */
+  driveLastSyncedAt?: string;
+  /** @deprecated See `driveSynced`. */
+  driveSyncStatus?: 'synced' | 'syncing' | 'unlinked' | 'error';
 }
 
 export interface CollaboratorPermissions {
@@ -215,7 +226,7 @@ export interface TeamInvitation {
   name: string;
   role: string;
   permissions: CollaboratorPermissions;
-  invitedAt: string;
+  invitedAt: string; // ISO 8601
   invitedBy: string;
   status: 'pending' | 'accepted' | 'expired';
   token: string;
@@ -230,10 +241,28 @@ export interface TutorialStep {
   actionRequired: string;
   completed: boolean;
   featureHighlight?: string;
-  demoActionKey?: string;
   keyBenefits?: string[];
-  targetElementId?: string;
   actionPrompt?: string;
 }
 
 export type ViewTab = 'immediate' | 'retroplanning' | 'hardware' | 'tasks' | 'markdown' | 'collaboration' | 'history';
+
+/** AI provider settings. `apiKey` values are kept out of localStorage when a secure store exists (see src/state/secrets.ts). */
+export interface AiSettings {
+  providers: AiProviderConfig[];
+  defaultProviderId: string | null;
+}
+
+/** OAuth client registrations entered by the user for the cloud providers. */
+export interface CloudSettings {
+  google: { clientId: string; clientSecret?: string };
+  onedrive: { clientId: string };
+}
+
+export interface CloudStatus {
+  state: 'idle' | 'syncing' | 'ok' | 'error';
+  message?: string;
+  lastSyncAt?: string; // ISO 8601
+}
+
+export type CloudAccounts = Partial<Record<CloudProviderId, CloudAccount>>;

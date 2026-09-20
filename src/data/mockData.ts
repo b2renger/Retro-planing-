@@ -1,11 +1,12 @@
-import { User, Workspace, Project, Notification, GoogleAccount, ApiSettings, TutorialStep, HardwareItem, MediaAssetItem } from '../types';
+import { User, Workspace, Project, Notification, TutorialStep, HardwareItem, MediaAssetItem } from '../types';
+import { initialsAvatar } from '../state/avatar';
 
 export const MOCK_USERS: User[] = [
   {
     id: 'user-1',
     name: 'Berenger Recoules',
-    email: 'berenger.recoules@gmail.com',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+    email: 'lead@example.com',
+    avatar: initialsAvatar('Berenger Recoules', '#3B82F6'),
     role: 'Creative Director & Spatial Designer',
     color: '#3B82F6',
     status: 'active',
@@ -14,7 +15,7 @@ export const MOCK_USERS: User[] = [
     id: 'user-2',
     name: 'Elena Rostova',
     email: 'elena.rostova@media-art.io',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80',
+    avatar: initialsAvatar('Elena Rostova', '#8B5CF6'),
     role: 'Lead Visual Artist & Motion Director',
     color: '#8B5CF6',
     status: 'active',
@@ -23,7 +24,7 @@ export const MOCK_USERS: User[] = [
     id: 'user-3',
     name: 'Marcus Vance',
     email: 'marcus.vance@sound-lab.io',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
+    avatar: initialsAvatar('Marcus Vance', '#EC4899'),
     role: 'Spatial Audio Designer & Sound Engineer',
     color: '#EC4899',
     status: 'reviewing',
@@ -32,155 +33,94 @@ export const MOCK_USERS: User[] = [
     id: 'user-4',
     name: 'Sora Chen',
     email: 'sora.chen@av-systems.io',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
+    avatar: initialsAvatar('Sora Chen', '#10B981'),
     role: 'AV Systems & TouchDesigner Specialist',
     color: '#10B981',
     status: 'crunching',
   },
 ];
 
-export const DEFAULT_GOOGLE_ACCOUNT: GoogleAccount = {
-  isSignedIn: true,
-  name: 'Berenger Recoules',
-  email: 'berenger.recoules@gmail.com',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-  accessToken: 'ya29.google_oauth_token_media_installation',
-  grantedScopes: [
-    'https://www.googleapis.com/auth/drive.file',
-    'https://www.googleapis.com/auth/userinfo.profile',
-    'https://www.googleapis.com/auth/userinfo.email',
-  ],
-  connectedAt: '2026-09-20 09:30',
-};
-
-export const DEFAULT_API_SETTINGS: ApiSettings = {
-  useCustomKey: false,
-  apiKey: '',
-  selectedModel: 'gemini-3.8-flash',
-  status: 'connected',
-  latencyMs: 135,
-  lastValidated: 'Active (Server-Side Google GenAI Engine)',
-};
-
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'tut-1',
-    title: '1. Rétroplanning & Backward Scheduling',
-    description: 'Set your hard opening night deadline. The backward scheduling engine calculates all start dates in reverse to guarantee installation buffers.',
+    title: '1. Timeline and target date',
+    description: 'The timeline shows phases, tasks and milestones against the target delivery date. Changing the target date either moves only the anchor or shifts every date by the same number of days; both are recorded in the history.',
     targetTab: 'retroplanning',
-    actionRequired: 'Review launch milestone or shift target delivery date',
-    targetElementId: 'retroplanning-target-date-input',
-    actionPrompt: 'Adjust the Target Opening Night date to see backward schedule envelopes recalculate automatically.',
-    completed: true,
-    featureHighlight: 'Backward scheduling math calculates buffer safety days from opening night.',
-    demoActionKey: 'retroplanning_demo',
+    actionRequired: 'Open the timeline and review the target delivery date',
+    actionPrompt: 'Change the target date and choose whether the schedule should move with it.',
+    completed: false,
+    featureHighlight: 'Days remaining, overdue tasks and schedule slack are computed from the real dates.',
     keyBenefits: [
-      'Anchored to opening exhibition night (Nov 20, 2026)',
-      'Guarantees 6 buffer safety days before public opening',
-      'Highlights zero-float critical path on venue booking and projector calibration',
+      'Phases, tasks and milestones on one Gantt view',
+      'Anchor-only or shift-all date changes, both logged',
+      'Health numbers derived from dates, not typed in',
     ],
   },
   {
     id: 'tut-2',
-    title: '2. Immediate Action Hub & Triage',
-    description: 'Track urgent booking deadlines, critical testing to-dos, countdown to opening night, and pending technical questions.',
+    title: '2. Immediate actions',
+    description: 'A triage view of urgent and critical-path tasks, the countdown to delivery, and open questions that still need an answer.',
     targetTab: 'immediate',
-    actionRequired: 'Review urgent tasks & run Gemini AI Health Audit',
-    targetElementId: 'tab-btn-immediate',
-    actionPrompt: 'Review urgent hardware bookings and answer open technical questions.',
+    actionRequired: 'Review the urgent tasks and open questions',
+    actionPrompt: 'Answer an open question or move an urgent task forward.',
     completed: false,
-    featureHighlight: 'Instant situational awareness for producers and technical directors.',
-    demoActionKey: 'immediate_triage_demo',
-    keyBenefits: [
-      'Real-time opening night countdown clock (61 days runway)',
-      'Instant resolution of venue and optical questions',
-      'AI-powered installation buffer safety audit',
-    ],
+    featureHighlight: 'One screen for what needs attention today.',
+    keyBenefits: ['Countdown to the target date', 'Urgent and critical-path tasks first', 'Open questions with suggested answers'],
   },
   {
     id: 'tut-3',
-    title: '3. Hardware Manifest & Media Roster',
-    description: 'Comprehensive manifest of 20K laser projectors, Dante spatial audio speakers, TouchDesigner servers, and list of videos/sounds to produce.',
+    title: '3. Hardware and media',
+    description: 'The sample project lists projection, audio, server and rigging equipment, plus the video and sound assets to produce, with their booking and production status.',
     targetTab: 'hardware',
-    actionRequired: 'Inspect hardware booking status and media assets roster',
-    targetElementId: 'tab-btn-hardware',
-    actionPrompt: 'Check equipment booking status and preview video/sound assets in production.',
+    actionRequired: 'Browse the hardware manifest and media roster',
+    actionPrompt: 'Filter the hardware list by category and check the media asset status.',
     completed: false,
-    featureHighlight: 'Dedicated cockpit for AV gear, rental vendors, and media assets.',
-    demoActionKey: 'kanban_workflow_demo',
-    keyBenefits: [
-      'Inventory tracking: Projection, Audio, Media Servers & Rigging',
-      'Roster of 4K video loops and 8.1 spatial sound stems',
-      'Live booking and delivery status indicators',
-    ],
+    featureHighlight: 'Equipment and assets are stored with the project and exported with it.',
+    keyBenefits: ['Hardware by category with vendor and booking status', 'Video and sound assets with format and status', 'Phase-linked booking and testing tasks'],
   },
   {
     id: 'tut-4',
-    title: '4. Testing Phase Checklist & Kanban',
-    description: 'Full testing phase checklist: projector edge-blending, acoustic delay tuning, LiDAR integration, and 4-hour stress tests.',
+    title: '4. Tasks and checklists',
+    description: 'Tasks are grouped by status. Use the status control to move a task between columns and tick checklist items as you go; deleting a task can be undone.',
     targetTab: 'tasks',
-    actionRequired: 'Check off calibration items and move deliverables across Kanban',
-    targetElementId: 'tab-btn-tasks',
-    actionPrompt: 'Check off calibration subtasks or drag tasks across workflow columns.',
+    actionRequired: 'Change a task status or tick a checklist item',
+    actionPrompt: 'Move a task to In progress or complete a checklist item.',
     completed: false,
-    featureHighlight: 'Tracks granular on-site testing checklists and deliverables.',
-    demoActionKey: 'kanban_workflow_demo',
-    keyBenefits: [
-      'Interactive checklist items with dynamic completion percentages',
-      'Filter by phase: Booking, Media Creation, Testing, or Review',
-      'Assign tasks directly to sound engineers, visual artists, and AV techs',
-    ],
+    featureHighlight: 'Every change is recorded in the project history.',
+    keyBenefits: ['Kanban and table views', 'Checklist progress per task', 'Filter by phase, search by title'],
   },
   {
     id: 'tut-5',
-    title: '5. Markdown Studio & Installation Brief',
-    description: 'Read the complete installation brief, hardware manifest, and media specs with live markdown preview and AI structuring.',
+    title: '5. Markdown documents',
+    description: 'Write briefs and notes in Markdown with a live preview. With an AI provider configured in Settings, notes can be turned into a proposed schedule that you apply (replace) or merge, with undo.',
     targetTab: 'markdown',
-    actionRequired: 'Read or edit the Media Installation Brief',
-    targetElementId: 'tab-btn-markdown',
-    actionPrompt: 'Open the installation brief or hardware manifest in Markdown Studio.',
+    actionRequired: 'Open the installation brief',
+    actionPrompt: 'Edit a document, or drop a .md file onto the studio to import it.',
     completed: false,
-    featureHighlight: 'Split-screen live markdown editor with auto-generated table of contents.',
-    demoActionKey: 'markdown_crunch_demo',
-    keyBenefits: [
-      'Complete artistic, spatial, and technical brief',
-      'AI Cruncher converts unstructured notes into structured tasks',
-      '1-Click markdown and PDF export',
-    ],
+    featureHighlight: 'Documents live with the project and are included in exports and cloud sync.',
+    keyBenefits: ['Split editor and preview', 'Import .md files by drag and drop', 'AI structuring only when a provider is configured'],
   },
   {
     id: 'tut-6',
-    title: '6. Google Drive Project Sync',
-    description: 'Dedicated Google Drive folder containing briefs, Gantt JSON, hardware lists, and video/sound metadata.',
+    title: '6. Team and comments',
+    description: 'Invite collaborators by email to create a pending invitation, comment on the project, and see workload per member. Invitations are stored locally in this version; no email is sent.',
     targetTab: 'collaboration',
-    actionRequired: 'Open Drive Folder and sync project assets',
-    targetElementId: 'header-drive-folder-btn',
-    actionPrompt: 'Click "Drive Folder" in the top bar to inspect and synchronize the project directory.',
+    actionRequired: 'Review the team and leave a comment',
+    actionPrompt: 'Post a comment or create an invitation.',
     completed: false,
-    featureHighlight: 'Automatic per-project Google Drive workspace with 4 structured subfolders.',
-    demoActionKey: 'drive_sync_demo',
-    keyBenefits: [
-      'Dedicated Google Drive folder: 📁 [Retroplan] Media Installation',
-      'Subfolders for Briefs, Schedules, Media Assets, and Backups',
-      '1-Click project export and local backup snapshot download',
-    ],
+    featureHighlight: 'Team data is local to this browser or desktop app.',
+    keyBenefits: ['Workload per team member', 'Comments attached to the project', 'Pending invitations you can revoke'],
   },
   {
     id: 'tut-7',
-    title: '7. Automated System & Math Test Suite',
-    description: 'Verify backward scheduling calculations, buffer protections, and durability assertions with 8 live tests.',
-    targetTab: 'immediate',
-    actionRequired: 'Open DB Tests modal and run verification',
-    targetElementId: 'header-db-tests-btn',
-    actionPrompt: 'Click "DB Active" in the top bar to run the full verification test suite.',
+    title: '7. History, backup and settings',
+    description: 'Every change is logged with who and when. Export the whole store as JSON, import it back, and configure AI providers and cloud storage in Settings.',
+    targetTab: 'history',
+    actionRequired: 'Open the history view',
+    actionPrompt: 'Filter the history by action or person, then open Settings.',
     completed: false,
-    featureHighlight: 'Built-in real assertion test suite proves all algorithms and persistence work flawlessly.',
-    demoActionKey: 'system_tests_demo',
-    keyBenefits: [
-      'Real-time execution benchmarks and date assertions',
-      'Verifies zero data loss across browser reloads',
-      'Validates all 4 installation phases and backward buffers',
-    ],
+    featureHighlight: 'Data stays on this device unless you connect a cloud folder.',
+    keyBenefits: ['Full audit trail per project', 'JSON backup and restore', 'AI and cloud providers configured by you'],
   },
 ];
 
@@ -357,14 +297,8 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
   retroplanningScore: 94,
   targetDeliveryDate: '2026-11-20', // Opening Night
   startDate: '2026-09-15',
-  isTutorialTemplate: false,
+  isTutorialTemplate: true,
   tags: ['Projection Mapping', 'Spatial Audio', 'TouchDesigner', 'Media Installation', 'Opening Night'],
-  driveSynced: true,
-  driveFolderId: '1_Echoes_and_Light_Installation_Folder_2026',
-  driveFolderName: '📁 [Retroplan] Media Installation: Echoes & Light',
-  driveFolderUrl: 'https://drive.google.com/drive/folders/1_Echoes_and_Light_Installation_Folder_2026',
-  driveLastSyncedAt: 'Today at 09:45 AM',
-  driveSyncStatus: 'synced',
   hardwareItems: MEDIA_INSTALLATION_HARDWARE,
   mediaAssets: MEDIA_INSTALLATION_ASSETS,
   phases: [
@@ -439,7 +373,7 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
     },
     {
       id: 'm4-opening-night',
-      title: '🎉 Exhibition Opening Night & VIP Vernissage',
+      title: 'Exhibition Opening Night & VIP Vernissage',
       targetDate: '2026-11-20',
       isHardDeadline: true,
       completed: false,
@@ -745,12 +679,12 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
 
 ---
 
-## 🌌 1. Artistic Concept & Vision
+## 1. Artistic Concept & Vision
 "Echoes & Light" is a 360-degree sensory immersion exploring the collision of cosmic architecture, fluid geometry, and physical acoustic resonance. Visitors step into a pitch-black gallery room where visual particle ribbons morph across dual edge-blended 4K projection surfaces while an 8.1 discrete spatial audio ring pans organic drones and visceral sub-bass pulses around the space.
 
 ---
 
-## 🏛️ 2. Venue & Spatial Parameters
+## 2. Venue & Spatial Parameters
 - **Gallery Dimensions:** 18.0m (Length) x 12.0m (Width) x 6.0m (Clear Ceiling Height)
 - **Projection Surface:** Matte white projection canvas (18m wide x 5.2m high)
 - **Ambient Lighting:** Complete blackout (<3 lux), indirect low-glare floor strip lighting along walkways
@@ -759,7 +693,7 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
 
 ---
 
-## 📐 3. Technical Architecture Overview
+## 3. Technical Architecture Overview
 1. **Visual Engine:** Dual Panasonic PT-RQ25K (20,000 lm each) with 0.37:1 UST lenses edge-blended into a single seamless 7680x2160 ultra-wide projection canvas.
 2. **Audio Engine:** 8x Genelec 8040B active studio monitors placed in an equidistant circular ring, coupled with 2x Genelec 7380A subwoofers tuned for 28Hz-60Hz tactile sub-bass resonance.
 3. **Control & Playback:** Custom RTX 4090 media server running TouchDesigner Pro with Dante AoIP PCIe interface.
@@ -780,7 +714,7 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
 
 ---
 
-## 📽️ Projection & Optics (Rental: ProAV Solutions)
+## Projection & Optics (Rental: ProAV Solutions)
 | Item | Model | Qty | Key Specs | Status |
 |---|---|---|---|---|
 | Projector A | Panasonic PT-RQ25K | 1 | 20,000 Lumens, 4K DLP, Dual SDI/HDMI | Booked |
@@ -791,7 +725,7 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
 
 ---
 
-## 🔊 Spatial Audio & Dante Network (Rental: Acoustic Labs Paris)
+## Spatial Audio & Dante Network (Rental: Acoustic Labs Paris)
 | Item | Model | Qty | Key Specs | Status |
 |---|---|---|---|---|
 | Surround Ring | Genelec 8040B | 8 | 90W+90W Active Bi-Amp, DCW Waveguide | Booked |
@@ -801,7 +735,7 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
 
 ---
 
-## 🖥️ Server Rack & Rigging (Studio Inventory & Rigging Masters)
+## Server Rack & Rigging (Studio Inventory & Rigging Masters)
 - **Media Server:** Intel i9-14900K / 64GB DDR5 / NVIDIA RTX 4090 24GB (Status: Delivered & Prepped)
 - **Interactive Sensor:** Slamtec RPLIDAR S2 (30m radius, 32kHz sample rate) (Status: Delivered)
 - **Truss Grid:** Global Truss F34 (18m x 12m perimeter box grid, 850kg safe load) (Status: Booked)
@@ -822,41 +756,41 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
 
 ---
 
-## 🎬 Video Assets
+## Video Assets
 1. **Atmospheric Continuum (Master Base Layer)**
    - *Resolution:* 3840x2160 @ 60fps
    - *Codec:* Apple ProRes 422HQ (Bitrate: ~440 Mbps)
    - *Duration:* 03:30 (Seamless loop, color matched to 20K laser contrast)
-   - *Status:* Master Approved ✅
+   - *Status:* Master Approved
 
 2. **Architectural Geometry Warp & Corner Highlights**
    - *Resolution:* 3840x2160 @ 60fps
    - *Codec:* Apple ProRes 422HQ
    - *Duration:* 02:15 (Seamless loop)
-   - *Status:* In Production 🔄 (Alpha masking in progress)
+   - *Status:* In Production (Alpha masking in progress)
 
 3. **TouchDesigner Real-Time GLSL Particle Field**
    - *Type:* Real-time compute shader
    - *Performance:* Locked 60.0 fps at 7680x2160 combined output
    - *Interactivity:* LiDAR audience proximity trigger
-   - *Status:* Approved ✅
+   - *Status:* Approved
 
 ---
 
-## 🎧 Audio Assets
+## Audio Assets
 1. **Spatial 8.1 Ambient Drone & Resonant Harmonics**
    - *Layout:* 8 Discrete Channels (Ch 1: Front L, Ch 2: Front R, Ch 3: Side L, Ch 4: Side R, Ch 5: Rear L, Ch 6: Rear R, Ch 7: Center Front, Ch 8: Center Rear)
    - *Duration:* 05:45 (Loop)
    - *Integrated Loudness:* -24.0 LUFS (True Peak: -1.5 dBTP)
-   - *Status:* Master Approved ✅
+   - *Status:* Master Approved
 
 2. **Sub-Bass 28Hz-60Hz Tactile Resonance Stems**
    - *Layout:* Dual Mono Subwoofer Feed (Ch 9 & 10)
-   - *Status:* In Production 🔄
+   - *Status:* In Production
 
 3. **Interactive Granular Audio Trigger Library (16 Stems)**
    - *Layout:* 16 Mono WAV files triggered by OSC coordinates
-   - *Status:* Rendered & Staged ✅
+   - *Status:* Rendered & Staged
 `,
     },
     {
@@ -872,7 +806,7 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
 
 ---
 
-## ✅ 1. Projector Rigging & Edge-Blending Calibration
+## 1. Projector Rigging & Edge-Blending Calibration
 - [ ] Rig 2x Panasonic PT-RQ25K projectors on F34 truss at 4.50m elevation
 - [ ] Connect secondary steel safety cables (rated 250kg)
 - [ ] Power on laser light engine and warm up for 20 minutes
@@ -882,7 +816,7 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
 
 ---
 
-## 🔊 2. Acoustic Alignment & Dante Network Configuration
+## 2. Acoustic Alignment & Dante Network Configuration
 - [ ] Connect Focusrite RedNet interface via redundant CAT6 etherCON cables
 - [ ] Verify Gigabit clock sync in Dante Controller (PTP Leader clock locked)
 - [ ] Position 8x Genelec 8040B monitors at ear height (1.65m) around room perimeter
@@ -893,7 +827,7 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
 
 ---
 
-## ⚡ 3. 4-Hour Stress Test & Thermal Stability Run
+## 3. 4-Hour Stress Test & Thermal Stability Run
 - [ ] Run continuous full-resolution playback for 4 hours non-stop
 - [ ] Confirm zero frame drops across 864,000 rendered video frames (60.0 fps steady)
 - [ ] Verify RTX 4090 GPU core temperature < 72°C and CPU < 68°C
@@ -907,8 +841,8 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
       id: 'c1',
       authorId: 'user-2',
       authorName: 'Elena Rostova',
-      authorAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80',
-      timestamp: '1 hour ago',
+      authorAvatar: initialsAvatar('Elena Rostova', '#8B5CF6'),
+      timestamp: '2026-09-20T08:30:00Z',
       content: 'Atmospheric Continuum 4K ProRes master is uploaded to Drive folder. Zero seam artifacts on loop test!',
       targetType: 'task',
       targetId: 'task-m1',
@@ -917,8 +851,8 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
       id: 'c2',
       authorId: 'user-3',
       authorName: 'Marcus Vance',
-      authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
-      timestamp: '35 min ago',
+      authorAvatar: initialsAvatar('Marcus Vance', '#EC4899'),
+      timestamp: '2026-09-20T08:55:00Z',
       content: 'Sub-bass 28Hz stems are dialed in. The low-frequency physical rumble feels incredible without overpowering the room speech intelligibility.',
       targetType: 'project',
       targetId: 'proj-media-installation',
@@ -930,7 +864,7 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
       timestamp: '2026-09-20T09:15:00Z',
       userId: 'user-1',
       userName: 'Berenger Recoules',
-      userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+      userAvatar: initialsAvatar('Berenger Recoules', '#3B82F6'),
       actionType: 'retroplan_shift',
       targetType: 'timeline',
       targetTitle: 'Opening Night Milestone',
@@ -941,7 +875,7 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
       timestamp: '2026-09-20T08:45:00Z',
       userId: 'user-4',
       userName: 'Sora Chen',
-      userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
+      userAvatar: initialsAvatar('Sora Chen', '#10B981'),
       actionType: 'status_change',
       targetType: 'task',
       targetTitle: 'Projectors & Optical Lenses Rental Reservation',
@@ -982,27 +916,27 @@ export const TUTORIAL_PROJECT: Project = MEDIA_INSTALLATION_PROJECT;
 export const INITIAL_NOTIFICATIONS: Notification[] = [
   {
     id: 'notif-1',
-    title: '📽️ 2x 20K Laser Projectors Reserved',
+    title: '2x 20K Laser Projectors Reserved',
     message: 'ProAV Solutions confirmed reservation of dual Panasonic PT-RQ25K projectors and UST lenses for load-in on Oct 29.',
-    timestamp: '10 min ago',
+    timestamp: '2026-09-20T09:20:00Z',
     type: 'status_update',
     read: false,
     projectId: 'proj-media-installation',
   },
   {
     id: 'notif-2',
-    title: '🔊 8.1 Spatial Audio Stems Staged',
+    title: '8.1 Spatial Audio Stems Staged',
     message: 'Marcus staged 8-channel discrete surround masters in Google Drive project folder.',
-    timestamp: '45 min ago',
+    timestamp: '2026-09-20T08:45:00Z',
     type: 'ai_insight',
     read: false,
     projectId: 'proj-media-installation',
   },
   {
     id: 'notif-3',
-    title: '⚠️ Critical Path Alert: On-Site Edge Blending',
+    title: 'Critical Path Alert: On-Site Edge Blending',
     message: 'On-site warping calibration is scheduled for Nov 2. 4 days of safety buffer remain before rehearsal freeze.',
-    timestamp: '2 hours ago',
+    timestamp: '2026-09-20T07:30:00Z',
     type: 'deadline_warning',
     read: true,
     projectId: 'proj-media-installation',

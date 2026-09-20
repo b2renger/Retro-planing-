@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useApp } from '../context/AppContext';
-import { MOCK_USERS } from '../data/mockData';
+import { useApp, useActiveProject } from '../context/AppContext';
 import {
   Calendar,
   Clock,
@@ -28,11 +27,10 @@ import {
   Users,
 } from 'lucide-react';
 import { Task, Phase, Milestone, TaskStatus } from '../types';
-import { analyzeDependencies } from '../services/geminiService';
+import { analyzeDependencies } from '../services/ai/tasks';
 
 export const RetroplanningTimeline: React.FC = () => {
   const {
-    activeProject,
     updatePhaseDates,
     updateTargetDeliveryDate,
     toggleMilestoneComplete,
@@ -41,7 +39,9 @@ export const RetroplanningTimeline: React.FC = () => {
     teamMembers,
     updateTaskStatus,
     toggleChecklistItem,
+    activeAiProvider,
   } = useApp();
+  const activeProject = useActiveProject();
 
   const [graphicMode, setGraphicMode] = useState<'gantt' | 'runway' | 'workload'>('gantt');
   const [zoomLevel, setZoomLevel] = useState<'days' | 'weeks' | 'months'>('weeks');
@@ -136,21 +136,20 @@ export const RetroplanningTimeline: React.FC = () => {
     setIsOptimizing(true);
     try {
       const result = await analyzeDependencies(
-        activeProject.tasks,
-        activeProject.targetDeliveryDate,
-        activeProject.title
+        { tasks: activeProject.tasks, targetDeliveryDate: activeProject.targetDeliveryDate, projectName: activeProject.title },
+        activeAiProvider
       );
 
       addNotification({
-        title: 'Retroplan AI Optimizer Complete',
-        message: result.analysis.executiveSummary || 'Reverse planning schedule optimized with zero critical path conflicts.',
+        title: result.fallback ? 'Local heuristic analysis (no AI provider)' : 'AI analysis complete',
+        message: result.analysis.executiveSummary || 'No summary returned.',
         type: 'ai_insight',
         projectId: activeProject.id,
       });
     } catch {
       addNotification({
-        title: 'Retroplan Optimized',
-        message: 'Calculated 6-day backward buffer before target delivery.',
+        title: 'Analysis failed',
+        message: 'The dependency analysis could not be completed.',
         type: 'ai_insight',
         projectId: activeProject.id,
       });
@@ -196,7 +195,7 @@ export const RetroplanningTimeline: React.FC = () => {
                     type="date"
                     id="retroplanning-target-date-input"
                     value={activeProject.targetDeliveryDate}
-                    onChange={(e) => updateTargetDeliveryDate(e.target.value)}
+                    onChange={(e) => updateTargetDeliveryDate(e.target.value, 'anchor-only')}
                     className="bg-transparent text-xs sm:text-sm font-bold text-amber-400 focus:outline-none cursor-pointer font-mono"
                   />
                   <span className="text-[10px] font-semibold text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded">
@@ -495,7 +494,7 @@ export const RetroplanningTimeline: React.FC = () => {
                         {phaseTasks.map((task) => {
                           const taskStartPct = getPositionPercentage(task.startDate);
                           const taskWidthPct = getWidthPercentage(task.startDate, task.dueDate);
-                          const assignee = teamMembers.find((u) => u.id === task.assigneeId) || MOCK_USERS[0];
+                          const assignee = teamMembers.find((u) => u.id === task.assigneeId) || teamMembers[0];
                           const isCritical = highlightCriticalPath && task.isCriticalPath;
 
                           return (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useActiveProject } from '../context/AppContext';
 import {
   HardDrive,
   Tv,
@@ -28,7 +28,8 @@ import {
 import { HardwareItem, MediaAssetItem } from '../types';
 
 export const HardwareMediaView: React.FC = () => {
-  const { activeProject, setActiveViewTab, setIsDriveModalOpen, addNotification } = useApp();
+  const { setActiveViewTab, setIsCloudPanelOpen, addNotification } = useApp();
+  const activeProject = useActiveProject();
   const [activeSubTab, setActiveSubTab] = useState<'hardware' | 'media' | 'booking' | 'testing' | 'review'>('hardware');
   const [hardwareCategoryFilter, setHardwareCategoryFilter] = useState<string>('all');
 
@@ -148,11 +149,11 @@ export const HardwareMediaView: React.FC = () => {
               <span>Read Full Brief (.md)</span>
             </button>
             <button
-              onClick={() => setIsDriveModalOpen(true)}
+              onClick={() => setIsCloudPanelOpen(true)}
               className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-blue-600/20 transition-all cursor-pointer"
             >
               <HardDrive className="w-3.5 h-3.5" />
-              <span>Drive Project Folder</span>
+              <span>Cloud folder</span>
             </button>
           </div>
         </div>

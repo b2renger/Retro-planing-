@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useActiveProject } from '../context/AppContext';
 import {
   FileText,
   Sparkles,
@@ -23,11 +23,11 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { MarkdownDoc } from '../types';
-import { crunchMarkdownNotes, CrunchResult } from '../services/geminiService';
+import type { CrunchResult } from '../services/geminiService';
+import { crunchMarkdownNotes } from '../services/ai/tasks';
 
 export const MarkdownStudio: React.FC = () => {
   const {
-    activeProject,
     activeDocument,
     setActiveDocumentId,
     saveDocument,
@@ -36,7 +36,9 @@ export const MarkdownStudio: React.FC = () => {
     importDroppedFiles,
     applyAiStructuredData,
     addNotification,
+    activeAiProvider,
   } = useApp();
+  const activeProject = useActiveProject();
 
   const [editorMode, setEditorMode] = useState<'split' | 'wysiwyg' | 'raw'>('split');
   const [docContent, setDocContent] = useState<string>(activeDocument?.content || '');
@@ -72,14 +74,13 @@ export const MarkdownStudio: React.FC = () => {
     setIsCrunching(true);
     try {
       const res = await crunchMarkdownNotes(
-        docContent,
-        activeProject.targetDeliveryDate,
-        activeProject.title
+        { markdownContent: docContent, targetDeliveryDate: activeProject.targetDeliveryDate, projectName: activeProject.title },
+        activeAiProvider
       );
 
       setCrunchResult(res.data);
       addNotification({
-        title: 'Gemini Structuring Ready',
+        title: res.fallback ? 'Local heuristic structure ready (no AI provider)' : 'AI structure ready',
         message: `Parsed ${res.data.tasks?.length || 0} tasks & ${res.data.phases?.length || 0} phases from markdown notes.`,
         type: 'ai_insight',
         projectId: activeProject.id,
@@ -98,7 +99,7 @@ export const MarkdownStudio: React.FC = () => {
 
   const handleApplyAiPlan = () => {
     if (!crunchResult) return;
-    applyAiStructuredData(crunchResult);
+    applyAiStructuredData(crunchResult, { replace: true });
     if (crunchResult.structuredMarkdown) {
       setDocContent(crunchResult.structuredMarkdown);
       if (activeDocument) {

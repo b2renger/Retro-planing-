@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useActiveProject } from '../context/AppContext';
 import { MOCK_USERS } from '../data/mockData';
 import {
   GitCommit,
@@ -15,7 +15,7 @@ import {
 import { HistoryEntry } from '../types';
 
 export const HistoryAuditView: React.FC = () => {
-  const { activeProject, revertHistoryState } = useApp();
+  const activeProject = useActiveProject();
   const [filterAction, setFilterAction] = useState<string>('all');
   const [filterUser, setFilterUser] = useState<string>('all');
 
@@ -181,17 +181,6 @@ export const HistoryAuditView: React.FC = () => {
                       </div>
                     </div>
                   )}
-
-                  <div className="flex items-center justify-end pt-1">
-                    <button
-                      onClick={() => revertHistoryState(entry)}
-                      className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 transition-colors cursor-pointer"
-                      title="Revert to state before this change"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                      <span>Revert State</span>
-                    </button>
-                  </div>
                 </div>
               </div>
             ))}

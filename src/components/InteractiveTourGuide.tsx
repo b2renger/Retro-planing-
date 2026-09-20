@@ -27,13 +27,11 @@ import {
 
 export const InteractiveTourGuide: React.FC = () => {
   const {
-    isInteractiveDemoOpen,
-    setIsInteractiveDemoOpen,
+    isTutorialDrawerOpen: isInteractiveDemoOpen,
+    setIsTutorialDrawerOpen: setIsInteractiveDemoOpen,
     tutorialSteps,
     completeTutorialStep,
     resetTutorial,
-    runLiveFeatureDemonstration,
-    isDemoPlaying,
     setActiveViewTab,
     activeViewTab,
   } = useApp();
@@ -73,8 +71,8 @@ export const InteractiveTourGuide: React.FC = () => {
   };
 
   const handleRunDemo = async () => {
-    setDemoNotice(`Executing real-time demo for ${currentStep.title}...`);
-    await runLiveFeatureDemonstration(currentStep.id);
+    setDemoNotice(`Opened the view for ${currentStep.title}.`);
+    setActiveViewTab(currentStep.targetTab);
     setTimeout(() => {
       setDemoNotice(null);
     }, 4000);
@@ -234,12 +232,11 @@ export const InteractiveTourGuide: React.FC = () => {
           <button
             id="tour-auto-demo-btn"
             onClick={handleRunDemo}
-            disabled={isDemoPlaying}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md shadow-purple-600/30 transition-all cursor-pointer"
-            title="Automatically executes this feature live on the screen"
+            title="Switch to the view this step describes"
           >
-            <Play className={`w-3.5 h-3.5 fill-white ${isDemoPlaying ? 'animate-spin' : ''}`} />
-            <span>{isDemoPlaying ? 'Demonstrating...' : '⚡ Watch Live Demo'}</span>
+            <Play className="w-3.5 h-3.5 fill-white" />
+            <span>Open this view</span>
           </button>
 
           {/* Right: Step Navigation Controls */}

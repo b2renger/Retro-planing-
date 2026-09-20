@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
-import { MOCK_USERS } from '../data/mockData';
+import { useApp, useActiveProject } from '../context/AppContext';
 import { X } from 'lucide-react';
 import { TaskPriority, TaskStatus } from '../types';
 
 export const CreateTaskModal: React.FC = () => {
   const {
-    activeProject,
     isCreateTaskModalOpen,
     setIsCreateTaskModalOpen,
     addTask,
+    teamMembers,
   } = useApp();
+  const activeProject = useActiveProject();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [phaseId, setPhaseId] = useState(activeProject.phases[0]?.id || '');
-  const [assigneeId, setAssigneeId] = useState(MOCK_USERS[0]?.id || '');
+  const [assigneeId, setAssigneeId] = useState(teamMembers[0]?.id || '');
   const [priority, setPriority] = useState<TaskPriority>('medium');
   const [status, setStatus] = useState<TaskStatus>('todo');
   const [startDate, setStartDate] = useState('2026-09-25');
@@ -35,7 +35,7 @@ export const CreateTaskModal: React.FC = () => {
       title,
       description,
       phaseId: phaseId || activeProject.phases[0]?.id || 'phase-1',
-      assigneeId: assigneeId || MOCK_USERS[0].id,
+      assigneeId: assigneeId || teamMembers[0].id,
       priority,
       status,
       startDate,
@@ -120,7 +120,7 @@ export const CreateTaskModal: React.FC = () => {
                 onChange={(e) => setAssigneeId(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-slate-200 focus:outline-none focus:border-purple-500"
               >
-                {MOCK_USERS.map((u) => (
+                {teamMembers.map((u) => (
                   <option key={u.id} value={u.id} className="bg-[#0D121F] text-slate-200">
                     {u.name} ({u.role})
                   </option>

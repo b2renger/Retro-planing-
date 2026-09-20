@@ -8,6 +8,7 @@ export const CreateProjectModal: React.FC = () => {
     isCreateProjectModalOpen,
     setIsCreateProjectModalOpen,
     createProject,
+    currentUser,
   } = useApp();
 
   const [title, setTitle] = useState('');
@@ -121,9 +122,9 @@ export const CreateProjectModal: React.FC = () => {
       history: [
         {
           id: `hist-${Date.now()}`,
-          userId: 'user-1',
-          userName: 'Alex Rivera',
-          userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+          userId: currentUser.id,
+          userName: currentUser.name,
+          userAvatar: currentUser.avatar,
           actionType: 'create',
           targetType: 'project',
           targetTitle: title,

@@ -17,7 +17,7 @@ import {
   ChevronRight,
   UserCheck,
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp, useActiveProject } from '../context/AppContext';
 import { CollaboratorPermissions } from '../types';
 
 export const InviteCollaboratorsModal: React.FC = () => {
@@ -30,10 +30,10 @@ export const InviteCollaboratorsModal: React.FC = () => {
     removeTeamMember,
     updateTeamMemberRole,
     revokeInvitation,
-    activeProject,
     currentUser,
     setCurrentUser,
   } = useApp();
+  const activeProject = useActiveProject();
 
   const [activeTab, setActiveTab] = useState<'email' | 'link' | 'members' | 'pending'>('email');
   
@@ -459,7 +459,7 @@ export const InviteCollaboratorsModal: React.FC = () => {
                         {!isCurrent && (
                           <button
                             onClick={() => {
-                              setCurrentUser(member);
+                              setCurrentUser(member.id);
                               setIsInviteModalOpen(false);
                             }}
                             title="Test the app as this user persona"

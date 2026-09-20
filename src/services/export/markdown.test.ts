@@ -37,7 +37,7 @@ describe('ganttToMarkdownTable', () => {
     expect(lines[0]).toMatch(/^\| Item \| W\d{2} \|/);
     expect(lines[1]).toMatch(/^\| --- \| :-: \|/);
     expect(table).toContain('█');
-    expect(table).toContain('| ◆ 🎉 Exhibition Opening Night & VIP Vernissage |');
+    expect(table).toContain('| ◆ Exhibition Opening Night & VIP Vernissage |');
     expect(table).toContain('**1. Booking & Procurement (Venue, Hardware & Rigging)**');
     expect(table).toContain('↳ Venue Booking');
   });
