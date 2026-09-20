@@ -236,3 +236,38 @@ latency. Every AI feature then calls `activeAiProvider`.
 - No browser/visual pass was possible here: a human should open Settings in both themes, and on the desktop
   build run a real Scan against a farm (the scan path could only be reasoned about, not executed).
 - `InteractiveTourGuide.tsx` is still dead code; `MOCK_USERS` is still imported by four views.
+
+## 2026-09-21 00:05 — SCOPE CONFIRMED BY b2renger (supersedes the earlier phase list)
+Decisions: **stay on Electron** (Tauri weighed and rejected for now — it wins on install size and idle
+memory but needs the whole main process rewritten in Rust, adds a Safari-engine test matrix on macOS,
+and cannot cross-build Windows from a Mac). **Ship a web build to GitHub Pages too**, WITHOUT LlmOnLan —
+a HTTPS page cannot call an http:// LAN farm (mixed content is blocked before the request leaves, and a
+private LAN address gets no localhost exemption). Cloud AI providers, Drive/OneDrive OAuth and exports
+all work client-side, so Pages is viable for everything except LAN inference and UDP discovery.
+Goal for 07:00: polished, working, clean UX/UI, with in-app interactive tutorials.
+
+### Remaining phases, strictly sequential, one agent each
+4. **(running)** Cloud sync panel + export menu + background sync hook.
+5. **Timeline + task editing + navigation cleanup.** Use `buildGanttModel`/`computeCriticalPath` from
+   `src/services/export/gantt.ts` (already tested — do not rewrite). Real zoom in px/day, lanes so
+   overlapping tasks stop hiding each other, dependency arrows, drag/resize wired to `updatePhase`/
+   `updateTask`, an edit-task modal (none exists today: create only), and the shift-all date control.
+   Also audit P0 "duplicate, competing navigation": Invite appears 3x on one screen, DB-tests appeared 4x;
+   consolidate into one model (tabs in ProjectHeader, everything else in one Navbar menu).
+6. **Interactive in-app tutorial — explicitly requested.** ONE surface, not the two the original had
+   (`TutorialDrawer` + the unmounted `InteractiveTourGuide` — delete or absorb the latter). Requirements:
+   anchored coach-marks that point at the real element (not a modal describing it), steps that the user
+   performs themselves and that detect completion from real state, skip/resume/restart, progress persisted,
+   and a sandbox: the tutorial must NEVER write into the user's real project — the original's "Watch Live
+   Demo" inserted a demo task and flipped the delivery date in live data. Use the sample project
+   (`isTutorialTemplate: true`) or a scratch copy. Cover: backward planning, tasks, markdown + AI crunch,
+   AI provider setup incl. a LAN farm, cloud sync, export.
+7. **GitHub Pages deploy + capability gating.** `.github/workflows/pages.yml` (build, upload artifact,
+   deploy). A single `src/capabilities.ts` (`hasDesktop`, `canDiscoverFarms`, `canUseLanFarms`,
+   `secretsBackend`) so the web build hides LAN farm scan and any desktop-only affordance cleanly instead
+   of showing dead buttons. Vite `base` already relative — verify under a Pages subpath. Document the
+   OAuth origins/redirect URIs to register for the Pages URL.
+8. **Final gate.** Full `npm test`, `tsc`, `build:all`, `package:mac` (arm64 + x64) and `package:win`,
+   review every doc for drift, and write `docs/HUMAN-TESTS.md` — numbered manual acceptance tests a human
+   follows to validate each feature, including the two theme spots never visually verified (Gantt tab and
+   the AI assistant modal in light mode).
