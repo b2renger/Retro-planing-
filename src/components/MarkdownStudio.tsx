@@ -21,10 +21,11 @@ import {
   ChevronRight,
   ShieldAlert,
   ArrowRight,
+  Settings,
+  AlertTriangle,
 } from 'lucide-react';
 import { MarkdownDoc } from '../types';
-import type { CrunchResult } from '../services/geminiService';
-import { crunchMarkdownNotes } from '../services/ai/tasks';
+import { crunchMarkdownNotes, type CrunchOutcome } from '../services/ai/tasks';
 
 export const MarkdownStudio: React.FC = () => {
   const {
@@ -37,6 +38,7 @@ export const MarkdownStudio: React.FC = () => {
     applyAiStructuredData,
     addNotification,
     activeAiProvider,
+    setIsSettingsOpen,
   } = useApp();
   const activeProject = useActiveProject();
 
@@ -44,7 +46,8 @@ export const MarkdownStudio: React.FC = () => {
   const [docContent, setDocContent] = useState<string>(activeDocument?.content || '');
   const [docTitle, setDocTitle] = useState<string>(activeDocument?.title || 'Untitled Doc');
   const [isCrunching, setIsCrunching] = useState(false);
-  const [crunchResult, setCrunchResult] = useState<CrunchResult | null>(null);
+  const [crunch, setCrunch] = useState<CrunchOutcome | null>(null);
+  const [confirmApply, setConfirmApply] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -70,25 +73,27 @@ export const MarkdownStudio: React.FC = () => {
     setTimeout(() => setSaveStatus(null), 2000);
   };
 
-  const handleCrunchWithGemini = async () => {
+  const handleCrunchWithAi = async () => {
     setIsCrunching(true);
+    setConfirmApply(false);
     try {
       const res = await crunchMarkdownNotes(
         { markdownContent: docContent, targetDeliveryDate: activeProject.targetDeliveryDate, projectName: activeProject.title },
         activeAiProvider
       );
 
-      setCrunchResult(res.data);
+      setCrunch(res);
       addNotification({
-        title: res.fallback ? 'Local heuristic structure ready (no AI provider)' : 'AI structure ready',
-        message: `Parsed ${res.data.tasks?.length || 0} tasks & ${res.data.phases?.length || 0} phases from markdown notes.`,
+        title: res.fallback ? 'Structured locally — no AI provider answered' : `Structured by ${res.source}`,
+        message: `${res.data.tasks?.length || 0} task(s) and ${res.data.phases?.length || 0} phase(s) proposed${res.error ? ` — the provider failed: ${res.error}` : ''}.`,
         type: 'ai_insight',
         projectId: activeProject.id,
       });
-    } catch (err: any) {
+    } catch (err) {
+      setCrunch(null);
       addNotification({
-        title: 'AI Structuring Error',
-        message: 'Could not complete analysis. Check server logs.',
+        title: 'Structuring failed',
+        message: err instanceof Error ? err.message : String(err),
         type: 'status_update',
         projectId: activeProject.id,
       });
@@ -98,19 +103,21 @@ export const MarkdownStudio: React.FC = () => {
   };
 
   const handleApplyAiPlan = () => {
-    if (!crunchResult) return;
-    applyAiStructuredData(crunchResult, { replace: true });
-    if (crunchResult.structuredMarkdown) {
-      setDocContent(crunchResult.structuredMarkdown);
+    const result = crunch?.data;
+    if (!result) return;
+    applyAiStructuredData(result, { replace: true });
+    if (result.structuredMarkdown) {
+      setDocContent(result.structuredMarkdown);
       if (activeDocument) {
         saveDocument({
           ...activeDocument,
-          content: crunchResult.structuredMarkdown,
+          content: result.structuredMarkdown,
           autoStructured: true,
         });
       }
     }
-    setCrunchResult(null);
+    setCrunch(null);
+    setConfirmApply(false);
   };
 
   // Drag and drop handlers for unstructured files & folders
@@ -266,8 +273,9 @@ export const MarkdownStudio: React.FC = () => {
               </h2>
             </div>
             <p className="text-xs text-fg-muted max-w-2xl leading-relaxed">
-              Drop any raw design briefs, meeting memos, or markdown files in any structure. Gemini AI will parse
-              deliverables, reverse-engineer milestones, and calculate retroplanning buffers automatically.
+              Drop any raw design briefs, meeting memos, or markdown files in any structure. The configured AI provider parses
+              deliverables, reverse-engineers milestones and schedules them backward from the target date. Without a provider a local
+              heuristic does it instead, and every result says which one ran.
             </p>
           </div>
 
@@ -289,59 +297,110 @@ export const MarkdownStudio: React.FC = () => {
 
             {/* Specialist Crunch Button */}
             <button
-              id="gemini-crunch-markdown-btn"
-              onClick={handleCrunchWithGemini}
+              id="ai-crunch-markdown-btn"
+              onClick={handleCrunchWithAi}
               disabled={isCrunching}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
             >
               <Sparkles className={`w-4 h-4 ${isCrunching ? 'animate-spin' : ''}`} />
-              <span>{isCrunching ? 'Gemini Crunching Notes...' : '✨ Crunch with Gemini AI'}</span>
+              <span>{isCrunching ? 'Crunching notes…' : 'Crunch with AI'}</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* AI Crunch Preview Drawer if result exists */}
-      {crunchResult && (
+      {/* Proposed structure: never applied without an explicit confirmation */}
+      {crunch && (
         <div className="bg-purple-50 dark:bg-purple-950/30 border-2 border-purple-300 dark:border-purple-600/60 rounded-2xl p-5 space-y-4 shadow-md dark:shadow-2xl animate-fadeIn">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               <h3 className="font-bold text-sm text-fg">
-                Gemini Auto-Structure Blueprint ({crunchResult.tasks?.length || 0} Tasks Extracted)
+                Proposed structure — {crunch.data.tasks?.length || 0} task(s) extracted
               </h3>
             </div>
             <div className="flex items-center gap-2">
+              {!confirmApply && (
+                <button
+                  onClick={() => setConfirmApply(true)}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Apply to project</span>
+                </button>
+              )}
               <button
-                onClick={handleApplyAiPlan}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Apply Structure to Project & Retroplan</span>
-              </button>
-              <button
-                onClick={() => setCrunchResult(null)}
-                className="px-3 py-2 rounded-xl bg-elevated text-fg-muted hover:text-fg text-xs"
+                onClick={() => {
+                  setCrunch(null);
+                  setConfirmApply(false);
+                }}
+                className="px-3 py-2 rounded-xl bg-elevated text-fg-muted hover:text-fg text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 Dismiss
               </button>
             </div>
           </div>
 
-          <p className="text-xs text-fg leading-relaxed">{crunchResult.summary}</p>
+          <p className="text-[11px] text-fg-muted">
+            {crunch.fallback ? 'Generated locally by the heuristic planner.' : `Generated by ${crunch.source}.`}
+          </p>
+
+          {crunch.fallback && (
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-fg">
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-px" />
+              <div className="space-y-1">
+                <p className="font-semibold">This plan was generated locally, without AI.</p>
+                <p className="text-fg-muted leading-relaxed">
+                  {crunch.error
+                    ? `The configured provider could not be used: ${crunch.error}`
+                    : 'No AI provider is configured, so dates and phases come from simple rules rather than from your notes.'}
+                </p>
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="inline-flex items-center gap-1 underline underline-offset-2 text-blue-700 dark:text-blue-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-sm"
+                >
+                  <Settings className="w-3 h-3" />
+                  <span>Open AI settings</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {confirmApply && (
+            <div role="alert" className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-fg">
+              <span>
+                This replaces the project's phases, tasks and milestones with the {crunch.data.tasks?.length || 0} task(s) above. It can be undone
+                from the toolbar.
+              </span>
+              <button
+                onClick={handleApplyAiPlan}
+                className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+              >
+                Replace the plan
+              </button>
+              <button
+                onClick={() => setConfirmApply(false)}
+                className="px-3 py-1.5 rounded-lg bg-elevated border border-line text-fg text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
+          <p className="text-xs text-fg leading-relaxed">{crunch.data.summary}</p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
             <div className="bg-card/90 p-3 rounded-xl border border-line">
-              <div className="font-semibold text-fg-muted uppercase text-[10px]">Phases Extracted</div>
-              <div className="font-bold text-blue-600 dark:text-blue-400 text-sm mt-1">{crunchResult.phases?.length || 0} Phases</div>
+              <div className="font-semibold text-fg-muted uppercase text-[10px]">Phases extracted</div>
+              <div className="font-bold text-blue-600 dark:text-blue-400 text-sm mt-1">{crunch.data.phases?.length || 0} phases</div>
             </div>
             <div className="bg-card/90 p-3 rounded-xl border border-line">
-              <div className="font-semibold text-fg-muted uppercase text-[10px]">Milestones Reverse Planned</div>
-              <div className="font-bold text-amber-600 dark:text-amber-400 text-sm mt-1">{crunchResult.milestones?.length || 0} Milestones</div>
+              <div className="font-semibold text-fg-muted uppercase text-[10px]">Milestones reverse planned</div>
+              <div className="font-bold text-amber-600 dark:text-amber-400 text-sm mt-1">{crunch.data.milestones?.length || 0} milestones</div>
             </div>
             <div className="bg-card/90 p-3 rounded-xl border border-line">
-              <div className="font-semibold text-fg-muted uppercase text-[10px]">Retroplan Buffer Health</div>
-              <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-1">{crunchResult.retroplanningScore}% Safe</div>
+              <div className="font-semibold text-fg-muted uppercase text-[10px]">Buffer health (self-reported)</div>
+              <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-1">{crunch.data.retroplanningScore}%</div>
             </div>
           </div>
         </div>

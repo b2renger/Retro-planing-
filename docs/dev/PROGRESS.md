@@ -167,3 +167,72 @@ dark-tuned accent surfaces.
    now a 40-line `Modal` child, so the real form drops straight into its body/footer.
 3. CloudPanel + export menu. Same: `CloudPanel` is now a `Modal` child.
 4. Timeline honesty + task edit modal — build the edit modal on `ui/Modal`, not from scratch.
+
+## 2026-09-20 22:35 — Settings UI landed; every AI feature now runs on the chosen provider
+Gate green: `npx tsc --noEmit` clean · `npx vitest run` **324/324** (307 + 17 new) · `npx vite build` clean
+(586 kB js / 91.6 kB css). Guard greps empty: `bg-\[#`, `border-white/`, `bg-white/`, `text-slate-[12]00`,
+`slate-850|slate-750`, and `geminiService`.
+
+### Added
+- `src/components/settings/SettingsModal.tsx` — the real settings dialog on `ui/Modal`, bound to
+  `isSettingsOpen`. Left tab rail (`role="tablist"`, vertical) → **AI providers · Cloud sync · Data · About**.
+  Replaces `ApiSettingsModal.tsx` (deleted; `App.tsx` imports `SettingsModal`).
+- `src/components/settings/AiProvidersPanel.tsx` — provider cards (status dot, Default badge / "In use
+  (no default set)", Test · Edit · Remove with an **inline** confirm, Set as default), the empty state, the
+  family picker (cards from `PROVIDER_CATALOG` + one-line blurbs) and the "Find a LlmOnLan farm" shortcut.
+  The status dot is grey until a test has actually run in this session — never a pre-claimed "connected".
+- `src/components/settings/ProviderForm.tsx` — add/edit form driven by the catalog entry: key field only
+  when `requiresKey` (optional key field for open servers), base URL only when `requiresBaseUrl`, Load
+  models → `<select>` + "Other…" free-text, Test connection rendering latency / answering model /
+  `sampleReply` and, on failure, the layer's own error message verbatim.
+- `src/components/settings/FarmDiscovery.tsx` — the LlmOnLan piece. Desktop: **Scan network** →
+  `discoverFarms(4000)` with a "Listening for farms…" state and farm cards (name, endpoint, model, seats
+  when the beacon carried them) → "Use this farm" → `farmToProviderConfig` pre-fills the form. Web: no dead
+  button, just the note that browsers cannot receive multicast. Always: one manual address field
+  (normalised through `normalizeLlmOnLanEndpoint` and echoed under the input) + **Check** → `probeFarm`
+  (reachable / models / latency) + an optional master-key field. Empty scan = a help message naming the two
+  usual causes, not an error.
+- `src/components/settings/DataPanel.tsx` — export/restore backup (via `services/export/download`) and
+  `runStorageSelfTest` (keys, bytes used) + the `storageError` line.
+- `src/components/settings/AboutPanel.tsx`, `controls.tsx` (shared class strings + `Field`/`PanelHeading`),
+  `helpers.ts` + `helpers.test.ts` (**17 tests**: `displayEndpoint`, `missingRequirements`, `canLoadModels`,
+  `secretsStorageNote`, `uniqueLabel`, `formatBytes`, `draftToConfig`).
+- `src/components/AiAnalysisPanel.tsx` — renders a `DependencyOutcome`: source line, fallback banner,
+  executive summary, buffer health, bottlenecks with severity, suggested links, open questions.
+
+### Changed
+- `src/components/GeminiAssistantModal.tsx` → **`AiAssistantModal.tsx`** (`git mv`, component renamed,
+  import updated in `App.tsx`). Real `history` is passed to `askAssistant`, the header names the active
+  provider + model, fallback turns carry an "answered locally" banner with an Open-settings link, send is
+  disabled in flight, and the old fake "trouble connecting to Gemini" message is gone.
+- `src/components/MarkdownStudio.tsx` — holds the whole `CrunchOutcome`; the preview says whether the model
+  or the local heuristic produced it, shows a fallback banner (with the provider error when there was one)
+  and an Open-settings link, and **Apply → inline confirm** ("this replaces phases, tasks and milestones").
+- `src/components/RetroplanningTimeline.tsx` — the optimizer result is rendered in `AiAnalysisPanel` instead
+  of being discarded; a real failure shows the actual message and posts a failure notification (the old code
+  posted a success-shaped notification on error).
+- `src/components/Navbar.tsx` — the AI chip's green dot now reflects "a provider is configured" instead of
+  being permanently green; titles/labels say "AI providers" instead of "Gemini API". Button id
+  `gemini-assistant-btn` → `ai-assistant-btn` (nothing referenced the old id).
+- `ImmediateActionView` ("AI schedule audit", "AI agent") and `NotificationCenter` ("AI insights", honest
+  footer) lost the Gemini-only wording.
+- `src/services/ai/types.ts` now owns `CrunchResult` / `DependencyAnalysisResult`; `tasks.ts`, `fallbacks.ts`
+  and `MarkdownStudio` import from there; **`src/services/geminiService.ts` deleted**.
+- `src/services/ai/farms.ts` — `FarmInfo.capacity` added and mapped from the beacon (additive; tests green).
+- `tsconfig.json` — `resolveJsonModule: true` so About can read the version. The About panel imports the two
+  **named** exports (`version`, `description`); importing the default would inline all of package.json into
+  the bundle (verified: it did, now it does not).
+
+### How the LlmOnLan flow reads end to end
+Settings → AI providers → "Find a LlmOnLan farm" (or Add provider → LlmOnLan farm (LAN)) → on desktop, Scan
+network listens 4 s for UDP beacons and lists farms; "Use this farm" fills address/model/label → optional
+master key → Load models → Test connection → Add provider → Set as default. On the web build the scan
+button is absent and the address is typed; Check probes `/v1/models` and reports reachable + models +
+latency. Every AI feature then calls `activeAiProvider`.
+
+### Not done / next
+- The Cloud sync tab still renders placeholder copy (link state + `cloudStatus`) and a button that opens the
+  old `CloudPanel` modal — the real cloud settings screen is the next UI job, alongside the export menu.
+- No browser/visual pass was possible here: a human should open Settings in both themes, and on the desktop
+  build run a real Scan against a farm (the scan path could only be reasoned about, not executed).
+- `InteractiveTourGuide.tsx` is still dead code; `MOCK_USERS` is still imported by four views.

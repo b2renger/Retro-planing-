@@ -2,6 +2,7 @@
  * Provider-agnostic AI layer: shared types.
  * Every adapter speaks this contract so the UI never depends on a vendor SDK.
  */
+import type { ClarificationQuestion, Milestone, Phase, Task } from '../../types';
 
 /** Identifiers of the supported provider families. */
 export type AiProviderId = 'gemini' | 'openai' | 'anthropic' | 'mistral' | 'openai-compatible' | 'llmonlan';
@@ -75,4 +76,39 @@ export class AiError extends Error {
 export interface AiAdapter {
   chat(cfg: AiProviderConfig, messages: ChatMessage[], opts?: ChatOptions): Promise<ChatResult>;
   listModels(cfg: AiProviderConfig): Promise<ModelInfo[]>;
+}
+
+/**
+ * Structured plan produced from raw notes (`crunchMarkdownNotes`) or the local heuristic.
+ * Entity ids are local to the result; `applyAiStructuredData` re-keys them when it lands the plan.
+ */
+export interface CrunchResult {
+  projectTitle: string;
+  summary: string;
+  retroplanningScore: number;
+  targetDeliveryDate: string;
+  phases: Phase[];
+  milestones: Milestone[];
+  tasks: Task[];
+  clarificationQuestions: ClarificationQuestion[];
+  structuredMarkdown: string;
+}
+
+/** Critical path, bottlenecks and missing links found by `analyzeDependencies`. */
+export interface DependencyAnalysisResult {
+  criticalPathTaskIds: string[];
+  bottlenecks: {
+    taskId: string;
+    issue: string;
+    recommendation: string;
+    severity: 'high' | 'medium' | 'low';
+  }[];
+  dependencySuggestions: {
+    sourceTaskId: string;
+    targetTaskId: string;
+    reason: string;
+  }[];
+  clarifications: ClarificationQuestion[];
+  bufferHealthScore: number;
+  executiveSummary: string;
 }

@@ -1,6 +1,6 @@
 import { addDays, format, isValid, parseISO, subDays } from 'date-fns';
 import type { Task } from '../../types';
-import type { CrunchResult, DependencyAnalysisResult } from '../geminiService';
+import type { CrunchResult, DependencyAnalysisResult } from './types';
 
 /** Label every fallback carries so the UI can never mistake it for AI output. */
 export const LOCAL_HEURISTIC_LABEL = 'Local heuristic (no AI provider configured)';

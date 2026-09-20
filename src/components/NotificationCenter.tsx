@@ -63,7 +63,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onClose 
             filter === 'ai' ? 'bg-purple-600 text-white' : 'text-fg-muted hover:text-fg'
           }`}
         >
-          Gemini Insights
+          AI insights
         </button>
       </div>
 
@@ -126,7 +126,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onClose 
       {/* Footer */}
       <div className="p-2.5 bg-elevated border-t border-line text-center">
         <span className="text-[11px] text-fg-muted">
-          Automated schedule monitoring via Gemini Design Ops
+          Schedule insights from the configured AI provider, or the local heuristic when none is set
         </span>
       </div>
     </div>

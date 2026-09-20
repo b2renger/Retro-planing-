@@ -135,7 +135,7 @@ The card is always `bg-card border border-line rounded-2xl shadow-2xl max-h-[85v
 **Submit buttons in the footer:** the footer is outside the `<form>`, so give the form an `id` and
 the button `form={THAT_ID}`. `CreateTaskModal` and `CreateProjectModal` both do this.
 
-Users: `ApiSettingsModal`, `CloudPanel`, `CreateTaskModal`, `CreateProjectModal`,
-`GeminiAssistantModal`, `InviteCollaboratorsModal`, and the task inspector in
+Users: `settings/SettingsModal`, `CloudPanel`, `CreateTaskModal`, `CreateProjectModal`,
+`AiAssistantModal`, `InviteCollaboratorsModal`, and the task inspector in
 `RetroplanningTimeline`. `TutorialDrawer` is deliberately **not** a modal — it is a non-blocking
 docked panel (`role="complementary"`) that coexists with the app.

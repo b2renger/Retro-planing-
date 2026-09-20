@@ -10,11 +10,11 @@ import { TaskBoard } from './components/TaskBoard';
 import { HardwareMediaView } from './components/HardwareMediaView';
 import { HistoryAuditView } from './components/HistoryAuditView';
 import { TeamCollaborationView } from './components/TeamCollaborationView';
-import { GeminiAssistantModal } from './components/GeminiAssistantModal';
+import { AiAssistantModal } from './components/AiAssistantModal';
 import { CloudPanel } from './components/CloudPanel';
 import { CreateTaskModal } from './components/CreateTaskModal';
 import { CreateProjectModal } from './components/CreateProjectModal';
-import { ApiSettingsModal } from './components/ApiSettingsModal';
+import { SettingsModal } from './components/settings/SettingsModal';
 import { TutorialDrawer } from './components/TutorialDrawer';
 import { InviteCollaboratorsModal } from './components/InviteCollaboratorsModal';
 
@@ -77,7 +77,7 @@ const AppContent: React.FC = () => {
             {activeViewTab === 'history' && <HistoryAuditView />}
             {activeViewTab === 'collaboration' && <TeamCollaborationView />}
           </main>
-          <GeminiAssistantModal />
+          <AiAssistantModal />
           <CloudPanel />
           <CreateTaskModal />
           <TutorialDrawer />
@@ -88,7 +88,7 @@ const AppContent: React.FC = () => {
       )}
 
       <CreateProjectModal />
-      <ApiSettingsModal />
+      <SettingsModal />
     </div>
   );
 };

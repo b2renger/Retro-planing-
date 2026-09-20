@@ -151,7 +151,7 @@ export const ImmediateActionView: React.FC = () => {
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-purple-500/20 transition-all cursor-pointer disabled:opacity-50"
             >
               <Sparkles className={`w-3.5 h-3.5 shrink-0 ${aiChecking ? 'animate-spin' : ''}`} />
-              <span>{aiChecking ? 'Auditing Schedule...' : 'Gemini Schedule Audit'}</span>
+              <span>{aiChecking ? 'Auditing schedule…' : 'AI schedule audit'}</span>
             </button>
           </div>
         </div>
@@ -395,7 +395,7 @@ export const ImmediateActionView: React.FC = () => {
 
         {/* Right Column (5 cols): Clarifications & Milestones */}
         <div className="lg:col-span-5 space-y-4 min-w-0">
-          {/* Gemini AI Clarification & Gap Detector */}
+          {/* AI Clarification & Gap Detector */}
           <div className="bg-card border border-purple-200 dark:border-purple-500/20 rounded-2xl p-4 sm:p-5 space-y-3 min-w-0 shadow-sm dark:shadow-none transition-colors">
             <div className="flex items-center justify-between pb-2.5 border-b border-line">
               <div className="flex items-center gap-2">
@@ -407,7 +407,7 @@ export const ImmediateActionView: React.FC = () => {
                 </h3>
               </div>
               <span className="text-[9px] font-semibold px-2 py-0.2 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 shrink-0">
-                Gemini Agent
+                AI agent
               </span>
             </div>
 

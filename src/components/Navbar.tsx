@@ -162,19 +162,22 @@ export const Navbar: React.FC = () => {
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-elevated hover:bg-line border border-line text-fg-muted text-xs font-medium transition-colors"
-            title="Gemini API Key & Model Settings"
+            title={activeAiProvider ? `AI provider: ${activeAiProvider.label} (${activeAiProvider.model})` : 'No AI provider configured — open settings'}
           >
             <Key className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             <span className="font-mono text-[11px] text-fg-muted">
               {activeAiProvider ? activeAiProvider.model : 'No AI provider'}
             </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span
+              aria-hidden="true"
+              className={`w-1.5 h-1.5 rounded-full ${activeAiProvider ? 'bg-emerald-400' : 'bg-line-strong'}`}
+            />
           </button>
 
           {/* Google Workspace Connection (Desktop) */}
-          {/* Gemini AI Copilot Button - Visible everywhere with adaptive label */}
+          {/* AI Copilot Button - Visible everywhere with adaptive label */}
           <button
-            id="gemini-assistant-btn"
+            id="ai-assistant-btn"
             onClick={() => setIsAiAssistantOpen(true)}
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600/30 via-indigo-600/30 to-blue-600/30 border border-purple-500/40 text-purple-800 dark:text-purple-200 hover:text-purple-900 dark:hover:text-white text-xs font-semibold shadow-sm transition-all hover:border-purple-400"
           >
@@ -436,9 +439,11 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center gap-2.5">
                   <Key className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <span>Gemini API & Model Config</span>
+                  <span>AI providers & settings</span>
                 </div>
-                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">{activeAiProvider ? activeAiProvider.model : 'Not configured'}</span>
+                <span className={`text-[10px] font-mono ${activeAiProvider ? 'text-emerald-600 dark:text-emerald-400' : 'text-fg-muted'}`}>
+                  {activeAiProvider ? activeAiProvider.model : 'Not configured'}
+                </span>
               </button>
 
             </div>

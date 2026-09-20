@@ -17,7 +17,7 @@ Files:
 
 ## Rendering rule
 
-`activeProject` is `Project | null`. `App.tsx` renders the project views, `ProjectHeader` and the project-scoped modals only when it is non-null and shows an empty state (create / import JSON) otherwise. Inside those views call `useActiveProject()` (returns `Project`, throws if rendered without one). `CreateProjectModal` and `ApiSettingsModal` (settings) are mounted in both branches.
+`activeProject` is `Project | null`. `App.tsx` renders the project views, `ProjectHeader` and the project-scoped modals only when it is non-null and shows an empty state (create / import JSON) otherwise. Inside those views call `useActiveProject()` (returns `Project`, throws if rendered without one). `CreateProjectModal` and `settings/SettingsModal` are mounted in both branches.
 
 ## `useApp()` facade
 

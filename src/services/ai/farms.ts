@@ -12,6 +12,8 @@ export interface FarmInfo {
   host: string;
   name?: string;
   model?: string;
+  /** Seats/clients the beacon advertised, when it carried them. */
+  capacity?: { slots?: number; clients?: number };
 }
 
 /** Listen for farm beacons for `durationMs`. Returns [] in the web build (no `window.desktop`). */
@@ -19,7 +21,7 @@ export async function discoverFarms(durationMs = 3000): Promise<FarmInfo[]> {
   const bridge = typeof window !== 'undefined' ? window.desktop : undefined;
   if (!bridge?.discoverFarms) return [];
   const farms: DiscoveredFarm[] = await bridge.discoverFarms(durationMs);
-  return farms.map((f) => ({ endpoint: normalizeLlmOnLanEndpoint(f.endpoint), host: f.host, name: f.name, model: f.model }));
+  return farms.map((f) => ({ endpoint: normalizeLlmOnLanEndpoint(f.endpoint), host: f.host, name: f.name, model: f.model, capacity: f.capacity }));
 }
 
 export interface FarmProbeResult {

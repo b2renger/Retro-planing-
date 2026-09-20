@@ -1,9 +1,8 @@
 import type { ClarificationQuestion, Milestone, Phase, Project, Task, TaskPriority, TaskStatus } from '../../types';
-import type { CrunchResult, DependencyAnalysisResult } from '../geminiService';
 import { chat, chatJson } from './client';
 import { generateFallbackAnalysis, generateSmartFallbackStructure, isIsoDate, LOCAL_HEURISTIC_LABEL, resolveTargetDate } from './fallbacks';
 import { toAiError } from './errors';
-import type { AiProviderConfig, ChatMessage } from './types';
+import type { AiProviderConfig, ChatMessage, CrunchResult, DependencyAnalysisResult } from './types';
 
 /** Value of `source` when no provider answered. */
 export const LOCAL_SOURCE = 'local-heuristic';

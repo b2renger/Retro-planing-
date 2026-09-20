@@ -27,7 +27,8 @@ import {
 } from 'lucide-react';
 import { Task, Phase, Milestone, TaskStatus } from '../types';
 import { Modal } from './ui/Modal';
-import { analyzeDependencies } from '../services/ai/tasks';
+import { analyzeDependencies, type DependencyOutcome } from '../services/ai/tasks';
+import { AiAnalysisPanel } from './AiAnalysisPanel';
 
 export const RetroplanningTimeline: React.FC = () => {
   const {
@@ -40,6 +41,7 @@ export const RetroplanningTimeline: React.FC = () => {
     updateTaskStatus,
     toggleChecklistItem,
     activeAiProvider,
+    setIsSettingsOpen,
   } = useApp();
   const activeProject = useActiveProject();
 
@@ -50,6 +52,8 @@ export const RetroplanningTimeline: React.FC = () => {
   const [selectedAssigneeFilter, setSelectedAssigneeFilter] = useState<string>('all');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [analysis, setAnalysis] = useState<DependencyOutcome | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [newMilestoneTitle, setNewMilestoneTitle] = useState('');
   const [newMilestoneDate, setNewMilestoneDate] = useState('');
   const [showAddMilestone, setShowAddMilestone] = useState(false);
@@ -134,23 +138,28 @@ export const RetroplanningTimeline: React.FC = () => {
 
   const handleRunAiOptimizer = async () => {
     setIsOptimizing(true);
+    setAnalysisError(null);
     try {
       const result = await analyzeDependencies(
         { tasks: activeProject.tasks, targetDeliveryDate: activeProject.targetDeliveryDate, projectName: activeProject.title },
         activeAiProvider
       );
 
+      setAnalysis(result);
       addNotification({
-        title: result.fallback ? 'Local heuristic analysis (no AI provider)' : 'AI analysis complete',
-        message: result.analysis.executiveSummary || 'No summary returned.',
+        title: result.fallback ? 'Analysed locally — no AI provider answered' : `Analysed by ${result.source}`,
+        message: result.analysis.executiveSummary || `${result.analysis.bottlenecks.length} bottleneck(s) reported.`,
         type: 'ai_insight',
         projectId: activeProject.id,
       });
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setAnalysis(null);
+      setAnalysisError(message);
       addNotification({
-        title: 'Analysis failed',
-        message: 'The dependency analysis could not be completed.',
-        type: 'ai_insight',
+        title: 'Dependency analysis failed',
+        message,
+        type: 'status_update',
         projectId: activeProject.id,
       });
     } finally {
@@ -403,6 +412,21 @@ export const RetroplanningTimeline: React.FC = () => {
           </form>
         )}
       </div>
+
+      {analysisError && (
+        <div role="alert" className="bg-rose-500/10 border border-rose-500/30 rounded-2xl px-4 py-3 text-xs text-rose-700 dark:text-rose-300">
+          The dependency analysis failed: {analysisError}
+        </div>
+      )}
+
+      {analysis && (
+        <AiAnalysisPanel
+          outcome={analysis}
+          tasks={activeProject.tasks}
+          onDismiss={() => setAnalysis(null)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
+      )}
 
       {/* GRAPHIC VIEW 1: GANTT CHART & BACKWARD TRACKS */}
       {graphicMode === 'gantt' && (
