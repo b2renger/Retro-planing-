@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signing in…</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; color: #333; background: #fafafa; }
+    p { font-size: 15px; }
+  </style>
+</head>
+<body>
+  <p id="msg">Completing sign-in…</p>
+  <script>
+    (function () {
+      var msg = document.getElementById('msg');
+      try {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({ type: 'rps-oauth', url: window.location.href }, window.location.origin);
+          msg.textContent = 'Signed in. You can close this window.';
+          setTimeout(function () { window.close(); }, 300);
+        } else {
+          msg.textContent = 'Sign-in finished, but the application window could not be found. You can close this window and retry from the app.';
+        }
+      } catch (e) {
+        msg.textContent = 'Sign-in could not be completed. You can close this window and retry from the app.';
+      }
+    })();
+  </script>
+</body>
+</html>
