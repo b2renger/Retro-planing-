@@ -322,3 +322,7 @@ grepping the chunks for `ExcelJS`/`jszip` markers (main chunk: none).
   imports are still open from the earlier handoff.
 - `useCloudSync` has no test (it needs a DOM/timers harness; vitest runs in `node` and only picks up
   `*.test.ts`, not `.tsx`). `runProjectSync` is testable as-is if someone wants to add one.
+
+### Orchestrator lesson (00:15)
+Never `git add -A` while an agent is writing — it swept a half-written `src/hooks/cloudClient.ts` into a
+docs commit (f5a912d). Commit docs with explicit paths while any agent is running.
