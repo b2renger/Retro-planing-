@@ -271,3 +271,54 @@ Goal for 07:00: polished, working, clean UX/UI, with in-app interactive tutorial
    review every doc for drift, and write `docs/HUMAN-TESTS.md` — numbered manual acceptance tests a human
    follows to validate each feature, including the two theme spots never visually verified (Gantt tab and
    the AI assistant modal in light mode).
+
+## 2026-09-21 00:30 — UI wiring agent: cloud sync + exports are reachable (DONE)
+
+### Files added
+- `src/hooks/cloudClient.ts` — the only glue between UI and `src/services/cloud/**`:
+  `createProvider(settings, id)`, `oauthConfig`, `redirectAdvice(id, {desktop, origin})`,
+  `scopeExplanations`, `compareDocuments(project, snapshot, syncState)`, `summaryLine`,
+  `relativeTime`, `linkFromSyncState`, `lastLocalChangeOf`, `openCloudUrl`, PROVIDER_LABELS/CONSOLE.
+- `src/hooks/cloudClient.test.ts` — 17 tests (redirect advice per build, scope copy, doc comparison,
+  relative time, summary counters).
+- `src/hooks/useCloudSync.ts` — `runProjectSync(project, deps, opts)` (snapshot → planSync →
+  executeSync → applyCloudPatch + setCloudLink + setCloudStatus) **and** the `useCloudSync()` hook.
+  This is the ONLY place a sync runs; the panel's "Sync now" calls the same function.
+- `src/components/settings/CloudSyncPanel.tsx` — Settings → Cloud sync tab (replaces the placeholder).
+- `src/components/settings/settingsTabs.ts` — `requestSettingsTab('cloud')` deep-link (CustomEvent).
+- `src/components/cloud/CloudLinkSetup.tsx` — create folder / link existing folder.
+- `src/components/cloud/CloudLinkedView.tsx` — folder + last sync + Sync now + file list + unlink.
+- `src/components/CloudStatusChip.tsx` — navbar chip bound to `cloudStatus`.
+- `src/components/ExportMenu.tsx` — project-header dropdown, **dynamic** `await import('../services/export')`.
+- `src/state/projectJsonRoundTrip.test.ts` — 5 tests: export JSON → `importProjectJson` → reducer.
+
+### Files changed
+- `src/components/CloudPanel.tsx` rewritten (3 honest states + "needs reconnecting" banner).
+- `src/components/settings/SettingsModal.tsx` — Cloud tab now `CloudSyncPanel`, listens for tab requests.
+- `src/components/Navbar.tsx` — Drive button → `CloudStatusChip` (removed the dead `HardDrive` import).
+- `src/components/ProjectHeader.tsx` — `<ExportMenu project={activeProject} />` next to the Cloud button.
+- `src/App.tsx` — `useCloudSync()` mounted once in `AppContent`.
+
+### Verified
+`npx tsc --noEmit` clean · `npx vitest run` 346 passed / 32 files (was 324/30) ·
+`npx vite build` clean, `dist/assets/index-*.js` **652.49 kB** (gzip 177.79) and a separate
+`dist/assets/export-*.js` **956.68 kB** (gzip 267.11) that holds ExcelJS + jszip — verified by
+grepping the chunks for `ExcelJS`/`jszip` markers (main chunk: none).
+`grep -rn "bg-\[#" src/components` empty; no accent-as-text violations in the new files.
+
+### Behaviour notes for whoever picks this up
+- Nothing is shown as connected until `provider.getAccount()` actually returns; a failure anywhere in
+  Connect clears the tokens and the account again.
+- Background sync: mount + `focus` + `online` + 60 s, 5 min after 2 consecutive failures, single-flight,
+  paused when `navigator.onLine === false`. Only the first failure of a streak raises a notification.
+- The facade exposes **no `documentDirty` flag**, so `runProjectSync` instead filters
+  `download-doc` / `conflict` / `delete-local-doc` actions for the document open in the Markdown tab
+  and reports them as "deferred". Adding a real dirty flag to the facade would let this be exact.
+- `parseProjectJson` does not carry `cloud` through, so a JSON export cannot point another machine at
+  your folder. The round-trip test asserts that.
+
+### Not done / next
+- `ApiSettingsModal.tsx`, `InteractiveTourGuide.tsx`, raw ISO timestamps and the remaining `MOCK_USERS`
+  imports are still open from the earlier handoff.
+- `useCloudSync` has no test (it needs a DOM/timers harness; vitest runs in `node` and only picks up
+  `*.test.ts`, not `.tsx`). `runProjectSync` is testable as-is if someone wants to add one.

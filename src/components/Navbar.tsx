@@ -4,7 +4,6 @@ import {
   Sparkles,
   Layers,
   Bell,
-  HardDrive,
   ChevronDown,
   Plus,
   CheckCircle2,
@@ -25,6 +24,7 @@ import {
   Monitor,
 } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter';
+import { CloudStatusChip } from './CloudStatusChip';
 
 const THEME_OPTIONS = [
   { value: 'dark' as const, label: 'Dark theme', icon: Moon },
@@ -46,7 +46,6 @@ export const Navbar: React.FC = () => {
     unreadCount,
     activeViewTab,
     setActiveViewTab,
-    setIsCloudPanelOpen,
     setIsAiAssistantOpen,
     setIsCreateProjectModalOpen,
     setIsSettingsOpen,
@@ -215,15 +214,8 @@ export const Navbar: React.FC = () => {
             })}
           </div>
 
-          {/* Google Drive Sync Modal (Desktop) */}
-          <button
-            id="google-drive-sync-btn"
-            onClick={() => setIsCloudPanelOpen(true)}
-            className="hidden md:flex p-1.5 rounded-lg bg-elevated hover:bg-line border border-line text-fg-muted transition-colors"
-            title="Google Drive Sync & Export"
-          >
-            <HardDrive className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          </button>
+          {/* Cloud sync status — opens the project's cloud panel */}
+          <CloudStatusChip />
 
           {/* Notifications Bell */}
           <div className="relative">

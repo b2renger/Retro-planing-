@@ -1,6 +1,7 @@
 import React from 'react';
 import { FolderPlus } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
+import { useCloudSync } from './hooks/useCloudSync';
 import { Navbar } from './components/Navbar';
 import { ProjectHeader } from './components/ProjectHeader';
 import { ImmediateActionView } from './components/ImmediateActionView';
@@ -54,6 +55,8 @@ const EmptyState: React.FC = () => {
 
 const AppContent: React.FC = () => {
   const { activeViewTab, activeProject, storageError } = useApp();
+  // Background cloud sync for the active project (no-op until one is linked).
+  useCloudSync();
 
   return (
     <div className="min-h-screen bg-app text-fg flex flex-col font-sans selection:bg-purple-500/30 selection:text-purple-200 transition-colors duration-200">

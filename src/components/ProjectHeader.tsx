@@ -24,6 +24,7 @@ import {
   Tv,
 } from 'lucide-react';
 import { ViewTab } from '../types';
+import { ExportMenu } from './ExportMenu';
 
 export const ProjectHeader: React.FC = () => {
   const {
@@ -243,6 +244,9 @@ export const ProjectHeader: React.FC = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               )}
             </button>
+
+            {/* Exports: spreadsheets, Markdown, images, JSON, and cloud uploads */}
+            <ExportMenu project={activeProject} />
 
             {/* Interactive Demo Launcher */}
             <button

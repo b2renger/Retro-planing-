@@ -4,10 +4,11 @@ import { useApp } from '../../context/AppContext';
 import { Modal } from '../ui/Modal';
 import { AboutPanel } from './AboutPanel';
 import { AiProvidersPanel } from './AiProvidersPanel';
+import { CloudSyncPanel } from './CloudSyncPanel';
 import { DataPanel } from './DataPanel';
-import { BTN_SECONDARY, PanelHeading } from './controls';
+import { onSettingsTabRequest, type SettingsTabId } from './settingsTabs';
 
-type TabId = 'ai' | 'cloud' | 'data' | 'about';
+type TabId = SettingsTabId;
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'ai', label: 'AI providers', icon: <Sparkles className="w-3.5 h-3.5" /> },
@@ -16,24 +17,6 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'about', label: 'About', icon: <Info className="w-3.5 h-3.5" /> },
 ];
 
-/** Cloud tab: the connection UI is not built yet, so this reports the link state and says so. */
-const CloudTab: React.FC = () => {
-  const { activeProject, cloudStatus, setIsCloudPanelOpen } = useApp();
-  return (
-    <div className="space-y-4">
-      <PanelHeading title="Cloud sync" description="Google Drive and OneDrive sync is implemented in the service layer; its settings screen is not built yet." />
-      <p className="text-xs text-fg-muted leading-relaxed">
-        {activeProject?.cloud ? `This project is linked to ${activeProject.cloud.providerId}.` : 'This project is not linked to a cloud folder.'} Status:{' '}
-        {cloudStatus.state}
-        {cloudStatus.message ? ` (${cloudStatus.message})` : ''}.
-      </p>
-      <button type="button" onClick={() => setIsCloudPanelOpen(true)} className={BTN_SECONDARY}>
-        Open the cloud panel
-      </button>
-    </div>
-  );
-};
-
 /**
  * The app's settings dialog: a tab rail over the AI providers, cloud sync, data and about panels.
  * Bound to `isSettingsOpen` in the store.
@@ -41,6 +24,9 @@ const CloudTab: React.FC = () => {
 export const SettingsModal: React.FC = () => {
   const { isSettingsOpen, setIsSettingsOpen } = useApp();
   const [tab, setTab] = React.useState<TabId>('ai');
+
+  // Another screen (the cloud panel) can deep-link into a tab.
+  React.useEffect(() => onSettingsTabRequest(setTab), []);
 
   return (
     <Modal
@@ -85,7 +71,7 @@ export const SettingsModal: React.FC = () => {
         className="flex-1 min-w-0 overflow-y-auto px-5 py-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-sm"
       >
         {tab === 'ai' && <AiProvidersPanel />}
-        {tab === 'cloud' && <CloudTab />}
+        {tab === 'cloud' && <CloudSyncPanel />}
         {tab === 'data' && <DataPanel />}
         {tab === 'about' && <AboutPanel />}
       </div>
