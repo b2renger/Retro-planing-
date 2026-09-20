@@ -1,32 +1,72 @@
 @import "tailwindcss";
 
-@variant dark (&:where(.dark, .dark *));
+/*
+ * Tailwind 4.3 accepts both `@variant` and `@custom-variant` at the top level for *defining* a
+ * variant; `@custom-variant` is the documented spelling, so that is what we use. Verified by
+ * compiling a probe stylesheet: `dark:bg-x` emits `.dark\:bg-x:where(.dark, .dark *)`.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Semantic surface / text tokens.
+ *
+ * `@theme inline` makes each Tailwind colour resolve to the raw CSS variable at *use* site
+ * (`.bg-card { background-color: var(--s-card) }`), so re-binding the raw variable under `.dark`
+ * flips every utility at once with no `dark:` prefix and no specificity games.
+ *
+ * Add a new surface by: (1) adding `--s-<name>` to both `:root` and `.dark` below,
+ * (2) adding `--color-<name>: var(--s-<name>)` to the `@theme inline` block.
+ * You then get `bg-<name>`, `text-<name>`, `border-<name>`, `bg-<name>/50`, `dark:bg-<name>`, ...
+ */
+@theme inline {
+  /* the `xs:` breakpoint used by ProjectHeader / Navbar was previously undefined */
+  --breakpoint-xs: 30rem;
+
+  --color-app: var(--s-app);
+  --color-card: var(--s-card);
+  --color-elevated: var(--s-elevated);
+  --color-input: var(--s-input);
+  --color-code: var(--s-code);
+  --color-line: var(--s-line);
+  --color-line-strong: var(--s-line-strong);
+  --color-fg: var(--s-fg);
+  --color-fg-muted: var(--s-fg-muted);
+  --color-fg-subtle: var(--s-fg-subtle);
+}
 
 :root {
-  --bg-app: #f8fafc;
-  --bg-card: #ffffff;
-  --bg-subtle: #f1f5f9;
-  --border-color: #e2e8f0;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
+  --s-app: #f8fafc;
+  --s-card: #ffffff;
+  --s-elevated: #f1f5f9;
+  --s-input: #ffffff;
+  --s-code: #f1f5f9;
+  --s-line: #e2e8f0;
+  --s-line-strong: #cbd5e1;
+  --s-fg: #0f172a;
+  --s-fg-muted: #64748b;
+  --s-fg-subtle: #94a3b8;
   color-scheme: light;
 }
 
 html.dark,
 :root.dark {
-  --bg-app: #070a10;
-  --bg-card: #0d121f;
-  --bg-subtle: #131929;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
+  --s-app: #070a10;
+  --s-card: #0d121f;
+  --s-elevated: #141b2d;
+  --s-input: #131927;
+  --s-code: #080c14;
+  --s-line: rgb(255 255 255 / 0.08);
+  --s-line-strong: rgb(255 255 255 / 0.14);
+  --s-fg: #f1f5f9;
+  --s-fg-muted: #94a3b8;
+  --s-fg-subtle: #64748b;
   color-scheme: dark;
 }
 
 html,
 body {
-  background-color: var(--bg-app);
-  color: var(--text-main);
+  background-color: var(--s-app);
+  color: var(--s-fg);
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;

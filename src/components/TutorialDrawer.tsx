@@ -37,17 +37,19 @@ export const TutorialDrawer: React.FC = () => {
   return (
     <div
       id="tutorial-drawer-dock"
-      className="fixed bottom-6 right-6 w-96 max-h-[580px] bg-[#0D121F]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col z-40 overflow-hidden animate-fadeIn text-slate-100"
+      role="complementary"
+      aria-label="Interactive designer tutorial"
+      className="fixed bottom-6 right-6 w-96 max-h-[580px] bg-card/95 backdrop-blur-xl border border-line rounded-2xl shadow-2xl flex flex-col z-40 overflow-hidden animate-fadeIn text-fg"
     >
       {/* Header */}
-      <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+      <div className="px-4 py-3 border-b border-line flex items-center justify-between bg-elevated">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+          <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
             <GraduationCap className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="font-semibold text-xs text-slate-100 tracking-tight">Interactive Designer Tutorial</h4>
-            <span className="text-[10px] text-slate-400">{completedCount} of {tutorialSteps.length} features explored</span>
+            <h4 className="font-semibold text-xs text-fg tracking-tight">Interactive Designer Tutorial</h4>
+            <span className="text-[10px] text-fg-muted">{completedCount} of {tutorialSteps.length} features explored</span>
           </div>
         </div>
 
@@ -55,13 +57,13 @@ export const TutorialDrawer: React.FC = () => {
           <button
             onClick={resetTutorial}
             title="Reset tutorial progress"
-            className="p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors"
+            className="p-1 rounded-md text-fg-muted hover:text-fg hover:bg-elevated transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setIsTutorialDrawerOpen(false)}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors"
+            className="p-1 rounded-md text-fg-muted hover:text-fg hover:bg-elevated transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -69,16 +71,16 @@ export const TutorialDrawer: React.FC = () => {
       </div>
 
       {/* Progress Bar */}
-      <div className="px-4 py-2 bg-[#141B2D]/40 border-b border-white/5 flex items-center justify-between">
+      <div className="px-4 py-2 bg-elevated/40 border-b border-line flex items-center justify-between">
         <div className="flex-1 mr-3">
-          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-elevated rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300 rounded-full"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
         </div>
-        <span className="text-[11px] font-mono text-purple-300 font-semibold">{progressPercent}%</span>
+        <span className="text-[11px] font-mono text-purple-700 dark:text-purple-300 font-semibold">{progressPercent}%</span>
       </div>
 
       {/* Steps List */}
@@ -92,7 +94,7 @@ export const TutorialDrawer: React.FC = () => {
               className={`p-2.5 rounded-xl border transition-all cursor-pointer group ${
                 isCurrentTab
                   ? 'bg-purple-600/15 border-purple-500/30'
-                  : 'bg-[#141B2D]/30 border-white/5 hover:border-white/10 hover:bg-[#141B2D]/60'
+                  : 'bg-elevated/30 border-line hover:border-line-strong hover:bg-elevated/60'
               }`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -103,31 +105,31 @@ export const TutorialDrawer: React.FC = () => {
                       e.stopPropagation();
                       completeTutorialStep(step.id);
                     }}
-                    className="mt-0.5 text-slate-400 hover:text-emerald-400 shrink-0"
+                    className="mt-0.5 text-fg-muted hover:text-emerald-600 dark:hover:text-emerald-400 shrink-0"
                   >
                     {step.completed ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     ) : (
-                      <Circle className="w-4 h-4 text-slate-500" />
+                      <Circle className="w-4 h-4 text-fg-muted" />
                     )}
                   </button>
 
                   <div className="space-y-1 min-w-0">
-                    <div className="font-semibold text-xs text-slate-200 group-hover:text-purple-300 transition-colors flex items-center gap-1.5 truncate">
+                    <div className="font-semibold text-xs text-fg group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors flex items-center gap-1.5 truncate">
                       <span className="truncate">{step.title}</span>
                       {isCurrentTab && (
-                        <span className="px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 text-[9px] shrink-0">
+                        <span className="px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[9px] shrink-0">
                           Active
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">{step.description}</p>
+                    <p className="text-[11px] text-fg-muted line-clamp-2 leading-relaxed">{step.description}</p>
                     <div className="flex items-center gap-2 pt-0.5">
                     </div>
                   </div>
                 </div>
 
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-slate-300 group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
+                <ChevronRight className="w-4 h-4 text-fg-muted group-hover:text-fg group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
               </div>
             </div>
           );
@@ -135,10 +137,10 @@ export const TutorialDrawer: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-white/5 bg-white/[0.02] flex items-center justify-between text-[11px] text-slate-400">
+      <div className="p-3 border-t border-line bg-elevated flex items-center justify-between text-[11px] text-fg-muted">
         <button
           onClick={() => setIsTutorialDrawerOpen(false)}
-          className="text-slate-400 hover:text-slate-200"
+          className="text-fg-muted hover:text-fg"
         >
           Dismiss
         </button>

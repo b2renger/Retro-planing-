@@ -95,3 +95,75 @@ Committed and pushed: 9e60058. Gate is green: 307 tests, `tsc --noEmit` clean, `
 4. **Timeline honesty + task edit modal** — use buildGanttModel/computeCriticalPath, real zoom, lanes for
    overlapping tasks, dependency arrows, edit-task modal, shift-all date control.
 5. **Final gate** — npm test, tsc, build:all, package:mac (arm64+x64) + package:win, docs/HUMAN-TESTS.md.
+
+## 2026-09-20 23:55 — HANDOFF: theme-token pass + shared Modal + 3-way theme control DONE
+
+### Step 1 finding (the `@variant` scare)
+**The dark variant was never broken.** Tailwind 4.3.3 accepts `@variant name (...)` *and*
+`@custom-variant name (...)` at the top level for defining a variant — verified by compiling a probe
+stylesheet through `tailwindcss/dist/lib.js`: both emit `.dark\:bg-x:where(.dark, .dark *)`.
+`index.css` now uses `@custom-variant` (the documented spelling) anyway. The 4 already-working
+light-theme views were therefore genuinely working; the other 15 files were simply unconverted.
+
+### What landed
+- `src/index.css` — `@custom-variant dark`, `@theme inline` token layer, `--breakpoint-xs: 30rem`
+  (the `xs:` breakpoint used by ProjectHeader/Navbar was previously undefined and silently dropped
+  those labels). Tokens: `app card elevated input code line line-strong fg fg-muted fg-subtle`,
+  defined as `--color-X: var(--s-X)` with `--s-X` re-bound under `html.dark`. `@theme inline` means
+  utilities compile to `var(--s-X)` directly — no specificity race, no `dark:` prefix needed.
+- `src/components/ui/Modal.tsx` — **new**. The single modal shell: themed chrome plus the P1
+  accessibility baseline the audit asked for (`role="dialog"`, `aria-modal`, `aria-labelledby` /
+  `aria-label`, Escape, backdrop click, focus-in on open, Tab trap, focus restore on close).
+  API documented in `docs/dev/THEME.md` §5.
+- **All 19 files** in `src/components` + `src/App.tsx` converted to tokens. Nothing is dark-only any
+  more: header, whole timeline tab, navbar right half + mobile drawer, and every modal now read in
+  both themes. Components that already used `dark:` correctly (HardwareMediaView, ImmediateActionView,
+  TaskBoard, TeamCollaborationView, MarkdownStudio, HistoryAuditView, NotificationCenter, Navbar-left)
+  were collapsed onto the same tokens — `bg-white dark:bg-[#0D121F]` → `bg-card` — so the app now has
+  exactly one system.
+- Broken classes fixed: `bg-slate-850`, `border-slate-750`, `hover:bg-slate-750` (not real Tailwind
+  shades — they rendered as nothing) in GeminiAssistantModal/MarkdownStudio; the undefined `xs:`
+  breakpoint is now defined rather than dropped.
+- Low-contrast fixes from the audit: HistoryAuditView action badges (accent-700/dark:accent-300,
+  neutral badges now `text-fg` on `bg-line-strong`/`bg-elevated`), MarkdownStudio inline chips and
+  `<strong>`, NotificationCenter item title/body/footer. Dark-tuned accent surfaces
+  (`bg-rose-950/90`, `from-purple-950/40`, `bg-emerald-950/80` on Gantt bars) got light twins.
+  ~40 dead `hover:bg-elevated` on a `bg-elevated` base became `hover:bg-line` (real feedback).
+- **Modals on the shared shell:** ApiSettingsModal, CloudPanel, CreateTaskModal, CreateProjectModal,
+  GeminiAssistantModal, InviteCollaboratorsModal, and the task inspector inside RetroplanningTimeline.
+  Footer submit buttons use `form={FORM_ID}` since the footer sits outside the `<form>`.
+- **Theme control (Step 5):** Navbar's two-way toggle replaced by a three-way segmented
+  `role="radiogroup"` (Moon / Sun / Monitor, `aria-label` per option) bound to `theme`/`setTheme`.
+  It reflects the stored preference, so `system` is visible as its own state.
+- `docs/dev/THEME.md` — token table, the accents-as-text rule, how to add a surface, Modal API,
+  and the two guard-rail greps.
+
+### Deliberately NOT converted
+- `TutorialDrawer` stays a **non-modal docked panel** (bottom-right, z-40, no backdrop). Wrapping it
+  in `Modal` would make it blocking and change behaviour. It got `role="complementary"` +
+  `aria-label` and full token conversion instead.
+- Two justified colour exceptions remain, both correct in either theme: `text-slate-950` on the solid
+  `bg-amber-400` milestone chip (RetroplanningTimeline), and the neutral
+  `bg-slate-500/10 … border-slate-500/20` badge (HardwareMediaView:101).
+- `InteractiveTourGuide.tsx` is still unmounted/dead but was converted anyway so it does not
+  reintroduce hex colours if someone re-adopts it.
+
+### Verified
+`npx tsc --noEmit` clean · `npx vitest run` 307/307 · `npx vite build` clean (88.3 kB CSS).
+Emitted CSS checked by hand: `html.dark,:root.dark{--s-app:#070a10;…}` present, every token utility
+compiles to `var(--s-…)`, `.xs\:inline` emits at `min-width:30rem`, opacity modifiers
+(`bg-card/95`, `bg-app/98`) resolve via `color-mix`.
+Acceptance greps both empty:
+`grep -rn "bg-\[#\|border-white/\|bg-white/\|text-slate-[12]00" src/components src/App.tsx`
+`grep -rn "slate-850\|slate-750" src/components`
+
+### NOT verified (no browser in this environment)
+No screenshot/visual pass — puppeteer/playwright are not installed and were not added. A human should
+open both themes and check the Gantt tab and the AI Copilot modal in particular; those had the most
+dark-tuned accent surfaces.
+
+### Next phase (unchanged from the 23:00 handoff)
+2. Settings UI (AI providers + LlmOnLan scan + cloud). `ApiSettingsModal` is still a stub — but it is
+   now a 40-line `Modal` child, so the real form drops straight into its body/footer.
+3. CloudPanel + export menu. Same: `CloudPanel` is now a `Modal` child.
+4. Timeline honesty + task edit modal — build the edit modal on `ui/Modal`, not from scratch.

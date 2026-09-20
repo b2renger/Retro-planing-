@@ -34,14 +34,14 @@ const EmptyState: React.FC = () => {
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="max-w-md w-full text-center space-y-4">
-        <FolderPlus className="w-10 h-10 mx-auto text-slate-400" />
+        <FolderPlus className="w-10 h-10 mx-auto text-fg-muted" />
         <h1 className="text-lg font-semibold">No project yet</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Create a project or import one from a JSON export. Everything is stored on this device.</p>
+        <p className="text-sm text-fg-muted">Create a project or import one from a JSON export. Everything is stored on this device.</p>
         <div className="flex items-center justify-center gap-2">
           <button onClick={() => setIsCreateProjectModalOpen(true)} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold">
             Create project
           </button>
-          <button onClick={() => fileRef.current?.click()} className="px-4 py-2 rounded-lg border border-slate-300 dark:border-white/10 text-sm font-semibold">
+          <button onClick={() => fileRef.current?.click()} className="px-4 py-2 rounded-lg border border-line-strong text-sm font-semibold">
             Import JSON
           </button>
           <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={onFile} />
@@ -56,7 +56,7 @@ const AppContent: React.FC = () => {
   const { activeViewTab, activeProject, storageError } = useApp();
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-[#070A10] text-slate-800 dark:text-slate-100 flex flex-col font-sans selection:bg-purple-500/30 selection:text-purple-200 transition-colors duration-200">
+    <div className="min-h-screen bg-app text-fg flex flex-col font-sans selection:bg-purple-500/30 selection:text-purple-200 transition-colors duration-200">
       <Navbar />
 
       {storageError && (

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, X, Sparkles } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { Project } from '../types';
+import { Modal } from './ui/Modal';
+
+const FORM_ID = 'create-project-form';
 
 export const CreateProjectModal: React.FC = () => {
   const {
@@ -15,7 +18,6 @@ export const CreateProjectModal: React.FC = () => {
   const [clientName, setClientName] = useState('');
   const [targetDeliveryDate, setTargetDeliveryDate] = useState('2026-12-15');
 
-  if (!isCreateProjectModalOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,52 +150,63 @@ export const CreateProjectModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-[#0D121F] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden text-slate-100 p-5 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-purple-600/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
-              <Plus className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-sm text-slate-100">Create New Project</h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">Initialize retroplanning schedule and milestones.</p>
-            </div>
-          </div>
+    <Modal
+      open={isCreateProjectModalOpen}
+      onClose={() => setIsCreateProjectModalOpen(false)}
+      title="Create New Project"
+      subtitle="Initialize retroplanning schedule and milestones."
+      size="lg"
+      icon={
+        <div className="w-7 h-7 rounded-lg bg-purple-600/20 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/30 shrink-0">
+          <Plus className="w-4 h-4" />
+        </div>
+      }
+      footer={
+        <div className="flex items-center justify-end gap-2">
           <button
+            type="button"
             onClick={() => setIsCreateProjectModalOpen(false)}
-            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+            className="px-3.5 py-2 rounded-xl bg-elevated hover:bg-line text-fg-muted text-xs font-medium transition-colors"
           >
-            <X className="w-4 h-4" />
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form={FORM_ID}
+            className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md shadow-purple-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Initialize Workspace</span>
           </button>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+      }
+    >
+      <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="text-slate-400 font-semibold block mb-1">Project Name *</label>
+            <label className="text-fg-muted font-semibold block mb-1">Project Name *</label>
             <input
               type="text"
               required
               placeholder="e.g. Fintech Mobile App Redesign"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-elevated border border-line text-fg placeholder-fg-subtle focus:outline-none focus:border-purple-500 transition-colors"
             />
           </div>
 
           <div>
-            <label className="text-slate-400 font-semibold block mb-1">Client / Stakeholder / Course</label>
+            <label className="text-fg-muted font-semibold block mb-1">Client / Stakeholder / Course</label>
             <input
               type="text"
               placeholder="e.g. Acme Corp / UX Capstone 2026"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-elevated border border-line text-fg placeholder-fg-subtle focus:outline-none focus:border-purple-500 transition-colors"
             />
           </div>
 
           <div>
-            <label className="text-slate-400 font-semibold block mb-1">
+            <label className="text-fg-muted font-semibold block mb-1">
               Rétroplanning Launch Date (Target Delivery Anchor) *
             </label>
             <input
@@ -201,31 +214,14 @@ export const CreateProjectModal: React.FC = () => {
               required
               value={targetDeliveryDate}
               onChange={(e) => setTargetDeliveryDate(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-amber-400 font-bold focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-elevated border border-line text-amber-600 dark:text-amber-400 font-bold focus:outline-none focus:border-purple-500 transition-colors"
             />
-            <span className="text-[10px] text-slate-400 mt-1 block">
+            <span className="text-[10px] text-fg-muted mt-1 block">
               All phases and buffers will be reverse-calculated backwards from this hard date.
             </span>
           </div>
 
-          <div className="pt-2 flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setIsCreateProjectModalOpen(false)}
-              className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-md shadow-purple-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Initialize Workspace</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 };

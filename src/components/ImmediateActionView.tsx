@@ -121,7 +121,7 @@ export const ImmediateActionView: React.FC = () => {
   return (
     <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 space-y-4 sm:space-y-6 overflow-hidden">
       {/* Top Action Bar: Clean, uncluttered, focused */}
-      <div className="bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-lg relative overflow-hidden transition-colors">
+      <div className="bg-card border border-line rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-lg relative overflow-hidden transition-colors">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 relative z-10">
           <div className="space-y-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -133,11 +133,11 @@ export const ImmediateActionView: React.FC = () => {
                 Design Operations Triage & Queue
               </span>
             </div>
-            <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 tracking-tight truncate">
+            <h2 className="text-base sm:text-lg font-semibold text-fg tracking-tight truncate">
               Immediate Deliverables & Critical Path Focus
             </h2>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl">
-              Target launch <span className="text-slate-800 dark:text-slate-200 font-semibold font-mono">{activeProject.targetDeliveryDate}</span>. Prioritizing{' '}
+            <p className="text-xs text-fg-muted leading-relaxed max-w-3xl">
+              Target launch <span className="text-fg font-semibold font-mono">{activeProject.targetDeliveryDate}</span>. Prioritizing{' '}
               <span className="text-rose-600 dark:text-rose-400 font-semibold">{criticalPathTasks.length} critical path deliverables</span> to safeguard delivery runway.
             </p>
           </div>
@@ -177,16 +177,16 @@ export const ImmediateActionView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 min-w-0">
         {/* Left Column (7 cols): High Priority Work Queue with Granular Filters */}
         <div className="lg:col-span-7 space-y-4 min-w-0">
-          <div className="bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 space-y-3.5 min-w-0 shadow-sm dark:shadow-none transition-colors">
+          <div className="bg-card border border-line rounded-2xl p-4 sm:p-5 space-y-3.5 min-w-0 shadow-sm dark:shadow-none transition-colors">
             {/* Header & Filter Controls */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200 dark:border-white/5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-line">
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                 <button
                   onClick={() => setActiveFilter('all')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors shrink-0 ${
                     activeFilter === 'all'
                       ? 'bg-purple-100 dark:bg-purple-600/30 text-purple-800 dark:text-purple-200 border border-purple-300 dark:border-purple-500/40 font-semibold'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                      : 'text-fg-muted hover:text-fg hover:bg-elevated'
                   }`}
                 >
                   All Active ({displayedTasks.length})
@@ -196,7 +196,7 @@ export const ImmediateActionView: React.FC = () => {
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors shrink-0 ${
                     activeFilter === 'critical'
                       ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-500/30 font-semibold'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                      : 'text-fg-muted hover:text-fg hover:bg-elevated'
                   }`}
                 >
                   <Flame className="w-3 h-3 text-rose-600 dark:text-rose-400" />
@@ -207,7 +207,7 @@ export const ImmediateActionView: React.FC = () => {
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors shrink-0 ${
                     activeFilter === 'urgent'
                       ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30 font-semibold'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                      : 'text-fg-muted hover:text-fg hover:bg-elevated'
                   }`}
                 >
                   Urgent ({urgentTasks.length})
@@ -217,7 +217,7 @@ export const ImmediateActionView: React.FC = () => {
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors shrink-0 ${
                     activeFilter === 'in-progress'
                       ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-500/30 font-semibold'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                      : 'text-fg-muted hover:text-fg hover:bg-elevated'
                   }`}
                 >
                   In Progress ({inProgressTasks.length})
@@ -236,7 +236,7 @@ export const ImmediateActionView: React.FC = () => {
             {/* Task Cards List */}
             <div className="space-y-2.5 min-w-0">
               {displayedTasks.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-xs">
+                <div className="p-8 text-center text-fg-muted text-xs">
                   No deliverables in this view. All tasks are completed or filtered!
                 </div>
               ) : (
@@ -249,7 +249,7 @@ export const ImmediateActionView: React.FC = () => {
                   return (
                     <div
                       key={task.id}
-                      className="bg-slate-50 dark:bg-[#141B2D]/40 hover:bg-slate-100 dark:hover:bg-[#141B2D]/70 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 rounded-xl p-3 sm:p-3.5 transition-all space-y-2.5 min-w-0"
+                      className="bg-elevated/50 hover:bg-elevated border border-line hover:border-line-strong rounded-xl p-3 sm:p-3.5 transition-all space-y-2.5 min-w-0"
                     >
                       {/* Top Row: Checkmark, Title, Phase & Priority */}
                       <div className="flex items-start gap-2.5 min-w-0">
@@ -261,7 +261,7 @@ export const ImmediateActionView: React.FC = () => {
                           className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0 ${
                             task.status === 'done'
                               ? 'bg-emerald-500 border-emerald-500 text-white'
-                              : 'border-slate-300 dark:border-slate-600 hover:border-purple-500 text-transparent hover:text-purple-500'
+                              : 'border-line-strong hover:border-purple-500 text-transparent hover:text-purple-500'
                           }`}
                           title="Toggle Task Done"
                         >
@@ -270,7 +270,7 @@ export const ImmediateActionView: React.FC = () => {
 
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 hover:text-purple-600 dark:hover:text-purple-300 transition-colors break-words">
+                            <span className="text-xs font-semibold text-fg hover:text-purple-600 dark:hover:text-purple-300 transition-colors break-words">
                               {task.title}
                             </span>
 
@@ -305,14 +305,14 @@ export const ImmediateActionView: React.FC = () => {
                             </span>
                           </div>
 
-                          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
+                          <p className="text-xs text-fg-muted leading-relaxed line-clamp-2">
                             {task.description}
                           </p>
 
                           {/* Checklist Items if available */}
                           {totalChecklist > 0 && (
                             <div className="pt-1 space-y-1">
-                              <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                              <div className="text-[10px] font-semibold text-fg-muted flex items-center justify-between">
                                 <span>Checklist:</span>
                                 <span className="font-mono text-[10px] text-purple-600 dark:text-purple-300">
                                   {completedChecklist}/{totalChecklist}
@@ -323,15 +323,15 @@ export const ImmediateActionView: React.FC = () => {
                                   <label
                                     key={item.id}
                                     onClick={() => toggleChecklistItem(task.id, item.id)}
-                                    className="flex items-center gap-1.5 text-[10px] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer select-none bg-slate-200/60 dark:bg-black/20 px-2 py-1 rounded truncate"
+                                    className="flex items-center gap-1.5 text-[10px] text-fg hover:text-fg cursor-pointer select-none bg-line/60 px-2 py-1 rounded truncate"
                                   >
                                     <input
                                       type="checkbox"
                                       checked={item.completed}
                                       readOnly
-                                      className="rounded border-slate-300 dark:border-slate-700 text-purple-600 dark:text-purple-500 focus:ring-0 w-3 h-3 shrink-0"
+                                      className="rounded border-line-strong text-purple-600 dark:text-purple-500 focus:ring-0 w-3 h-3 shrink-0"
                                     />
-                                    <span className={`truncate ${item.completed ? 'line-through text-slate-400 dark:text-slate-500' : ''}`}>
+                                    <span className={`truncate ${item.completed ? 'line-through text-fg-subtle' : ''}`}>
                                       {item.text}
                                     </span>
                                   </label>
@@ -341,7 +341,7 @@ export const ImmediateActionView: React.FC = () => {
                           )}
 
                           {/* Deliverable Tokens & Meta */}
-                          <div className="flex items-center justify-between pt-1 text-[10px] text-slate-500 dark:text-slate-400 flex-wrap gap-2">
+                          <div className="flex items-center justify-between pt-1 text-[10px] text-fg-muted flex-wrap gap-2">
                             <div className="flex items-center gap-2 shrink-0">
                               <img
                                 src={assignee.avatar}
@@ -355,7 +355,7 @@ export const ImmediateActionView: React.FC = () => {
                                 Due {task.dueDate}
                               </span>
                               <span>&bull;</span>
-                              <span className="font-mono text-slate-500 dark:text-slate-400 shrink-0">{task.estimatedHours}h</span>
+                              <span className="font-mono text-fg-muted shrink-0">{task.estimatedHours}h</span>
                             </div>
 
                             <div className="flex items-center gap-1 flex-wrap">
@@ -378,8 +378,8 @@ export const ImmediateActionView: React.FC = () => {
             </div>
 
             {/* Bottom link to Kanban */}
-            <div className="pt-2.5 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-xs">
-              <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+            <div className="pt-2.5 border-t border-line flex items-center justify-between text-xs">
+              <span className="text-fg-muted text-[11px]">
                 {activeProject.tasks.length} total deliverables in retroplan
               </span>
               <button
@@ -396,13 +396,13 @@ export const ImmediateActionView: React.FC = () => {
         {/* Right Column (5 cols): Clarifications & Milestones */}
         <div className="lg:col-span-5 space-y-4 min-w-0">
           {/* Gemini AI Clarification & Gap Detector */}
-          <div className="bg-white dark:bg-[#0D121F] border border-purple-200 dark:border-purple-500/20 rounded-2xl p-4 sm:p-5 space-y-3 min-w-0 shadow-sm dark:shadow-none transition-colors">
-            <div className="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-white/5">
+          <div className="bg-card border border-purple-200 dark:border-purple-500/20 rounded-2xl p-4 sm:p-5 space-y-3 min-w-0 shadow-sm dark:shadow-none transition-colors">
+            <div className="flex items-center justify-between pb-2.5 border-b border-line">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-lg bg-purple-100 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-500/40 flex items-center justify-center text-purple-600 dark:text-purple-300 shrink-0">
                   <Sparkles className="w-3.5 h-3.5" />
                 </div>
-                <h3 className="font-semibold text-xs text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                <h3 className="font-semibold text-xs text-fg uppercase tracking-wider">
                   Scope Clarification Queue
                 </h3>
               </div>
@@ -411,7 +411,7 @@ export const ImmediateActionView: React.FC = () => {
               </span>
             </div>
 
-            <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p className="text-[11px] text-fg-muted leading-relaxed">
               Resolve these decisions to prevent timeline drift:
             </p>
 
@@ -421,16 +421,16 @@ export const ImmediateActionView: React.FC = () => {
                   key={q.id}
                   className={`p-3 rounded-xl border transition-all min-w-0 ${
                     q.resolved
-                      ? 'bg-slate-100/60 dark:bg-black/20 border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400'
+                      ? 'bg-elevated/60 border-line text-fg-muted'
                       : 'bg-purple-50/60 dark:bg-purple-950/20 border-purple-200 dark:border-purple-700/40 shadow-sm'
                   }`}
                 >
                   <div className="flex items-start gap-2 min-w-0">
                     <HelpCircle
-                      className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${q.resolved ? 'text-slate-400 dark:text-slate-500' : 'text-purple-600 dark:text-purple-400'}`}
+                      className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${q.resolved ? 'text-fg-subtle' : 'text-purple-600 dark:text-purple-400'}`}
                     />
                     <div className="space-y-1.5 flex-1 min-w-0">
-                      <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 break-words">{q.question}</div>
+                      <div className="text-xs font-semibold text-fg break-words">{q.question}</div>
                       <div className="text-[10px] text-purple-700 dark:text-purple-300/80 leading-relaxed">{q.reason}</div>
 
                       {q.resolved ? (
@@ -440,7 +440,7 @@ export const ImmediateActionView: React.FC = () => {
                         </div>
                       ) : (
                         <div className="pt-1.5 space-y-1">
-                          <div className="text-[9px] font-semibold text-slate-500 dark:text-slate-400">Choose decision to apply:</div>
+                          <div className="text-[9px] font-semibold text-fg-muted">Choose decision to apply:</div>
                           <div className="flex flex-wrap gap-1">
                             {q.suggestedOptions.map((opt, idx) => (
                               <button
@@ -462,13 +462,13 @@ export const ImmediateActionView: React.FC = () => {
           </div>
 
           {/* Retroplanning Milestones Sequence */}
-          <div className="bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 space-y-3 min-w-0 shadow-sm dark:shadow-none transition-colors">
-            <div className="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-white/5">
+          <div className="bg-card border border-line rounded-2xl p-4 sm:p-5 space-y-3 min-w-0 shadow-sm dark:shadow-none transition-colors">
+            <div className="flex items-center justify-between pb-2.5 border-b border-line">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                   <Calendar className="w-3.5 h-3.5" />
                 </div>
-                <h3 className="font-semibold text-xs text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                <h3 className="font-semibold text-xs text-fg uppercase tracking-wider">
                   Milestone Sequence
                 </h3>
               </div>
@@ -482,27 +482,27 @@ export const ImmediateActionView: React.FC = () => {
               </button>
             </div>
 
-            <div className="relative pl-4 space-y-2.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-px before:bg-slate-200 dark:before:bg-white/10">
+            <div className="relative pl-4 space-y-2.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-px before:bg-line">
               {activeProject.milestones.map((ms, index) => (
                 <div key={ms.id} className="relative min-w-0">
                   <div
                     className={`absolute -left-4 top-1 w-2.5 h-2.5 rounded-full border-2 ${
                       ms.completed
-                        ? 'bg-emerald-500 border-white dark:border-[#0D121F]'
+                        ? 'bg-emerald-500 border-card'
                         : index === 0 || !activeProject.milestones[index - 1]?.completed
-                        ? 'bg-amber-500 border-white dark:border-[#0D121F] ring-1 ring-amber-500/30'
-                        : 'bg-slate-300 dark:bg-slate-700 border-white dark:border-[#0D121F]'
+                        ? 'bg-amber-500 border-card ring-1 ring-amber-500/30'
+                        : 'bg-line-strong border-card'
                     }`}
                   />
 
-                  <div className="bg-slate-50 dark:bg-[#141B2D]/40 p-2.5 rounded-xl border border-slate-200 dark:border-white/5 min-w-0">
+                  <div className="bg-elevated/50 p-2.5 rounded-xl border border-line min-w-0">
                     <div className="flex items-center justify-between gap-1">
-                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">{ms.title}</span>
+                      <span className="text-xs font-semibold text-fg truncate">{ms.title}</span>
                       <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 font-mono shrink-0">
                         {ms.targetDate}
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed line-clamp-1">{ms.description}</p>
+                    <p className="text-[10px] text-fg-muted mt-0.5 leading-relaxed line-clamp-1">{ms.description}</p>
                   </div>
                 </div>
               ))}
@@ -510,17 +510,17 @@ export const ImmediateActionView: React.FC = () => {
           </div>
 
           {/* Quick Drop & Markdown Notes Card */}
-          <div className="bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-2xl p-4 text-center shadow-sm dark:shadow-none transition-colors">
+          <div className="bg-card border border-line rounded-2xl p-4 text-center shadow-sm dark:shadow-none transition-colors">
             <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto mb-2">
               <FileText className="w-4 h-4" />
             </div>
-            <h4 className="text-xs font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Markdown & Notes Studio</h4>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">
+            <h4 className="text-xs font-semibold text-fg uppercase tracking-wider">Markdown & Notes Studio</h4>
+            <p className="text-[11px] text-fg-muted mt-1 max-w-sm mx-auto leading-relaxed">
               Paste meeting minutes, briefs, or client emails to auto-generate retroplanning tasks and dependencies.
             </p>
             <button
               onClick={() => setActiveViewTab('markdown')}
-              className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
+              className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-elevated hover:bg-line border border-line text-fg text-xs font-semibold transition-colors cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
               <span>Open Markdown Studio</span>

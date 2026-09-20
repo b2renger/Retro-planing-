@@ -73,16 +73,16 @@ export const TeamCollaborationView: React.FC = () => {
   return (
     <div className="w-full max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6 overflow-hidden">
       {/* Top Banner */}
-      <div className="bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-xl bg-gradient-to-r from-purple-500/10 dark:from-purple-950/30 via-slate-50 dark:via-slate-900 to-transparent transition-colors">
+      <div className="bg-card border border-line rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-xl bg-gradient-to-r from-purple-500/10 dark:from-purple-950/30 via-elevated to-transparent transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
+              <h2 className="text-base sm:text-lg font-bold text-fg">
                 Team Collaboration & Workload Distribution
               </h2>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
+            <p className="text-xs text-fg-muted">
               Manage workspace members, invite new designers & clients, inspect workload capacities, and exchange design feedback.
             </p>
           </div>
@@ -97,7 +97,7 @@ export const TeamCollaborationView: React.FC = () => {
               <span>Invite New Collaborator</span>
             </button>
 
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-white/[0.03] px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10">
+            <div className="flex items-center gap-1.5 bg-elevated px-3 py-1.5 rounded-xl border border-line">
               <span className="flex h-2 w-2 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -113,15 +113,15 @@ export const TeamCollaborationView: React.FC = () => {
         {/* Left Column (7 cols): Designer Capacity Cards & Pending Invites */}
         <div className="lg:col-span-7 space-y-4">
           {/* Active Members Workload */}
-          <div className="bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm dark:shadow-none transition-colors">
+          <div className="bg-card border border-line rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm dark:shadow-none transition-colors">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-xs text-slate-800 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <h3 className="font-bold text-xs text-fg uppercase tracking-wider flex items-center gap-2">
                 <span>Active Designers & Assignees</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
                   {teamMembers.length}
                 </span>
               </h3>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">Current persona: <strong className="text-purple-600 dark:text-purple-300">{currentUser.name}</strong></span>
+              <span className="text-[11px] text-fg-muted">Current persona: <strong className="text-purple-600 dark:text-purple-300">{currentUser.name}</strong></span>
             </div>
 
             <div className="space-y-3">
@@ -131,7 +131,7 @@ export const TeamCollaborationView: React.FC = () => {
                 return (
                   <div
                     key={user.id}
-                    className="bg-slate-50 dark:bg-white/[0.02] p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all space-y-2.5"
+                    className="bg-elevated/60 p-4 rounded-xl border border-line hover:border-line-strong transition-all space-y-2.5"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center gap-3">
@@ -142,28 +142,28 @@ export const TeamCollaborationView: React.FC = () => {
                             className="w-9 h-9 rounded-full object-cover ring-2 ring-purple-500/30"
                           />
                           <span
-                            className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#0D121F] ${
+                            className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card ${
                               isOnline ? 'bg-emerald-500' : 'bg-amber-500'
                             }`}
                           />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs text-slate-900 dark:text-slate-100">{user.name}</span>
+                            <span className="font-bold text-xs text-fg">{user.name}</span>
                             {isCurrent && (
                               <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
                                 You
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400">{user.email || user.role}</div>
+                          <div className="text-[11px] text-fg-muted">{user.email || user.role}</div>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 self-end sm:self-auto">
                         <div className="text-right pr-2">
                           <span className="text-xs font-mono font-bold text-purple-600 dark:text-purple-300">{totalHours} hrs</span>
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400">{taskCount} tasks assigned</div>
+                          <div className="text-[10px] text-fg-muted">{taskCount} tasks assigned</div>
                         </div>
 
                         {!isCurrent && (
@@ -195,13 +195,13 @@ export const TeamCollaborationView: React.FC = () => {
 
                     {/* Progress Bar */}
                     <div className="space-y-1">
-                      <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                      <div className="flex justify-between text-[10px] text-fg-muted">
                         <span>Sprint Completion:</span>
                         <span>
                           {completedTasks}/{taskCount} Done ({taskCount > 0 ? Math.round((completedTasks / taskCount) * 100) : 0}%)
                         </span>
                       </div>
-                      <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-white/5 overflow-hidden">
+                      <div className="w-full h-1.5 rounded-full bg-line overflow-hidden">
                         <div
                           className="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
                           style={{
@@ -218,7 +218,7 @@ export const TeamCollaborationView: React.FC = () => {
 
           {/* Pending Invitations Box */}
           {invitations.length > 0 && (
-            <div className="bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 space-y-3 shadow-sm dark:shadow-none transition-colors">
+            <div className="bg-card border border-line rounded-2xl p-4 sm:p-5 space-y-3 shadow-sm dark:shadow-none transition-colors">
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-xs text-amber-700 dark:text-amber-300 uppercase tracking-wider flex items-center gap-2">
                   <Clock className="w-3.5 h-3.5" />
@@ -230,17 +230,17 @@ export const TeamCollaborationView: React.FC = () => {
                 {invitations.map((inv) => (
                   <div
                     key={inv.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-elevated/60 border border-line"
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-900 dark:text-slate-200">{inv.name}</span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400">({inv.email})</span>
+                        <span className="text-xs font-semibold text-fg">{inv.name}</span>
+                        <span className="text-[10px] text-fg-muted">({inv.email})</span>
                         <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300">
                           {inv.role}
                         </span>
                       </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-500 mt-0.5">
+                      <div className="text-[10px] text-fg-muted mt-0.5">
                         Invited by {inv.invitedBy} on {new Date(inv.invitedAt).toLocaleDateString()}
                       </div>
                     </div>
@@ -248,7 +248,7 @@ export const TeamCollaborationView: React.FC = () => {
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         onClick={() => copyInviteLink(inv.token, inv.id)}
-                        className="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-[11px] text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                        className="px-2.5 py-1 rounded-lg bg-line hover:bg-line-strong text-[11px] text-fg flex items-center gap-1"
                       >
                         {copiedId === inv.id ? <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3 h-3" />}
                         <span>{copiedId === inv.id ? 'Copied' : 'Copy Token Link'}</span>
@@ -270,11 +270,11 @@ export const TeamCollaborationView: React.FC = () => {
 
         {/* Right Column (5 cols): Design Feedback & Comments Feed */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col h-[560px] shadow-sm dark:shadow-xl transition-colors">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
+          <div className="bg-card border border-line rounded-2xl p-4 sm:p-5 flex flex-col h-[560px] shadow-sm dark:shadow-xl transition-colors">
+            <div className="flex items-center justify-between pb-3 border-b border-line">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                <h3 className="font-bold text-xs text-slate-800 dark:text-slate-300 uppercase tracking-wider">
+                <h3 className="font-bold text-xs text-fg uppercase tracking-wider">
                   Live Design Critique Feed
                 </h3>
               </div>
@@ -284,9 +284,9 @@ export const TeamCollaborationView: React.FC = () => {
             </div>
 
             {/* Comments Stream */}
-            <div className="flex-1 overflow-y-auto py-3 space-y-3 divide-y divide-slate-200 dark:divide-white/5">
+            <div className="flex-1 overflow-y-auto py-3 space-y-3 divide-y divide-line">
               {activeProject.comments.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-xs">
+                <div className="p-8 text-center text-fg-muted text-xs">
                   No feedback posted yet. Start the conversation below!
                 </div>
               ) : (
@@ -299,24 +299,24 @@ export const TeamCollaborationView: React.FC = () => {
                           alt={comm.authorName}
                           className="w-5 h-5 rounded-full object-cover"
                         />
-                        <span className="font-bold text-xs text-slate-900 dark:text-slate-200">{comm.authorName}</span>
+                        <span className="font-bold text-xs text-fg">{comm.authorName}</span>
                       </div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500">{comm.timestamp}</span>
+                      <span className="text-[10px] text-fg-subtle">{comm.timestamp}</span>
                     </div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 pl-7 leading-relaxed">{comm.content}</p>
+                    <p className="text-xs text-fg pl-7 leading-relaxed">{comm.content}</p>
                   </div>
                 ))
               )}
             </div>
 
             {/* Post Comment Input */}
-            <form onSubmit={handlePostComment} className="pt-3 border-t border-slate-200 dark:border-white/10 flex gap-2">
+            <form onSubmit={handlePostComment} className="pt-3 border-t border-line flex gap-2">
               <input
                 type="text"
                 placeholder="Leave design feedback, @mention teammates..."
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                className="flex-1 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-[#131927] border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                className="flex-1 px-3.5 py-2 rounded-xl bg-input border border-line text-xs text-fg placeholder-fg-subtle focus:outline-none focus:border-purple-500"
               />
               <button
                 type="submit"

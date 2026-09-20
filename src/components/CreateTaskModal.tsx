@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useApp, useActiveProject } from '../context/AppContext';
-import { X } from 'lucide-react';
 import { TaskPriority, TaskStatus } from '../types';
+import { Modal } from './ui/Modal';
+
+const FORM_ID = 'create-task-form';
 
 export const CreateTaskModal: React.FC = () => {
   const {
@@ -23,8 +25,6 @@ export const CreateTaskModal: React.FC = () => {
   const [estimatedHours, setEstimatedHours] = useState(16);
   const [deliverablesInput, setDeliverablesInput] = useState('Figma Component, Token export');
   const [isCriticalPath, setIsCriticalPath] = useState(false);
-
-  if (!isCreateTaskModalOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,55 +58,65 @@ export const CreateTaskModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-[#0D121F] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden text-slate-100 p-5 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-white/10">
-          <div>
-            <h3 className="font-semibold text-sm text-slate-100">Create New Design Task</h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">Define deliverables and backward schedule deadlines.</p>
-          </div>
+    <Modal
+      open={isCreateTaskModalOpen}
+      onClose={() => setIsCreateTaskModalOpen(false)}
+      title="Create New Design Task"
+      subtitle="Define deliverables and backward schedule deadlines."
+      size="lg"
+      footer={
+        <div className="flex items-center justify-end gap-2">
           <button
+            type="button"
             onClick={() => setIsCreateTaskModalOpen(false)}
-            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+            className="px-3.5 py-2 rounded-xl bg-elevated hover:bg-line text-fg-muted text-xs font-medium transition-colors"
           >
-            <X className="w-4 h-4" />
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form={FORM_ID}
+            className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md shadow-purple-500/20 transition-all cursor-pointer"
+          >
+            Create Task
           </button>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+      }
+    >
+      <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-3.5 text-xs">
           <div>
-            <label className="text-slate-400 font-semibold block mb-1">Task Title *</label>
+            <label className="text-fg-muted font-semibold block mb-1">Task Title *</label>
             <input
               type="text"
               required
               placeholder="e.g. Design Tokens & Semantic Variables Specification"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-3.5 py-2 rounded-xl bg-elevated border border-line text-fg placeholder-fg-subtle focus:outline-none focus:border-purple-500 transition-colors"
             />
           </div>
 
           <div>
-            <label className="text-slate-400 font-semibold block mb-1">Description</label>
+            <label className="text-fg-muted font-semibold block mb-1">Description</label>
             <textarea
               rows={2}
               placeholder="Deliverable specifications, acceptance criteria..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none transition-colors"
+              className="w-full px-3.5 py-2 rounded-xl bg-elevated border border-line text-fg placeholder-fg-subtle focus:outline-none focus:border-purple-500 resize-none transition-colors"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-slate-400 font-semibold block mb-1">Phase</label>
+              <label className="text-fg-muted font-semibold block mb-1">Phase</label>
               <select
                 value={phaseId}
                 onChange={(e) => setPhaseId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-slate-200 focus:outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-xl bg-elevated border border-line text-fg focus:outline-none focus:border-purple-500"
               >
                 {activeProject.phases.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-[#0D121F] text-slate-200">
+                  <option key={p.id} value={p.id} className="bg-card text-fg">
                     {p.name}
                   </option>
                 ))}
@@ -114,14 +124,14 @@ export const CreateTaskModal: React.FC = () => {
             </div>
 
             <div>
-              <label className="text-slate-400 font-semibold block mb-1">Assignee</label>
+              <label className="text-fg-muted font-semibold block mb-1">Assignee</label>
               <select
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-slate-200 focus:outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-xl bg-elevated border border-line text-fg focus:outline-none focus:border-purple-500"
               >
                 {teamMembers.map((u) => (
-                  <option key={u.id} value={u.id} className="bg-[#0D121F] text-slate-200">
+                  <option key={u.id} value={u.id} className="bg-card text-fg">
                     {u.name} ({u.role})
                   </option>
                 ))}
@@ -131,94 +141,77 @@ export const CreateTaskModal: React.FC = () => {
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-slate-400 font-semibold block mb-1">Priority</label>
+              <label className="text-fg-muted font-semibold block mb-1">Priority</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as TaskPriority)}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-slate-200 focus:outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-xl bg-elevated border border-line text-fg focus:outline-none focus:border-purple-500"
               >
-                <option value="urgent" className="bg-[#0D121F] text-slate-200">Urgent</option>
-                <option value="high" className="bg-[#0D121F] text-slate-200">High</option>
-                <option value="medium" className="bg-[#0D121F] text-slate-200">Medium</option>
-                <option value="low" className="bg-[#0D121F] text-slate-200">Low</option>
+                <option value="urgent" className="bg-card text-fg">Urgent</option>
+                <option value="high" className="bg-card text-fg">High</option>
+                <option value="medium" className="bg-card text-fg">Medium</option>
+                <option value="low" className="bg-card text-fg">Low</option>
               </select>
             </div>
 
             <div>
-              <label className="text-slate-400 font-semibold block mb-1">Start Date</label>
+              <label className="text-fg-muted font-semibold block mb-1">Start Date</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-slate-200 focus:outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-xl bg-elevated border border-line text-fg focus:outline-none focus:border-purple-500"
               />
             </div>
 
             <div>
-              <label className="text-slate-400 font-semibold block mb-1">Due Date</label>
+              <label className="text-fg-muted font-semibold block mb-1">Due Date</label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-slate-200 focus:outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-xl bg-elevated border border-line text-fg focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-slate-400 font-semibold block mb-1">Estimated Hours</label>
+              <label className="text-fg-muted font-semibold block mb-1">Estimated Hours</label>
               <input
                 type="number"
                 min="1"
                 max="200"
                 value={estimatedHours}
                 onChange={(e) => setEstimatedHours(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-slate-200 focus:outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-xl bg-elevated border border-line text-fg focus:outline-none focus:border-purple-500"
               />
             </div>
 
             <div>
-              <label className="text-slate-400 font-semibold block mb-1">Deliverables (comma-separated)</label>
+              <label className="text-fg-muted font-semibold block mb-1">Deliverables (comma-separated)</label>
               <input
                 type="text"
                 placeholder="Figma Prototype, Styleguide"
                 value={deliverablesInput}
                 onChange={(e) => setDeliverablesInput(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-xl bg-elevated border border-line text-fg placeholder-fg-subtle focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
 
-          <div className="pt-2 flex items-center justify-between">
-            <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+          <div className="pt-1">
+            <label className="flex items-center gap-2 cursor-pointer text-fg-muted">
               <input
                 type="checkbox"
                 checked={isCriticalPath}
                 onChange={(e) => setIsCriticalPath(e.target.checked)}
-                className="rounded border-slate-700 text-rose-500 focus:ring-0 w-3.5 h-3.5"
+                className="rounded border-line-strong text-rose-500 focus:ring-0 w-3.5 h-3.5"
               />
               <span className="text-xs font-medium">Mark as Critical Path Deliverable</span>
             </label>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsCreateTaskModalOpen(false)}
-                className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-md shadow-purple-500/20 transition-all cursor-pointer"
-              >
-                Create Task
-              </button>
-            </div>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 };

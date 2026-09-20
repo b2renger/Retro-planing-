@@ -31,7 +31,7 @@ export const TaskBoard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const columns: { id: TaskStatus; label: string; color: string }[] = [
-    { id: 'todo', label: 'To Do', color: 'border-slate-700' },
+    { id: 'todo', label: 'To Do', color: 'border-line-strong' },
     { id: 'in-progress', label: 'In Progress', color: 'border-blue-500/40' },
     { id: 'in-review', label: 'In Review / QA', color: 'border-purple-500/40' },
     { id: 'done', label: 'Done', color: 'border-emerald-500/40' },
@@ -57,7 +57,7 @@ export const TaskBoard: React.FC = () => {
   return (
     <div className="w-full max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6 overflow-hidden">
       {/* Task Board Controls */}
-      <div className="bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors">
+      <div className="bg-card border border-line rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors">
         <div className="flex items-center gap-3 flex-wrap flex-1">
           {/* Search Input */}
           <input
@@ -65,18 +65,18 @@ export const TaskBoard: React.FC = () => {
             placeholder="Search tasks, tags, deliverables..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-purple-500 min-w-[220px] transition-colors"
+            className="px-3.5 py-2 rounded-xl bg-elevated border border-line text-xs text-fg placeholder-fg-subtle focus:outline-none focus:border-purple-500 min-w-[220px] transition-colors"
           />
 
           {/* Phase Filter Dropdown */}
           <select
             value={selectedPhase}
             onChange={(e) => setSelectedPhase(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-500"
+            className="px-3 py-2 rounded-xl bg-elevated border border-line text-xs text-fg focus:outline-none focus:border-purple-500"
           >
-            <option value="all" className="bg-white dark:bg-[#0D121F] text-slate-900 dark:text-slate-200">All Phases ({activeProject.phases.length})</option>
+            <option value="all" className="bg-card text-fg">All Phases ({activeProject.phases.length})</option>
             {activeProject.phases.map((p) => (
-              <option key={p.id} value={p.id} className="bg-white dark:bg-[#0D121F] text-slate-900 dark:text-slate-200">
+              <option key={p.id} value={p.id} className="bg-card text-fg">
                 {p.name}
               </option>
             ))}
@@ -85,11 +85,11 @@ export const TaskBoard: React.FC = () => {
 
         <div className="flex items-center gap-3">
           {/* View Toggle */}
-          <div className="flex items-center bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl p-1 text-xs">
+          <div className="flex items-center bg-elevated border border-line rounded-xl p-1 text-xs">
             <button
               onClick={() => setViewMode('kanban')}
               className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-medium transition-colors ${
-                viewMode === 'kanban' ? 'bg-purple-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                viewMode === 'kanban' ? 'bg-purple-600 text-white' : 'text-fg-muted hover:text-fg'
               }`}
             >
               <Kanban className="w-3.5 h-3.5" />
@@ -98,7 +98,7 @@ export const TaskBoard: React.FC = () => {
             <button
               onClick={() => setViewMode('table')}
               className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-medium transition-colors ${
-                viewMode === 'table' ? 'bg-purple-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                viewMode === 'table' ? 'bg-purple-600 text-white' : 'text-fg-muted hover:text-fg'
               }`}
             >
               <List className="w-3.5 h-3.5" />
@@ -124,13 +124,13 @@ export const TaskBoard: React.FC = () => {
             return (
               <div
                 key={col.id}
-                className="bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-3 shadow-sm dark:shadow-md transition-colors"
+                className="bg-card border border-line rounded-2xl p-4 space-y-3 shadow-sm dark:shadow-md transition-colors"
               >
                 {/* Column Header */}
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                <div className="flex items-center justify-between pb-2 border-b border-line">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-xs text-slate-900 dark:text-slate-200">{col.label}</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400">
+                    <span className="font-semibold text-xs text-fg">{col.label}</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-elevated text-fg-muted">
                       {colTasks.length}
                     </span>
                   </div>
@@ -139,7 +139,7 @@ export const TaskBoard: React.FC = () => {
                 {/* Cards */}
                 <div className="space-y-3 min-h-[150px]">
                   {colTasks.length === 0 ? (
-                    <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-xs border border-dashed border-slate-200 dark:border-white/10 rounded-xl">
+                    <div className="p-6 text-center text-fg-subtle text-xs border border-dashed border-line rounded-xl">
                       Empty column
                     </div>
                   ) : (
@@ -150,10 +150,10 @@ export const TaskBoard: React.FC = () => {
                       return (
                         <div
                           key={task.id}
-                          className="bg-slate-50 dark:bg-[#141B2D]/70 hover:bg-slate-100 dark:hover:bg-[#141B2D] border border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/30 rounded-xl p-3.5 space-y-2.5 transition-all shadow-sm group"
+                          className="bg-elevated/70 hover:bg-elevated border border-line hover:border-purple-300 dark:hover:border-purple-500/30 rounded-xl p-3.5 space-y-2.5 transition-all shadow-sm group"
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <span className="font-semibold text-xs text-slate-900 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
+                            <span className="font-semibold text-xs text-fg group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
                               {task.title}
                             </span>
                             <span
@@ -162,14 +162,14 @@ export const TaskBoard: React.FC = () => {
                                   ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30'
                                   : task.priority === 'high'
                                   ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30'
-                                  : 'bg-slate-200 dark:bg-white/5 text-slate-600 dark:text-slate-400'
+                                  : 'bg-line text-fg-muted'
                               }`}
                             >
                               {task.priority}
                             </span>
                           </div>
 
-                          <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                          <p className="text-[11px] text-fg-muted line-clamp-2 leading-relaxed">
                             {task.description}
                           </p>
 
@@ -196,7 +196,7 @@ export const TaskBoard: React.FC = () => {
 
                           {/* Checklists */}
                           {task.checklist.length > 0 && (
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between pt-1">
+                            <div className="text-[10px] text-fg-muted flex items-center justify-between pt-1">
                               <span>Subtasks:</span>
                               <span className="font-mono text-purple-600 dark:text-purple-300">
                                 {task.checklist.filter((c) => c.completed).length}/{task.checklist.length}
@@ -205,7 +205,7 @@ export const TaskBoard: React.FC = () => {
                           )}
 
                           {/* Bottom Card Controls: Assignee, Due Date & Quick Move */}
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400">
+                          <div className="flex items-center justify-between pt-2 border-t border-line text-[11px] text-fg-muted">
                             <div className="flex items-center gap-1.5">
                               <img
                                 src={assignee.avatar}
@@ -219,12 +219,12 @@ export const TaskBoard: React.FC = () => {
                             <select
                               value={task.status}
                               onChange={(e) => updateTaskStatus(task.id, e.target.value as TaskStatus)}
-                              className="bg-slate-200/80 dark:bg-black/30 text-slate-800 dark:text-slate-300 text-[10px] rounded px-2 py-0.5 border border-slate-300 dark:border-white/10 focus:outline-none focus:border-purple-500"
+                              className="bg-line/80 text-fg text-[10px] rounded px-2 py-0.5 border border-line-strong focus:outline-none focus:border-purple-500"
                             >
-                              <option value="todo" className="bg-white dark:bg-[#0D121F]">To Do</option>
-                              <option value="in-progress" className="bg-white dark:bg-[#0D121F]">In Progress</option>
-                              <option value="in-review" className="bg-white dark:bg-[#0D121F]">In Review</option>
-                              <option value="done" className="bg-white dark:bg-[#0D121F]">Done</option>
+                              <option value="todo" className="bg-card">To Do</option>
+                              <option value="in-progress" className="bg-card">In Progress</option>
+                              <option value="in-review" className="bg-card">In Review</option>
+                              <option value="done" className="bg-card">Done</option>
                             </select>
                           </div>
                         </div>
@@ -238,9 +238,9 @@ export const TaskBoard: React.FC = () => {
         </div>
       ) : (
         /* Table View */
-        <div className="bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-xl transition-colors">
-          <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
-            <thead className="bg-slate-100 dark:bg-[#141B2D] border-b border-slate-200 dark:border-white/10 text-[11px] uppercase font-semibold text-slate-600 dark:text-slate-400">
+        <div className="bg-card border border-line rounded-2xl overflow-hidden shadow-sm dark:shadow-xl transition-colors">
+          <table className="w-full text-left text-xs text-fg">
+            <thead className="bg-elevated border-b border-line text-[11px] uppercase font-semibold text-fg-muted">
               <tr>
                 <th className="p-3.5">Task & Deliverables</th>
                 <th className="p-3.5">Phase</th>
@@ -252,15 +252,15 @@ export const TaskBoard: React.FC = () => {
                 <th className="p-3.5 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+            <tbody className="divide-y divide-line">
               {filteredTasks.map((t) => {
                 const assignee = getAssignee(t.assigneeId);
                 const phase = getPhase(t.phaseId);
                 return (
-                  <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
-                    <td className="p-3.5 font-medium text-slate-900 dark:text-slate-100">
+                  <tr key={t.id} className="hover:bg-elevated/60 transition-colors">
+                    <td className="p-3.5 font-medium text-fg">
                       <div>{t.title}</div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-xs">{t.description}</div>
+                      <div className="text-[10px] text-fg-muted truncate max-w-xs">{t.description}</div>
                     </td>
                     <td className="p-3.5">
                       {phase && (
@@ -282,18 +282,18 @@ export const TaskBoard: React.FC = () => {
                       </div>
                     </td>
                     <td className="p-3.5">
-                      <span className="uppercase text-[10px] font-semibold text-slate-500 dark:text-slate-400">{t.priority}</span>
+                      <span className="uppercase text-[10px] font-semibold text-fg-muted">{t.priority}</span>
                     </td>
                     <td className="p-3.5">
                       <select
                         value={t.status}
                         onChange={(e) => updateTaskStatus(t.id, e.target.value as TaskStatus)}
-                        className="bg-slate-100 dark:bg-black/30 text-slate-800 dark:text-slate-300 text-xs rounded px-2 py-1 border border-slate-300 dark:border-white/10"
+                        className="bg-elevated text-fg text-xs rounded px-2 py-1 border border-line-strong"
                       >
-                        <option value="todo" className="bg-white dark:bg-[#0D121F]">To Do</option>
-                        <option value="in-progress" className="bg-white dark:bg-[#0D121F]">In Progress</option>
-                        <option value="in-review" className="bg-white dark:bg-[#0D121F]">In Review</option>
-                        <option value="done" className="bg-white dark:bg-[#0D121F]">Done</option>
+                        <option value="todo" className="bg-card">To Do</option>
+                        <option value="in-progress" className="bg-card">In Progress</option>
+                        <option value="in-review" className="bg-card">In Review</option>
+                        <option value="done" className="bg-card">Done</option>
                       </select>
                     </td>
                     <td className="p-3.5 font-mono text-amber-600 dark:text-amber-400">{t.dueDate}</td>
@@ -301,7 +301,7 @@ export const TaskBoard: React.FC = () => {
                     <td className="p-3.5 text-right">
                       <button
                         onClick={() => deleteTask(t.id)}
-                        className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                        className="p-1 text-fg-muted hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                         title="Delete Task"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
