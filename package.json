@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "description": "RetroPlaningStudio - retro-planning and design-ops studio: timeline, tasks, markdown docs, AI assistants, cloud sync and desktop builds.",
+  "author": "b2renger",
+  "main": "dist-electron/main.cjs",
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
@@ -11,7 +14,16 @@
     "clean": "rm -rf dist server.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:electron": "node scripts/build-electron.mjs",
+    "build:all": "vite build && npm run build:electron",
+    "electron:dev": "npm run build:electron && electron . --dev",
+    "gen:icon": "node scripts/gen-icon.cjs",
+    "verify:macsign": "node scripts/verify-mac-signature.cjs",
+    "package:mac": "npm run build:all && electron-builder --mac --arm64 --x64 --publish never && node scripts/verify-mac-signature.cjs",
+    "package:win": "npm run build:all && electron-builder --win --x64 --publish never",
+    "package:all": "npm run build:all && electron-builder --mac --arm64 --x64 --win --x64 --publish never && node scripts/verify-mac-signature.cjs",
+    "package:dir": "npm run build:all && electron-builder --dir"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -41,5 +53,63 @@
     "typescript": "^7.0.2",
     "vitest": "^5.0.1"
   },
-  "description": "RetroPlaningStudio - retro-planning and design-ops studio: timeline, tasks, markdown docs, AI assistants, cloud sync and desktop builds."
+  "build": {
+    "appId": "com.b2renger.retroplaningstudio",
+    "productName": "RetroPlaningStudio",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "asar": true,
+    "npmRebuild": false,
+    "files": [
+      "dist/**/*",
+      "!dist/server.cjs*",
+      "dist-electron/**/*",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "electronFuses": {
+      "runAsNode": false,
+      "resetAdHocDarwinSignature": true
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "icon": "build/icon.png"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
 }

@@ -5,6 +5,11 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // Relative asset URLs so the Electron build can load dist/index.html over file://.
+    base: './',
+    build: {
+      outDir: 'dist',
+    },
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
