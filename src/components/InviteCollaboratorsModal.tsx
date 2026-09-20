@@ -470,14 +470,19 @@ export const InviteCollaboratorsModal: React.FC = () => {
                           </button>
                         )}
 
-                        {/* Remove button */}
+                        {/* Revoke button */}
                         {!isCurrent && (
                           <button
-                            onClick={() => removeTeamMember(member.id)}
-                            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
-                            title="Remove member"
+                            onClick={() => {
+                              if (window.confirm(`Revoke access for ${member.name}? They will lose workspace permissions.`)) {
+                                removeTeamMember(member.id);
+                              }
+                            }}
+                            className="px-2 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/20 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Revoke user access"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
+                            <span>Revoke</span>
                           </button>
                         )}
                       </div>

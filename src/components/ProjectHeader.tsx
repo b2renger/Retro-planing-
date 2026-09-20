@@ -111,7 +111,7 @@ export const ProjectHeader: React.FC = () => {
   ];
 
   return (
-    <div className="bg-[#0B0F17] border-b border-white/10 text-slate-100 px-3 sm:px-4 pt-3 w-full max-w-full">
+    <div className="bg-white dark:bg-[#0B0F17] border-b border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-100 px-3 sm:px-4 pt-3 w-full max-w-full transition-colors duration-200">
       <div className="max-w-7xl mx-auto space-y-3 min-w-0">
         {/* Top Row: Project Selector + Main Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 min-w-0">

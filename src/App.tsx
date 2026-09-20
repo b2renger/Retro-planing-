@@ -25,7 +25,7 @@ const AppContent: React.FC = () => {
   const { activeViewTab, isDatabaseTesterOpen, setIsDatabaseTesterOpen } = useApp();
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-slate-100 flex flex-col font-sans selection:bg-purple-500/30 selection:text-purple-200">
+    <div className="min-h-screen bg-slate-100 dark:bg-[#070A10] text-slate-800 dark:text-slate-100 flex flex-col font-sans selection:bg-purple-500/30 selection:text-purple-200 transition-colors duration-200">
       {/* Top Application Navbar */}
       <Navbar />
 

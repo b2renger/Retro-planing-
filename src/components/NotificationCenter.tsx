@@ -17,50 +17,50 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onClose 
   });
 
   return (
-    <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden text-slate-200">
+    <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl dark:shadow-2xl z-50 overflow-hidden text-slate-800 dark:text-slate-200 transition-colors">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/90">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90">
         <div className="flex items-center gap-2">
-          <Bell className="w-4 h-4 text-blue-400" />
-          <span className="font-semibold text-xs tracking-tight text-slate-100">
+          <Bell className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <span className="font-semibold text-xs tracking-tight text-slate-900 dark:text-slate-100">
             Real-Time Notifications & Alerts
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={markAllNotificationsRead}
-            className="text-[11px] text-blue-400 hover:text-blue-300 font-medium transition-colors"
+            className="text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-500 font-medium transition-colors cursor-pointer"
           >
             Mark all read
           </button>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-1 px-3 py-2 bg-slate-950/60 border-b border-slate-800/80 text-xs">
+      <div className="flex items-center gap-1 px-3 py-2 bg-slate-100/80 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800/80 text-xs">
         <button
           onClick={() => setFilter('all')}
-          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-            filter === 'all' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'
+          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
+            filter === 'all' ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
           All ({notifications.length})
         </button>
         <button
           onClick={() => setFilter('deadlines')}
-          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-            filter === 'deadlines' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-slate-200'
+          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
+            filter === 'deadlines' ? 'bg-amber-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
           Deadlines & Blockers
         </button>
         <button
           onClick={() => setFilter('ai')}
-          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-            filter === 'ai' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-slate-200'
+          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
+            filter === 'ai' ? 'bg-purple-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
           Gemini Insights
@@ -68,9 +68,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onClose 
       </div>
 
       {/* List */}
-      <div className="max-h-80 overflow-y-auto divide-y divide-slate-800/60">
+      <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
         {filtered.length === 0 ? (
-          <div className="p-6 text-center text-slate-400 text-xs">
+          <div className="p-6 text-center text-slate-500 dark:text-slate-400 text-xs">
             No notifications in this filter.
           </div>
         ) : (
@@ -85,8 +85,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onClose 
                   setActiveViewTab('markdown');
                 }
               }}
-              className={`p-3 text-left transition-colors cursor-pointer hover:bg-slate-850 flex items-start gap-3 ${
-                !n.read ? 'bg-slate-800/40' : ''
+              className={`p-3 text-left transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-start gap-3 ${
+                !n.read ? 'bg-blue-50/50 dark:bg-slate-800/40' : ''
               }`}
             >
               <div className="mt-0.5">

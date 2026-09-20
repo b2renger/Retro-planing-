@@ -35,6 +35,8 @@ import { RobustStorageService } from '../services/storageService';
 interface AppContextType {
   currentUser: User;
   setCurrentUser: (user: User) => void;
+  theme: 'dark' | 'light';
+  toggleTheme: () => void;
   workspaces: Workspace[];
   activeWorkspace: Workspace;
   setActiveWorkspaceId: (id: string) => void;
@@ -153,6 +155,31 @@ const STORAGE_KEY_INVITATIONS = 'retroplan_team_invitations_v4_media';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User>(MOCK_USERS[0]);
+
+  // Theme State
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try {
+      const saved = localStorage.getItem('retroplan_theme');
+      return saved === 'light' ? 'light' : 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('retroplan_theme', theme);
+    } catch {}
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   // Team Members & Invitations State
   const [teamMembers, setTeamMembers] = useState<User[]>(() => {
@@ -1046,6 +1073,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         currentUser,
         setCurrentUser,
+        theme,
+        toggleTheme,
         workspaces,
         activeWorkspace,
         setActiveWorkspaceId,

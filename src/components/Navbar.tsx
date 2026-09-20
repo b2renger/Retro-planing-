@@ -21,6 +21,8 @@ import {
   Database,
   UserPlus,
   Play,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter';
 
@@ -28,6 +30,8 @@ export const Navbar: React.FC = () => {
   const {
     currentUser,
     setCurrentUser,
+    theme,
+    toggleTheme,
     workspaces,
     activeWorkspace,
     setActiveWorkspaceId,
@@ -55,7 +59,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <header className="bg-[#0B0F17]/95 backdrop-blur-md border-b border-white/10 text-slate-100 sticky top-0 z-40 px-3 sm:px-4 py-2 w-full max-w-full">
+      <header className="bg-white/95 dark:bg-[#0B0F17]/95 backdrop-blur-md border-b border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-100 sticky top-0 z-40 px-3 sm:px-4 py-2 w-full max-w-full transition-colors duration-200">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 min-w-0">
         {/* Left: Brand & Workspace Switcher */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -65,39 +69,39 @@ export const Navbar: React.FC = () => {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1 sm:gap-1.5 leading-none">
-                <span className="font-semibold text-slate-100 tracking-tight text-xs sm:text-sm truncate">
+                <span className="font-semibold text-slate-900 dark:text-slate-100 tracking-tight text-xs sm:text-sm truncate">
                   RetroPlan
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-semibold px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0">
+                <span className="text-[9px] sm:text-[10px] font-semibold px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 shrink-0">
                   STUDIO
                 </span>
               </div>
-              <p className="text-[9px] sm:text-[10px] text-slate-400 leading-none mt-0.5 sm:mt-1 truncate hidden xs:block">
+              <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 leading-none mt-0.5 sm:mt-1 truncate hidden xs:block">
                 Design Ops & Rétroplanning
               </p>
             </div>
           </div>
 
-          <div className="h-4 w-px bg-white/10 hidden md:block" />
+          <div className="h-4 w-px bg-slate-200 dark:bg-white/10 hidden md:block" />
 
           {/* Desktop Workspace Selector */}
           <div className="relative hidden md:block">
             <button
               id="workspace-switcher-btn"
               onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 text-xs font-medium transition-colors"
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.03] hover:bg-slate-200 dark:hover:bg-white/[0.06] border border-slate-200 dark:border-white/10 text-xs font-medium transition-colors cursor-pointer"
             >
               <div
                 className="w-2 h-2 rounded-full shrink-0"
                 style={{ backgroundColor: activeWorkspace.color }}
               />
-              <span className="text-slate-200 truncate max-w-[120px]">{activeWorkspace.name}</span>
+              <span className="text-slate-800 dark:text-slate-200 truncate max-w-[120px]">{activeWorkspace.name}</span>
               <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
             </button>
 
             {isWorkspaceDropdownOpen && (
-              <div className="absolute top-full left-0 mt-1.5 w-64 bg-[#0D121F] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 animate-fadeIn">
-                <div className="text-[10px] font-semibold text-slate-400 px-2 py-1 uppercase tracking-wider">
+              <div className="absolute top-full left-0 mt-1.5 w-64 bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl dark:shadow-2xl p-1.5 z-50 animate-fadeIn">
+                <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 px-2 py-1 uppercase tracking-wider">
                   Workspaces
                 </div>
                 {workspaces.map((ws) => (
@@ -107,26 +111,26 @@ export const Navbar: React.FC = () => {
                       setActiveWorkspaceId(ws.id);
                       setIsWorkspaceDropdownOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs text-left transition-colors ${
+                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs text-left transition-colors cursor-pointer ${
                       ws.id === activeWorkspace.id
-                        ? 'bg-purple-600/20 text-purple-300 font-semibold'
-                        : 'text-slate-300 hover:bg-white/5'
+                        ? 'bg-purple-100 dark:bg-purple-600/20 text-purple-700 dark:text-purple-300 font-semibold'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate">
                       <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ws.color }} />
                       <span className="truncate">{ws.name}</span>
                     </div>
-                    {ws.id === activeWorkspace.id && <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0 ml-2" />}
+                    {ws.id === activeWorkspace.id && <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0 ml-2" />}
                   </button>
                 ))}
-                <div className="border-t border-white/5 my-1" />
+                <div className="border-t border-slate-200 dark:border-white/5 my-1" />
                 <button
                   onClick={() => {
                     setIsWorkspaceDropdownOpen(false);
                     setIsCreateProjectModalOpen(true);
                   }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-purple-400 hover:bg-purple-500/10 font-medium"
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 font-medium cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Create New Project</span>
@@ -221,6 +225,21 @@ export const Navbar: React.FC = () => {
             <span className="sm:hidden text-[11px]">AI</span>
           </button>
 
+          {/* Theme Switcher Button */}
+          <button
+            id="theme-toggle-btn"
+            onClick={toggleTheme}
+            className="p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-700/50 dark:border-white/10 text-slate-300 hover:text-white transition-all flex items-center justify-center"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-slate-300" />
+            )}
+          </button>
+
           {/* Google Drive Sync Modal (Desktop) */}
           <button
             id="google-drive-sync-btn"
@@ -265,13 +284,13 @@ export const Navbar: React.FC = () => {
             </button>
 
             {isUserMenuOpen && (
-              <div className="absolute top-full right-0 mt-1.5 w-64 bg-[#0D121F] border border-white/10 rounded-xl shadow-2xl p-2 z-50 animate-fadeIn">
-                <div className="px-2 py-1.5 border-b border-white/5 mb-1">
-                  <p className="text-[11px] font-semibold text-slate-200">{currentUser.name}</p>
-                  <p className="text-[10px] text-slate-400 font-mono">{currentUser.email}</p>
-                  <p className="text-[10px] text-purple-400 font-medium mt-0.5">{currentUser.role}</p>
+              <div className="absolute top-full right-0 mt-1.5 w-64 bg-white dark:bg-[#0D121F] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl dark:shadow-2xl p-2 z-50 animate-fadeIn">
+                <div className="px-2 py-1.5 border-b border-slate-200 dark:border-white/5 mb-1">
+                  <p className="text-[11px] font-semibold text-slate-900 dark:text-slate-200">{currentUser.name}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{currentUser.email}</p>
+                  <p className="text-[10px] text-purple-600 dark:text-purple-400 font-medium mt-0.5">{currentUser.role}</p>
                 </div>
-                <div className="text-[10px] font-semibold text-slate-400 px-2 py-1 uppercase tracking-wider">
+                <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 px-2 py-1 uppercase tracking-wider">
                   Switch Collaborator Persona
                 </div>
                 {MOCK_USERS.map((user) => (
@@ -281,16 +300,16 @@ export const Navbar: React.FC = () => {
                       setCurrentUser(user);
                       setIsUserMenuOpen(false);
                     }}
-                    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs text-left transition-colors ${
+                    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs text-left transition-colors cursor-pointer ${
                       user.id === currentUser.id
-                        ? 'bg-purple-600/20 text-purple-300 font-medium'
-                        : 'text-slate-300 hover:bg-white/5'
+                        ? 'bg-purple-100 dark:bg-purple-600/20 text-purple-800 dark:text-purple-300 font-medium'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                     }`}
                   >
                     <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover shrink-0" />
                     <div className="truncate">
                       <div className="truncate font-medium">{user.name}</div>
-                      <div className="text-[10px] text-slate-400 truncate">{user.role}</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user.role}</div>
                     </div>
                   </button>
                 ))}
