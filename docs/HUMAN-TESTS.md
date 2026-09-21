@@ -1,9 +1,19 @@
 # Manual acceptance tests
 
-What a person has to check by hand, because no automated test can. 498 unit tests cover the logic;
-none of them has ever seen a screen. **Nothing in this app has been looked at in a browser** — every
-claim about how it looks is inferred from code. Treat the tests marked ⚠ as the ones most likely to
-fail, and do those first.
+What a person has to check by hand, because no automated test can.
+
+Since this was first written the app **has** been rendered and inspected: `scripts/screenshots.mjs`
+drives headless Chromium over 38 states — every view, both themes, the main modals and the tutorial
+coachmark — and ten real visual defects were found and fixed that way, including phase chips sitting at
+roughly 2:1 contrast in light mode. So section A is no longer a shot in the dark. What the harness
+cannot judge is whether the app is *right*: whether sync really round-trips, whether a farm answers,
+whether the tutorial leaves your data alone. That is what the ⚠ tests are for, and they still come first.
+
+You can re-run the capture yourself at any point:
+
+```bash
+npm run build:web && node scripts/screenshots.mjs   # writes .tmp/shots/
+```
 
 Work through a section at a time. Each test says what to do and what should happen. If something
 differs, note the test number — that is enough for me to find it.
@@ -16,10 +26,10 @@ npm run dev          # http://localhost:3000
 
 ---
 
-## A. First impression and theme ⚠
+## A. First impression and theme
 
-These are the highest-risk tests: the theme was converted across nineteen components without anyone
-seeing the result.
+Lower risk than it was — every screen here has been captured and reviewed in both themes. Still worth a
+pass, because a screenshot at one window size misses reflow, hover and focus states.
 
 **A1.** Open the app. It should load a sample media-installation project on the timeline tab, with no
 error overlay and no flash of the wrong colour on load.
@@ -27,13 +37,13 @@ error overlay and no flash of the wrong colour on load.
 **A2.** Find the theme control in the navbar menu. It has three states: Dark, Light, System. Switch to
 **Light**.
 
-**A3.** ⚠ **In light mode, walk every tab**: Immediate, Rétroplanning, Hardware, Tasks, Markdown,
+**A3.** **In light mode, walk every tab**: Immediate, Rétroplanning, Hardware, Tasks, Markdown,
 Collaboration, History. Look for white text on white, invisible borders, or unreadable badges. The
 Gantt tab is the one most likely to have a problem — it carried the most dark-tuned colours.
 
-**A4.** ⚠ In light mode, open each of these and check the same: Settings, the cloud panel, the AI
-assistant, the task editor, the invite dialog. **The AI assistant modal is the second most likely
-to have a problem.**
+**A4.** In light mode, open each of these and check the same: Settings, the cloud panel, the AI
+assistant, the task editor, the invite dialog. Resize the window narrow and wide while you are there — the
+capture only ever saw 1440x900.
 
 **A5.** Set the theme to **System**, then change your OS appearance. The app should follow without a
 reload.
@@ -321,5 +331,6 @@ Things I know are not done, so you do not spend time finding them:
 - **No real-time collaboration.** Two people editing the same project sync through the drive, not live.
 - **The leaked Firebase key is still in git history** at commits `949b750` and `397bcaf`. Deleting the
   file did not remove it. Rotate or restrict that key.
-- **No screenshot or browser automation exists in this repo**, which is why section A and B carry the
-  most risk.
+- **The screenshot harness only checks one window size** (1440x900) and cannot judge hover, focus or
+  animation. Narrow windows and touch targets are unverified.
+- **Nothing has been run on Windows.** The installer builds on macOS but no one has launched it.
