@@ -83,6 +83,7 @@ Modal flags (local state, not persisted)
 
 Undo
 - `undo()`, `canUndo`, `undoLabel` — see policy below.
+- `pushUndoSnapshot(label)` — makes the **next** mutation reversible. The facade snapshots automatically before the destructive actions listed under "Undo policy"; this is the opt-in for an action that is not on that list but still needs taking back — an accepted suggestion, which the user did not type by hand. Call it immediately before the mutation. `markdown/DatesPanel` uses it for `addMilestone` and `updateTargetDeliveryDate(…, 'anchor-only')`.
 
 Storage
 - `storageError: string | null` — set when a `localStorage` write fails (quota, unavailable); cleared by the next successful write. App shows it as a banner.
@@ -156,7 +157,7 @@ are kept. `src/state/secrets.ts` keeps its own three-valued `secretsBackend()` f
 
 ## Undo policy
 
-A snapshot (`projects`, `teamMembers`, `workspaces`, `invitations`, active project/document ids) is pushed BEFORE: `deleteTask`, `deleteDocument`, `deletePhase`, `deleteMilestone`, `deleteProject`, `applyAiStructuredData`, `updateTargetDeliveryDate(…, 'shift-all')`, `removeTeamMember`, `importBackup`, `importProjectFromJson`. Stack depth 20, in memory only (lost on reload). `undo()` restores the top snapshot; `undoLabel` is the human label of what will be undone. Notifications and settings are not part of snapshots.
+A snapshot (`projects`, `teamMembers`, `workspaces`, `invitations`, active project/document ids) is pushed BEFORE (and by `pushUndoSnapshot(label)` on demand): `deleteTask`, `deleteDocument`, `deletePhase`, `deleteMilestone`, `deleteProject`, `applyAiStructuredData`, `updateTargetDeliveryDate(…, 'shift-all')`, `removeTeamMember`, `importBackup`, `importProjectFromJson`. Stack depth 20, in memory only (lost on reload). `undo()` restores the top snapshot; `undoLabel` is the human label of what will be undone. Notifications and settings are not part of snapshots.
 
 ## Theme boot
 

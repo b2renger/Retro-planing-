@@ -9,7 +9,7 @@ Status vocabulary, used strictly:
 | **Planned** | Specified, not yet written. |
 | **Cut** | Existed in the generated original, deliberately removed. Reason given. |
 
-Last updated 2026-09-21 05:40. Test counts are from `npm test`.
+Last updated 2026-09-21. Test counts are from `npm test`.
 
 ---
 
@@ -44,6 +44,26 @@ Last updated 2026-09-21 05:40. Test counts are from `npm test`.
 | Quick-insert snippets | Wired | |
 | Link and image safety | Wired | Scheme-allowlisted; script-scheme links render as text and remote images do not auto-fetch. |
 | Unsaved-changes guard when switching documents | Planned | Edits are currently discarded silently. |
+
+### Dates found — reading commitments out of your own notes
+
+Tier 0 of [LOCAL-INFERENCE.md](dev/LOCAL-INFERENCE.md), and the only tier built. No model, no
+download, no API call, nothing leaves the machine: `chrono-node` parses the dates and a table of
+French and English commitment words (`deadline`, `échéance`, `au plus tard`, `vernissage`,
+`montage`, `filage`, `livraison`, `opening`, …) decides whether each one reads as a promise or a
+passing mention. 71 tests.
+
+| Feature | Status | Notes |
+|---|---|---|
+| Dates in French and English prose, absolute, numeric, relative and ranges | Wired | `src/services/insight/dates.ts`. Both parsers run on every document and their findings are merged, because a French brief with English hardware dates in it is this project's normal case. |
+| Every finding shows the sentence it came from, with the matched words marked | Wired | The explainability the design note requires: the panel shows *why*, not just *what*. |
+| Confidence in words, never a percentage | Wired | "likely a deadline" / "possibly a fixed date" / "mentioned". |
+| Code fences, inline code and YAML frontmatter skipped; link targets, unanchored relative dates and implausible years downranked and flagged | Wired | A date in a JSON sample is a value someone is documenting, not a date they are promising. |
+| Suggested actions: create a milestone, set the target delivery date | Wired | Shown with an explicit accept button, never applied on their own, and undoable from the toolbar afterwards. |
+| Warnings: a commitment past your delivery date, a commitment already gone by | Wired | Explanation only — there is no button, because there is no single right fix. |
+| Import scan — dropped files are read for commitments and one notification says what was found | Wired | Nothing is created. |
+| Panel labels its own origin as pattern matching, not AI | Wired | Because that is what it is, and it is the distinction the whole app draws. |
+| Phase classification and risk scoring from the same interface | Planned | Tiers 1–2 in [LOCAL-INFERENCE.md](dev/LOCAL-INFERENCE.md); `findDeadlines` already answers in the shared `{ items, source }` shape they would slot into. |
 
 ## 3. AI
 

@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { crunchMarkdownNotes, type CrunchOutcome } from '../services/ai/tasks';
 import { LazyMarkdownView } from './markdown/LazyMarkdownView';
+import { DatesPanel } from './markdown/DatesPanel';
+import { findDates } from '../services/insight';
 
 export const MarkdownStudio: React.FC = () => {
   const {
@@ -121,33 +123,54 @@ export const MarkdownStudio: React.FC = () => {
     setIsDragging(false);
   };
 
+  /**
+   * Imported files are scanned for dates the same way the panel scans the open one, and a single
+   * notification says what was found. Nothing is created: the plan is only ever changed from the
+   * Dates panel, by the user, one accepted suggestion at a time.
+   */
+  const importAndReport = (readFiles: { name: string; content: string }[]) => {
+    const imported = importDroppedFiles(readFiles);
+    const today = new Date();
+    let commitments = 0;
+    let firstTitle = '';
+    for (const doc of imported) {
+      const hits = findDates(doc.content, { referenceDate: today }).filter(
+        (d) => d.kind !== 'mention' && !d.signals.includes('implausible-year')
+      );
+      if (hits.length > 0 && !firstTitle) firstTitle = doc.title;
+      commitments += hits.length;
+    }
+    if (commitments === 0) return;
+    addNotification({
+      title: `${commitments} date${commitments > 1 ? 's' : ''} in the imported notes look like commitments`,
+      message: `Starting with ${firstTitle}. Open the “Dates found” panel next to the document to read them — nothing has been added to the plan.`,
+      type: 'ai_insight',
+      projectId: activeProject.id,
+    });
+  };
+
+  const readAll = async (files: File[]) => {
+    const readFiles: { name: string; content: string }[] = [];
+    for (const file of files) {
+      const text = await file.text();
+      readFiles.push({ name: file.name, content: text });
+    }
+    return readFiles;
+  };
+
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
 
     const files = Array.from(e.dataTransfer.files);
     if (files.length === 0) return;
-
-    const readFiles: { name: string; content: string }[] = [];
-    for (const file of files) {
-      const text = await file.text();
-      readFiles.push({ name: file.name, content: text });
-    }
-
-    importDroppedFiles(readFiles);
+    importAndReport(await readAll(files));
   };
 
   const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
-
-    const readFiles: { name: string; content: string }[] = [];
-    for (const file of files) {
-      const text = await file.text();
-      readFiles.push({ name: file.name, content: text });
-    }
-
-    importDroppedFiles(readFiles);
+    importAndReport(await readAll(files));
   };
 
   // Helper to insert markdown snippets
@@ -416,8 +439,8 @@ export const MarkdownStudio: React.FC = () => {
           </div>
         </div>
 
-        {/* Center/Right Pane (9 cols): Editor & Live Preview */}
-        <div className="lg:col-span-9 space-y-3">
+        {/* Center Pane: Editor & Live Preview. Narrows at xl to make room for the Dates panel. */}
+        <div className="lg:col-span-9 xl:col-span-6 space-y-3">
           <div className="bg-card border border-line rounded-2xl p-4 space-y-4 shadow-sm dark:shadow-xl transition-colors">
             {/* Editor Header: Title, Mode Switcher & Save Status */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-line">
@@ -505,6 +528,11 @@ export const MarkdownStudio: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Right Pane: dates read out of the saved document. Drops under the editor below xl. */}
+        <div className="lg:col-start-4 lg:col-span-9 xl:col-start-auto xl:col-span-3">
+          <DatesPanel doc={activeDocument} project={activeProject} />
         </div>
       </div>
     </div>

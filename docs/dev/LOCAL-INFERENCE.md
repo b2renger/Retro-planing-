@@ -1,8 +1,13 @@
 # Scoping: on-device inference for triage
 
-Status: **scoping only, nothing built.** Written 2026-09-21 after b2renger raised
-[Laya](https://github.com/NandhaKishorM/laya) and asked whether a Python sidecar is really the
-only way. It is not, and it is probably the worst of the options here.
+Status: **tier 0 is built and wired; tiers 1–3 remain scoping only.** Written 2026-09-21 after
+b2renger raised [Laya](https://github.com/NandhaKishorM/laya) and asked whether a Python sidecar is
+really the only way. It is not, and it is probably the worst of the options here.
+
+> **Tier 0 shipped 2026-09-21.** Date detection lives in `src/services/insight/` and the
+> "Dates found" panel in the Markdown Studio shows it. `chrono-node` 2.10.1, French and English,
+> 71 tests, +21.8 kB gzip in the main chunk — no model, no download, no network. Details in the
+> tier-0 section below.
 
 ## What we would actually want it for
 
@@ -21,7 +26,7 @@ the first time gets something useful before configuring anything.
 
 ## The options, cheapest first
 
-### 0. No model at all
+### 0. No model at all — **BUILT**
 Regex and date parsing for deadline detection; keyword and TF-IDF similarity against phase names for
 classification; the existing `computeProjectHealth` plus dependency depth for risk.
 
@@ -31,6 +36,34 @@ without the word "deadline" in it.
 
 **Honest assessment: this covers most of the value and should be built first regardless.** It is also
 the fallback the other tiers degrade to.
+
+**What was built (2026-09-21).** The deadline half only; phase classification and risk scoring are
+still ahead.
+
+| File | Role |
+|---|---|
+| `src/services/insight/dates.ts` | `findDates(text, { referenceDate, locale })` → `DetectedDate[]`: iso day, matched text, the sentence it came from, an offset, a confidence, a kind (`deadline` / `milestone` / `mention`), the signals that fired, plus range and time flags. |
+| `src/services/insight/signals.ts` | `SIGNALS`, the documented French/English commitment vocabulary, matched case- and accent-insensitively. A new studio word is a new row, not new logic. |
+| `src/services/insight/text.ts` | Which parts of a markdown document are prose and which are machinery, and the sentence-around-a-match extraction. |
+| `src/services/insight/suggestions.ts` | `suggestFromDocument(doc, project, { today, dates })` → `Suggestion[]`. Pure; `apply` is a serialisable description of the action, never a closure, so nothing can run by accident. |
+| `src/services/insight/index.ts` | The boundary the design note asks for: `findDeadlines(doc)` → `{ items, source: 'heuristic' }`. A later tier answers here. |
+| `src/components/markdown/DatesPanel.tsx` | The "Dates found" panel beside the document. |
+
+Decisions worth knowing before touching it:
+
+- **Both parsers, merged.** Picking one locale by stopword count loses half a mixed document, and
+  mixed is what these users write. The winning parser's hits are kept whole; the loser may only
+  contribute dates it is certain of, or it reads the other language's prose as weekday abbreviations.
+- **Casual parsing plus a strict rescue.** `chrono.en.casual` reads "Opening night on November 20,
+  2026" as one anchorless blob starting at "night" and loses the date; anything casual returns with
+  no certain date component is re-parsed strictly over the same span.
+- **Durations are not dates.** "warm up for 20 minutes" parses as a date in casual mode. A match
+  naming only a sub-day unit, with no calendar word and no year, is discarded.
+- **Nothing is dropped silently that a user could expect to see.** Code fences, inline code and
+  frontmatter are skipped outright; link targets, unanchored relative expressions and implausible
+  years are kept, downranked, and flagged in `signals` so the panel can say why it distrusts them.
+- **Suggestions are never applied on their own**, and both actions push an undo snapshot first
+  (`pushUndoSnapshot` on the facade) so an accepted suggestion can always be taken back.
 
 ### 1. Embeddings in JavaScript — the recommended first real model
 [`transformers.js`](https://github.com/huggingface/transformers.js) runs ONNX models directly in the
@@ -77,7 +110,8 @@ run on a design student's laptop. That is exactly why this feature should not be
 
 ## Recommendation
 
-Build tier 0 now, as ordinary product code with no model and no download. Instrument whether anyone
+**Done for dates; still open for classification and risk.** Build tier 0 as ordinary product code
+with no model and no download. Instrument whether anyone
 uses the resulting suggestions. If they do, add tier 1 behind the same interface so the upgrade is
 invisible to the rest of the app.
 
@@ -144,6 +178,11 @@ rules for proximity to words like *deadline*, *livraison*, *vernissage*, *openin
 done properly, it works identically in the web build, it adds roughly 50 kB rather than 25 MB, and it
 is explainable — you can show the user the sentence the date came from. Build this one first; it may
 be the only tier that ever ships.
+
+**Measured, now that it is built:** importing only `chrono-node/fr` and `chrono-node/en` (the root
+entry pulls in all fourteen locales) the whole feature — parser, rules, panel — costs 69.9 kB raw
+and **21.8 kB gzip** in the main chunk, 199.23 → 221.06 kB. Well under the 60 kB gzip line at which
+it would have had to be split out like the export module, so it is a plain static import.
 
 ### Where this leaves Laya
 

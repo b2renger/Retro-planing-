@@ -614,6 +614,15 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
 2. **Audio Engine:** 8x Genelec 8040B active studio monitors placed in an equidistant circular ring, coupled with 2x Genelec 7380A subwoofers tuned for 28Hz-60Hz tactile sub-bass resonance.
 3. **Control & Playback:** Custom RTX 4090 media server running TouchDesigner Pro with Dante AoIP PCIe interface.
 4. **Interactivity:** Slamtec LiDAR scanner ceiling-mounted over the threshold to track real-time spatial density and modulate GLSL particle dispersion.
+
+---
+
+## 5. Calendrier de production (note de l'équipe)
+- **Montage** sur site : du 29 octobre au 2 novembre 2026.
+- La **remise** du dossier technique au lieu est due le 6 novembre 2026, au plus tard.
+- **Répétition générale et filage** technique : le 16 novembre 2026.
+- **Vernissage** public : le 20 novembre 2026 à 19h00.
+- **Démontage** et restitution du matériel loué : du 16 au 18 janvier 2027.
 `,
     },
     {

@@ -802,3 +802,66 @@ The screenshot harness's `cloud` shot now opens **Settings → Cloud sync**; the
 to `cloud-project`. A local `vite build` has no ids, so that shot shows the unconfigured state —
 build with `VITE_GOOGLE_CLIENT_ID=… VITE_MS_CLIENT_ID=… npx vite build` to photograph the normal
 one. I nearly signed off on the unconfigured screenshot as if it were the feature working.
+
+---
+
+## 2026-09-21 — "Dates found": tier 0 of local inference, built
+
+`docs/dev/LOCAL-INFERENCE.md` argued that the cheapest tier covers most of the value and should be
+built first regardless of whether a model ever follows. It is now built, for dates: the Markdown
+Studio reads the commitments out of the user's own notes and offers to turn them into plan
+structure. No model, no download, no API — `chrono-node` 2.10.1 (the only new dependency) plus
+rules.
+
+### What is there
+`src/services/insight/` — `dates.ts` (`findDates`), `signals.ts` (the exported `SIGNALS`
+vocabulary), `text.ts` (markdown regions and sentence extraction), `suggestions.ts`
+(`suggestFromDocument`), `index.ts` (the `findDeadlines(doc) → { items, source }` boundary the
+design note asks for). UI: `src/components/markdown/DatesPanel.tsx` + `datesPanelCopy.ts`, wired
+into `MarkdownStudio` as a third grid column at `xl` that drops under the editor below it.
+
+### The four things that were not obvious
+1. **`chrono.en.casual` eats dates.** "Opening night on November 20, 2026" comes back as a single
+   anchorless result starting at "night", with the date gone. Fix: any casual result with no
+   certain date component is discarded and its span re-parsed with `strict`, which finds the real
+   date inside it. This is the single highest-value rule in the file.
+2. **Durations parse as dates.** "warm up for 20 minutes" and "for 4 hours" both resolve to today;
+   the QA checklist document was full of them. A match naming only a sub-day unit, with no calendar
+   word and no year, is thrown away.
+3. **Picking one locale loses half a mixed document.** These users write French briefs with English
+   hardware dates. Both parsers run; the one with more hits wins the overlaps and the loser may
+   contribute only dates it is certain of — unfiltered it read "SAM GLM" in a speaker spec as
+   *samedi*.
+4. **Nothing in the store made `addMilestone` undoable.** The undo policy snapshots before
+   destructive actions only, and the brief requires an accepted suggestion to be reversible. Rather
+   than change the policy for every caller, `pushUndoSnapshot(label)` is now on the facade
+   (documented in STATE-API.md) and the panel calls it immediately before each accepted action.
+
+### Honesty, which is the whole point of the feature
+Every finding shows the sentence it came from with the matched words marked. Confidence is words,
+never a percentage. The panel says in its own header copy that this is pattern matching and not AI.
+Code fences, inline code and frontmatter are skipped, but link targets, unanchored relative dates
+and implausible years are **kept and flagged** rather than dropped — a silently missing finding is
+exactly as opaque as a silently applied one.
+
+### Sample data
+The bundled brief was English-only, which made the panel a poor demo of a French-first feature and
+a poor representation of its users. A "Calendrier de production" section was added to
+`doc-brief` with montage, remise, filage, vernissage and démontage dates. Nothing asserts on that
+document's prose, so no test moved.
+
+### Verified
+`npx tsc --noEmit` clean · `npx vitest run` 635 passing (was 565; 71 new in `src/services/insight`)
+· `npx vite build` clean · `grep -rn "bg-\[#" src/components` empty · screenshots in both themes
+show the panel with five real findings on the sample brief.
+
+### Bundle
+`chrono-node` imported as `chrono-node/fr` and `chrono-node/en` — **never the root entry**, which
+pulls in all fourteen locales. Whole feature: +69.9 kB raw, **+21.8 kB gzip** in the main chunk
+(199.23 → 221.06). Under the 60 kB gzip line, so it is a static import; if a future tier pushes it
+over, split it the way `ExportMenu` splits `services/export`.
+
+### Next, if anyone picks this up
+Tier 0's other two halves are untouched: phase classification and risk scoring. `findDeadlines`
+already answers in the `{ items, source }` shape they should share. The `SIGNALS` table is the
+first place to look when a finding is wrong — it is data, and growing it needs no code change.

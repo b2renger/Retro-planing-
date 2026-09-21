@@ -163,6 +163,14 @@ export interface AppContextType {
   undo: () => void;
   canUndo: boolean;
   undoLabel: string | null;
+  /**
+   * Makes the *next* mutation reversible. The facade snapshots automatically before the
+   * destructive actions listed in `docs/dev/STATE-API.md`; this is for a caller that wants an
+   * ordinarily un-snapshotted action to be undoable anyway — an accepted suggestion, say, which
+   * the user did not type by hand and must be able to take back. Call it immediately before the
+   * mutation; calling it without one leaves a snapshot that undoes to the same state.
+   */
+  pushUndoSnapshot: (label: string) => void;
 
   // Storage
   storageError: string | null;
@@ -681,6 +689,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       undo,
       canUndo,
       undoLabel,
+      pushUndoSnapshot: pushUndo,
       storageError,
       exportBackup,
       importBackup,
@@ -711,7 +720,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       applyAiStructuredData, addComment, addHistoryLog, resolveClarification, notifications, unreadCount, addNotification, markNotificationRead,
       markAllNotificationsRead, dismissNotification, clearNotifications, tutorial, startTutorial, goToTutorialStep, completeTutorialStep,
       endTutorial, resetTutorial, dismissTutorialInvite, isCloudPanelOpen, isAiAssistantOpen, isCreateTaskModalOpen, isCreateProjectModalOpen, isSettingsOpen, isInviteModalOpen,
-      undo, canUndo, undoLabel, storageError, exportBackup, importBackup, importProjectFromJson, aiSettings, activeAiProvider, addAiProvider,
+      undo, canUndo, undoLabel, pushUndo, storageError, exportBackup, importBackup, importProjectFromJson, aiSettings, activeAiProvider, addAiProvider,
       updateAiProvider, removeAiProvider, setDefaultAiProvider, secretsReady, cloudSettings, updateCloudSettings, cloudAccounts, setCloudAccount,
       cloudStatus, setCloudStatus, setCloudLink, applyCloudPatch,
     ]
