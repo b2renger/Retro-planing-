@@ -57,6 +57,33 @@ const TABS = [
   ['audit', 'Audit Trail'],
 ];
 
+/**
+ * The markdown tab needs help: the sample documents contain prose, lists and one table but no
+ * fenced code, so the preview would never be photographed rendering a fence. Clicking the app's own
+ * Quick Insert buttons appends a checklist (task list, inline code, a hex colour), a JSON block and
+ * an SLA table, then the preview pane is scrolled to them.
+ */
+async function insertMarkdownSnippets(page) {
+  for (const label of [/Deliverables Checklist/, /Token Config JSON Block/, /SLA Milestone Table/]) {
+    await page.getByRole('button', { name: label }).first().click();
+    await page.waitForTimeout(120);
+  }
+  // The renderer is a lazy chunk; give it a moment to arrive before the shot.
+  await page.waitForTimeout(500);
+  await page
+    .locator('[data-preview="markdown"]')
+    .first()
+    .evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+  await page.waitForTimeout(250);
+}
+
+/** Per-tab preparation run after the tab is opened and before its shot. */
+const TAB_PREP = {
+  markdown: insertMarkdownSnippets,
+};
+
 /** Clicks a view tab by its visible label. */
 const openTab = async (page, label) => {
   await page.getByRole('button', { name: new RegExp(label, 'i') }).first().click();
@@ -97,6 +124,14 @@ const OVERLAYS = [
     async (page) => {
       await openTab(page, 'Rétroplanning');
       await page.click('#mode-workload-btn');
+    },
+  ],
+  [
+    'markdown-preview',
+    async (page) => {
+      await openTab(page, 'Markdown Studio');
+      await page.getByRole('button', { name: /^Visual WYSIWYG$/ }).first().click();
+      await insertMarkdownSnippets(page);
     },
   ],
   [
@@ -184,6 +219,11 @@ for (const theme of ['dark', 'light']) {
     } else {
       problems.push(`[${theme}] tab not found: ${tab}`);
       continue;
+    }
+    if (TAB_PREP[name]) {
+      await TAB_PREP[name](page).catch((err) =>
+        problems.push(`[${theme}] ${name}: preparation failed: ${String(err).slice(0, 160)}`)
+      );
     }
     await page.screenshot({ path: path.join(OUT, `${theme}-${name}.png`), fullPage: false });
     // The page itself must never scroll sideways; only the Gantt scrolls inside its own box.

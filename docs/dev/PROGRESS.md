@@ -668,3 +668,40 @@ the whole scroll range. **Run it after any visual change and LOOK at the PNGs.**
 6. GitHub repo still named Retro-planing-; the owner must rename, then
    `git remote set-url origin https://github.com/b2renger/RetroPlaningStudio.git`.
 7. Harness only covers 1440x900; hover/focus/animation and narrow windows unverified.
+
+## 2026-09-21 05:40 — Markdown preview completed (react-markdown, still no HTML injection)
+
+The hand-rolled line-by-line renderer in `MarkdownStudio` (headings 1-3, bullets, checkboxes, bold,
+inline code, hex chips) is gone. `src/components/markdown/` now holds a real renderer:
+
+- `MarkdownView.tsx` — react-markdown 10 + remark-gfm 4, mapped to theme tokens. Tables, fenced
+  code, links, images, italics, ordered lists, blockquotes, rules and strikethrough all render; the
+  app's own "SLA Milestone Table" and "Token Config JSON Block" snippets finally display.
+- `urlSafety.ts` — scheme allowlist (http/https/mailto). Everything else, relative URLs included,
+  renders as plain text. The scheme is read after stripping C0 controls, so `java<TAB>script:` and
+  a leading-space `javascript:` are both caught.
+- `rehypeHexChips.ts` — keeps the colour-swatch feature, as a rehype step on text nodes only; code
+  and fences are skipped, so a hex in a JSON block stays source.
+- `rehypeHardBreaks.ts` — opt-in (`breaks`), used only by the assistant bubble so the local
+  fallback reply keeps its three lines. Documents follow markdown semantics.
+- `LazyMarkdownView.tsx` — both call sites go through it.
+
+**Why the library choice matters:** react-markdown builds React elements from an AST, so the "no
+XSS surface" property the audit recorded still holds — there is no HTML-string injection anywhere in
+`src`, and raw HTML passthrough is off (no rehype-raw), so `<script>` in a document shows up as
+literal text. 23 tests cover it, including a `javascript:` link rendering as text and a remote image
+not being fetched until clicked.
+
+**Bundle:** the parser is ~48 kB gzip, above the 40 kB bar, so it is a dynamic `import()`:
+main chunk 708.79 kB / 197.46 kB gzip before → 707.46 kB / 197.21 kB gzip after, with
+`MarkdownView-*.js` 161.15 kB / 48.02 kB gzip loaded on demand.
+
+**Also changed:** the assistant modal renders assistant replies through the same component (the
+system prompt already says "markdown allowed"); the user's own bubble stays literal text.
+`scripts/screenshots.mjs` gained a per-tab preparation hook — the markdown tab now clicks the app's
+three Quick Insert buttons before its shot, because no sample document contains a code fence, plus a
+full-width `markdown-preview` state. Both themes were looked at: chips, fence caption, table, quote,
+link vs. refused link and the image placeholder all read correctly.
+
+Not done: `MarkdownStudio.tsx` is still 512 lines (was 607) and could be split; the preview has no
+heading anchors; a loaded remote image stays loaded for the session only.

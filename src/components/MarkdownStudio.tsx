@@ -16,6 +16,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { crunchMarkdownNotes, type CrunchOutcome } from '../services/ai/tasks';
+import { LazyMarkdownView } from './markdown/LazyMarkdownView';
 
 export const MarkdownStudio: React.FC = () => {
   const {
@@ -152,102 +153,6 @@ export const MarkdownStudio: React.FC = () => {
   // Helper to insert markdown snippets
   const insertSnippet = (snippet: string) => {
     setDocContent((prev) => prev + '\n' + snippet);
-  };
-
-  // Render markdown with custom color swatch token parser
-  const renderFormattedMarkdown = (content: string) => {
-    const lines = content.split('\n');
-    return (
-      <div className="space-y-2 font-sans text-fg text-xs sm:text-sm leading-relaxed">
-        {lines.map((line, idx) => {
-          // Check for H1
-          if (line.startsWith('# ')) {
-            return (
-              <h1 key={idx} className="text-lg sm:text-xl font-extrabold text-fg border-b border-line pb-1.5 mt-4">
-                {line.replace('# ', '')}
-              </h1>
-            );
-          }
-          // Check for H2
-          if (line.startsWith('## ')) {
-            return (
-              <h2 key={idx} className="text-base font-bold text-fg mt-3 text-blue-600 dark:text-blue-400">
-                {line.replace('## ', '')}
-              </h2>
-            );
-          }
-          // Check for H3
-          if (line.startsWith('### ')) {
-            return (
-              <h3 key={idx} className="text-sm font-semibold text-fg mt-2">
-                {line.replace('### ', '')}
-              </h3>
-            );
-          }
-          // Check for task checklist
-          if (line.startsWith('- [x]') || line.startsWith('- [ ]')) {
-            const isChecked = line.startsWith('- [x]');
-            const text = line.replace(/- \[[ x]\]\s*/, '');
-            return (
-              <div key={idx} className="flex items-center gap-2 pl-2">
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  readOnly
-                  className="rounded border-line-strong text-blue-500 focus:ring-0 w-3.5 h-3.5"
-                />
-                <span className={isChecked ? 'line-through text-fg-muted' : 'text-fg font-medium'}>
-                  {text}
-                </span>
-              </div>
-            );
-          }
-          // Check for bullet list
-          if (line.startsWith('- ') || line.startsWith('* ')) {
-            return (
-              <li key={idx} className="ml-4 list-disc text-fg">
-                {renderInlineTokens(line.replace(/^[-*]\s*/, ''))}
-              </li>
-            );
-          }
-          // Standard line
-          if (line.trim() === '') {
-            return <div key={idx} className="h-2" />;
-          }
-          return <p key={idx}>{renderInlineTokens(line)}</p>;
-        })}
-      </div>
-    );
-  };
-
-  // Helper to render color hex tags (#3B82F6) with live color swatches inline
-  const renderInlineTokens = (text: string) => {
-    const parts = text.split(/(#[0-9A-Fa-f]{6}|`[^`]+`|\*\*[^*]+\*\*)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('#') && part.length === 7 && /^#[0-9A-Fa-f]{6}$/.test(part)) {
-        return (
-          <span key={i} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-elevated border border-line-strong font-mono text-[10px] mx-1">
-            <span className="w-2.5 h-2.5 rounded-full inline-block border border-line-strong" style={{ backgroundColor: part }} />
-            <span>{part}</span>
-          </span>
-        );
-      }
-      if (part.startsWith('`') && part.endsWith('`')) {
-        return (
-          <code key={i} className="px-1.5 py-0.5 rounded bg-elevated text-indigo-700 dark:text-indigo-300 font-mono text-[11px]">
-            {part.slice(1, -1)}
-          </code>
-        );
-      }
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return (
-          <strong key={i} className="font-bold text-fg">
-            {part.slice(2, -2)}
-          </strong>
-        );
-      }
-      return part;
-    });
   };
 
   return (
@@ -579,8 +484,8 @@ export const MarkdownStudio: React.FC = () => {
                   />
 
                   {/* Right: Live Visual Preview */}
-                  <div className="w-full h-[480px] p-4 rounded-xl bg-app/60 border border-line overflow-y-auto">
-                    {renderFormattedMarkdown(docContent)}
+                  <div data-preview="markdown" className="w-full h-[480px] p-4 rounded-xl bg-app/60 border border-line overflow-y-auto">
+                    <LazyMarkdownView content={docContent} />
                   </div>
                 </div>
               )}
@@ -594,8 +499,8 @@ export const MarkdownStudio: React.FC = () => {
               )}
 
               {editorMode === 'wysiwyg' && (
-                <div className="w-full min-h-[480px] p-5 rounded-xl bg-app/80 border border-line overflow-y-auto">
-                  {renderFormattedMarkdown(docContent)}
+                <div data-preview="markdown" className="w-full min-h-[480px] p-5 rounded-xl bg-app/80 border border-line overflow-y-auto">
+                  <LazyMarkdownView content={docContent} />
                 </div>
               )}
             </div>

@@ -5,6 +5,7 @@ import { Sparkles, Send, Bot, User, Settings } from 'lucide-react';
 import { askAssistant } from '../services/ai/tasks';
 import { PROVIDER_CATALOG } from '../services/ai/registry';
 import type { ChatMessage } from '../services/ai/types';
+import { LazyMarkdownView } from './markdown/LazyMarkdownView';
 
 interface Turn {
   role: 'user' | 'assistant';
@@ -176,7 +177,12 @@ export const AiAssistantModal: React.FC = () => {
                 msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-elevated border border-line text-fg'
               }`}
             >
-              <div className="whitespace-pre-line">{msg.content}</div>
+              {/* Assistant replies are markdown; the user's own bubble is their literal text. */}
+              {msg.role === 'assistant' ? (
+                <LazyMarkdownView content={msg.content} breaks className="sm:text-xs" />
+              ) : (
+                <div className="whitespace-pre-line">{msg.content}</div>
+              )}
 
               {msg.role === 'assistant' && msg.fallback && (
                 <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-fg space-y-1">
