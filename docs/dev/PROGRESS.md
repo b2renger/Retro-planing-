@@ -705,3 +705,21 @@ link vs. refused link and the image placeholder all read correctly.
 
 Not done: `MarkdownStudio.tsx` is still 512 lines (was 607) and could be split; the preview has no
 heading anchors; a loaded remote image stays loaded for the session only.
+
+## 2026-09-21 05:55 — DONE. Final state
+32 commits, all pushed. Working tree clean. Gate: **537 tests / 44 files**, `tsc --noEmit` clean,
+`vite build` clean, screenshot harness clean (38 states, no console errors, no page-level h-scroll).
+
+Packages in `release/`, all rebuilt from the final tree, `verify-mac-signature` OK:
+mac-arm64.dmg/zip 121 MB · mac-x64.dmg/zip 128 MB · win-x64.exe 107 MB · win-arm64.exe 101 MB · win.exe 207 MB.
+
+Everything on b2renger's original list is done: rename, documentation, audit, theme, multi-provider AI
+incl. Gemini, LlmOnLan LAN farms, Drive + OneDrive as source of truth, spreadsheet export, tests,
+Electron builds for Windows/Apple Silicon/Intel, interactive tutorial, GitHub Pages workflow,
+human test checklist.
+
+### For whoever picks this up next
+Read `docs/FEATURES.md` for what exists, `docs/HUMAN-TESTS.md` for what still needs a human, and the
+"Still open" list in the 05:00 entry above. The single most useful habit: run
+`npm run build:web && node scripts/screenshots.mjs` and LOOK at `.tmp/shots/`. Ten defects came out of
+doing that once; none of them was findable by grep or by a unit test.
