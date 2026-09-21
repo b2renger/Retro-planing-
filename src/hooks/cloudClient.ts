@@ -1,9 +1,10 @@
 /**
- * Glue between the UI and `src/services/cloud/**`: provider construction from the user's own
- * OAuth client ids, the copy the setup screen needs (redirect URI, scopes), and the pure
- * comparisons the cloud panel renders. Nothing here performs a sync — see `useCloudSync.ts`.
+ * Glue between the UI and `src/services/cloud/**`: provider construction from whichever OAuth
+ * client `appCredentials` resolved, the copy the setup screen needs (redirect URI, scopes), and
+ * the pure comparisons the cloud panel renders. Nothing here performs a sync — see `useCloudSync.ts`.
  */
 import { capabilities, desktopBridge } from '../capabilities';
+import { appCredentials, isConfigured, type ResolvedCredentials } from '../services/cloud/appCredentials';
 import { createGoogleDriveProvider } from '../services/cloud/googleDrive';
 import { docFileName } from '../services/cloud/layout';
 import { createOneDriveProvider } from '../services/cloud/oneDrive';
@@ -16,6 +17,24 @@ import type { CloudSettings, Project, ProjectCloudLink } from '../types';
 export const PROVIDER_LABELS: Record<CloudProviderId, string> = {
   google: 'Google Drive',
   onedrive: 'Microsoft OneDrive',
+};
+
+/** The short form, for a button face: "Connect OneDrive" reads better than the full vendor name. */
+export const PROVIDER_SHORT_LABELS: Record<CloudProviderId, string> = {
+  google: 'Google Drive',
+  onedrive: 'OneDrive',
+};
+
+/**
+ * The one-time setup guide. Linked from the unconfigured state and from the Advanced disclosure,
+ * because nobody should have to guess which of a dozen console pages they are meant to be on.
+ */
+export const CLOUD_SETUP_DOC_URL = 'https://github.com/b2renger/Retro-planing-/blob/main/docs/CLOUD-SETUP.md';
+
+/** One line saying what pressing Connect actually does, per provider. */
+export const CONNECT_SUMMARY: Record<CloudProviderId, string> = {
+  google: 'The app creates a RetroPlaningStudio folder in your Google Drive and keeps your projects there.',
+  onedrive: 'The app creates a RetroPlaningStudio folder in your OneDrive and keeps your projects there.',
 };
 
 /** Where the user creates the OAuth client this app needs. */
@@ -34,6 +53,24 @@ export const SCOPE_MEANINGS: Record<string, string> = {
   'User.Read': 'Read your name and email address, to show which account is connected.',
   offline_access: 'Stay signed in, so background sync does not ask you to sign in again every hour.',
 };
+
+/**
+ * The same permissions in the words the consent screen will use, for someone who has never seen
+ * an OAuth scope. Keyed by scope so the list can never drift from what is actually requested.
+ */
+export const PLAIN_PERMISSIONS: Record<string, string> = {
+  'https://www.googleapis.com/auth/drive': 'Read and write files in your Google Drive — including files you add to the project folder yourself.',
+  'https://www.googleapis.com/auth/userinfo.email': 'See your email address, so the panel can show which account is connected.',
+  'https://www.googleapis.com/auth/userinfo.profile': 'See your name, so the panel can show which account is connected.',
+  'Files.ReadWrite': 'Read and write files in your OneDrive.',
+  'User.Read': 'See your name and email address, so the panel can show which account is connected.',
+  offline_access: 'Stay signed in, so background sync does not ask you again every hour.',
+};
+
+/** The plain-words permission list shown next to the Connect button. */
+export function plainPermissions(providerId: CloudProviderId): string[] {
+  return PROVIDER_OAUTH[providerId].scopes.map((scope) => PLAIN_PERMISSIONS[scope] ?? scope);
+}
 
 /** `[scope, what it allows]` for the settings screen. */
 export function scopeExplanations(providerId: CloudProviderId): Array<{ scope: string; meaning: string }> {
@@ -82,17 +119,32 @@ export function redirectAdvice(providerId: CloudProviderId, opts: { desktop?: bo
   };
 }
 
-/** The OAuth client the user entered for a provider. */
-export function oauthConfig(settings: CloudSettings, providerId: CloudProviderId): CloudOAuthConfig {
-  return providerId === 'google'
-    ? { clientId: settings.google.clientId.trim(), clientSecret: settings.google.clientSecret?.trim() || undefined }
-    : { clientId: settings.onedrive.clientId.trim() };
+/**
+ * The credentials this build will authenticate with, and where they came from.
+ * A `source` of `'none'` means the app was built without cloud ids: the UI must say so and link
+ * to `docs/CLOUD-SETUP.md` rather than render a Connect button that cannot work.
+ */
+export function providerCredentials(settings: CloudSettings, providerId: CloudProviderId): ResolvedCredentials {
+  return appCredentials(providerId, settings);
 }
 
-/** A provider bound to the stored tokens. Throws when no client id has been entered. */
+/** True when Connect can actually be offered for this provider on this build. */
+export function isProviderConfigured(settings: CloudSettings, providerId: CloudProviderId): boolean {
+  return isConfigured(providerCredentials(settings, providerId));
+}
+
+/** The OAuth client used for a provider: the user's own override, else the app's built-in client. */
+export function oauthConfig(settings: CloudSettings, providerId: CloudProviderId): CloudOAuthConfig {
+  const resolved = providerCredentials(settings, providerId);
+  return providerId === 'google'
+    ? { clientId: resolved.clientId, clientSecret: resolved.clientSecret }
+    : { clientId: resolved.clientId };
+}
+
+/** A provider bound to the stored tokens. Throws when this build has no client id at all. */
 export function createProvider(settings: CloudSettings, providerId: CloudProviderId): CloudProvider {
   const cfg = oauthConfig(settings, providerId);
-  if (!cfg.clientId) throw new Error(`Enter the ${PROVIDER_LABELS[providerId]} client ID in Settings → Cloud sync first.`);
+  if (!cfg.clientId) throw new Error(`This build has no ${PROVIDER_LABELS[providerId]} credentials. See docs/CLOUD-SETUP.md.`);
   return providerId === 'google' ? createGoogleDriveProvider(cfg) : createOneDriveProvider(cfg);
 }
 

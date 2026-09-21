@@ -747,3 +747,58 @@ https://github.com/b2renger/Retro-planing-/releases/tag/v0.1.0
 `npm run package:*` finishing green proves nothing about whether the app opens. Add a launch probe to
 the gate: Playwright's `_electron.launch()` against the packaged binary, assert a window appears and
 `#root` is non-empty. Windows still has NO such verification — those builds have never been run.
+
+## 2026-09-21 09:55 — One-click cloud sign-in. The app owns the OAuth clients now.
+
+### The problem
+Connecting Drive or OneDrive required **each user** to open the Google Cloud or Azure console,
+create an OAuth client, copy an id and register a redirect URI. The users are students and
+designers. b2renger: "Just click a button, auth in browser and we are good to go."
+
+### What changed
+The app owns the OAuth clients. One registration is done once (see the new `docs/CLOUD-SETUP.md`),
+the ids are baked into the build through Vite env vars, and every user afterwards clicks one
+button. The per-user override survives, folded into an Advanced disclosure.
+
+- **`src/services/cloud/appCredentials.ts`** — resolution order, first hit wins: a per-user
+  override in settings → `VITE_GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_SECRET` / `VITE_MS_CLIENT_ID`
+  → nothing, which reports `source: 'none'`. An empty-string env var counts as absent: Vite
+  substitutes `""` for an undefined var in some setups, and treating that as configured would
+  render a dead button. 13 tests cover all three branches. The module's header explains at length
+  why shipping these values is correct and not a compromise — a browser client id is visible in the
+  authorize URL, and Google documents an installed-app secret as not-a-secret. Do not "fix" it.
+- **`CloudSyncPanel.tsx`** is now 65 lines and holds no fields. Per provider,
+  `CloudProviderCard.tsx` shows one Connect button, one line of what connecting does, and the
+  permissions in plain words (derived from `PROVIDER_OAUTH[id].scopes` so the list cannot drift
+  from what is actually requested). `CloudAdvanced.tsx` holds the old client id / secret / redirect
+  URI / scope table, collapsed — and opens by itself on a build with no credentials, which is the
+  only state where fields appear by default.
+- **`useCloudConnect.ts`** is the one sign-in path, shared by settings, the project cloud panel and
+  the navbar chip. Four steps that must succeed together; any failure clears the tokens again, so
+  a provider is never shown as connected when it is not.
+
+### The weekly expiry, handled as a state rather than an error
+The full `drive` scope is restricted, so the OAuth project stays in Testing and Google kills every
+refresh token after seven days. `CloudError` gained a `code` field carrying the provider's machine
+code (`invalid_grant`), `isExpiredSignIn()` in `services/cloud/types.ts` is the single predicate,
+and `runProjectSync` maps it to a new `cloudStatus.state === 'expired'` — never `'error'`. The chip
+turns amber and *becomes* the Reconnect button (one click runs the flow; the click is the user
+gesture the web popup needs anyway); the cloud panel shows a calm band saying nothing was lost.
+Tested at both levels: `tokenStore.test.ts` for the code surviving the refresh failure, and
+`useCloudSync.test.ts` for the end-to-end mapping, including that a 500 still reports as an error.
+
+### Verified
+`npx tsc --noEmit` clean · `npx vitest run` 565 passing (was 537) · `npx vite build` clean with no
+env set at all, which is the "unconfigured build still succeeds" case · theme guard greps empty ·
+screenshots in both themes show one Connect button per provider and zero credential fields.
+
+### What b2renger must still do, once
+Follow `docs/CLOUD-SETUP.md`: two Google clients (Desktop app + Web application), one Entra
+registration, then `.env` for the desktop builds and two repository secrets for Pages. Google's
+Test users list (max 100) is what gates who can sign in at all.
+
+### Note for next time
+The screenshot harness's `cloud` shot now opens **Settings → Cloud sync**; the project panel moved
+to `cloud-project`. A local `vite build` has no ids, so that shot shows the unconfigured state —
+build with `VITE_GOOGLE_CLIENT_ID=… VITE_MS_CLIENT_ID=… npx vite build` to photograph the normal
+one. I nearly signed off on the unconfigured screenshot as if it were the feature working.

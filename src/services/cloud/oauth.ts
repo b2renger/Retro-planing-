@@ -164,7 +164,7 @@ export function parseTokenResponse(raw: unknown, previousRefreshToken?: string, 
   const accessToken = str(raw, 'access_token');
   if (!accessToken) {
     const desc = str(raw, 'error_description') ?? str(raw, 'error') ?? 'no access_token in response';
-    throw new CloudError('auth', `Token request failed: ${desc}`);
+    throw new CloudError('auth', `Token request failed: ${desc}`, undefined, str(raw, 'error'));
   }
   const expiresIn = num(raw, 'expires_in') ?? 3600;
   return {
@@ -187,7 +187,8 @@ async function postTokenRequest(tokenEndpoint: string, fields: Record<string, st
     context
   ).catch((err: unknown) => {
     // Token endpoint failures are auth failures regardless of HTTP status (400 invalid_grant etc.).
-    if (err instanceof CloudError && err.kind !== 'network') throw new CloudError('auth', err.message, err.status);
+    // `err.code` is carried across: it is how the UI tells an expired weekly grant from a real fault.
+    if (err instanceof CloudError && err.kind !== 'network') throw new CloudError('auth', err.message, err.status, err.code);
     throw err;
   });
   let json: unknown;

@@ -94,11 +94,18 @@ integration guide, including why discovery needs the desktop build, is in
 
 ### Google Drive or OneDrive
 
-You supply your own OAuth client id, so the data belongs to you and there is no middleman server.
-Settings, Cloud sync has the steps and the exact scopes. The app creates
-`RetroPlaningStudio/<project>/` with `project.json`, a `docs/` folder of markdown files, and an
-`exports/` folder. Edit a document in either place; the app reconciles both directions and keeps both
-copies when it cannot decide.
+Settings, Cloud sync, one button: Connect Google Drive or Connect OneDrive, sign in in the browser,
+done. No console, no client id, no redirect URI — the app carries its own OAuth clients and there is
+still no middleman server, because the tokens and the files are yours and never pass through anyone
+else. The app creates `RetroPlaningStudio/<project>/` with `project.json`, a `docs/` folder of
+markdown files, and an `exports/` folder. Edit a document in either place; the app reconciles both
+directions and keeps both copies when it cannot decide.
+
+Registering those OAuth clients is a one-time job for whoever builds the app —
+[docs/CLOUD-SETUP.md](docs/CLOUD-SETUP.md) walks through both consoles. Because the app asks for the
+full Drive scope, Google keeps it in Testing mode, so Google sign-ins expire weekly: the cloud chip
+turns amber, one click reconnects, nothing is lost. Anyone who would rather use their own OAuth
+client still can, under Advanced in the same panel.
 
 ---
 
@@ -108,6 +115,7 @@ copies when it cannot decide.
 |---|---|
 | [docs/FEATURES.md](docs/FEATURES.md) | What exists, what does not, what was removed and why |
 | [docs/HUMAN-TESTS.md](docs/HUMAN-TESTS.md) | A checklist to verify a build by hand |
+| [docs/CLOUD-SETUP.md](docs/CLOUD-SETUP.md) | The one-time Google / Microsoft OAuth registration |
 | [docs/dev/LLMONLAN.md](docs/dev/LLMONLAN.md) | LAN inference integration |
 | [docs/dev/ELECTRON.md](docs/dev/ELECTRON.md) | Desktop architecture and the macOS signing trap |
 | [docs/dev/STATE-API.md](docs/dev/STATE-API.md) | Application state contract |

@@ -89,10 +89,11 @@ const pendingRefresh = new Map<CloudProviderId, Promise<OAuthTokens>>();
  */
 export async function getValidAccessToken(providerId: CloudProviderId, cfg: CloudOAuthConfig): Promise<string> {
   const tokens = await loadTokens(providerId);
-  if (!tokens) throw new CloudError('auth', `Not connected to ${providerId} — reconnect required`);
+  if (!tokens) throw new CloudError('auth', `Not connected to ${providerId} — reconnect required`, undefined, 'not_connected');
   if (!isExpired(tokens)) return tokens.accessToken;
   if (!tokens.refreshToken) {
-    throw new CloudError('auth', `The ${providerId} session has expired — reconnect required`);
+    // The web implicit flow issues no refresh token, so every expiry lands here.
+    throw new CloudError('auth', `The ${providerId} session has expired — reconnect required`, undefined, 'expired_token');
   }
   let pending = pendingRefresh.get(providerId);
   if (!pending) {
@@ -113,7 +114,12 @@ export async function getValidAccessToken(providerId: CloudProviderId, cfg: Clou
   try {
     return (await pending).accessToken;
   } catch (err) {
+    // `invalid_grant` is the expected weekly expiry of a Testing-mode Google refresh token.
+    // It keeps its code so the UI can offer a calm Reconnect instead of reporting a sync failure.
+    if (err instanceof CloudError && err.code === 'invalid_grant') {
+      throw new CloudError('auth', `Your ${providerId} sign-in has expired — sign in again to resume syncing`, err.status, 'invalid_grant');
+    }
     const msg = err instanceof Error ? err.message : String(err);
-    throw new CloudError('auth', `Could not refresh the ${providerId} session (${msg}) — reconnect required`);
+    throw new CloudError('auth', `Could not refresh the ${providerId} session (${msg}) — reconnect required`, undefined, err instanceof CloudError ? err.code : undefined);
   }
 }

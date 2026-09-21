@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearTokens, getValidAccessToken, loadTokens, parseStoredTokens, saveTokens, tokenStorageKey } from './tokenStore';
-import { CloudError, type OAuthTokens } from './types';
+import { CloudError, isExpiredSignIn, type OAuthTokens } from './types';
 import { fetchCall, jsonResponse } from './testFixtures';
 
 function stubLocalStorage(): Map<string, string> {
@@ -87,8 +87,58 @@ describe('getValidAccessToken', () => {
   });
 
   it('wraps a failed refresh as a reconnect-required auth error', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'invalid_grant' }, 400)));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'invalid_client', error_description: 'Unauthorized' }, 401)));
     await saveTokens('google', { accessToken: 'old', refreshToken: 'rt', expiresAt: 0 });
     await expect(getValidAccessToken('google', { clientId: 'cid' })).rejects.toThrow(/reconnect required/);
+  });
+});
+
+/**
+ * Google ends a refresh token after seven days while the OAuth project is in Testing mode, which
+ * the restricted `drive` scope forces the app to stay in. The token endpoint then answers
+ * `invalid_grant`. That is a weekly, expected event with a one-click cure, so it must arrive at
+ * the UI as an identifiable expired sign-in — never as an unhandled throw or a generic failure.
+ */
+describe('getValidAccessToken — the weekly invalid_grant', () => {
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'invalid_grant', error_description: 'Token has been expired or revoked.' }, 400)));
+    await saveTokens('google', { accessToken: 'old', refreshToken: 'rt', expiresAt: 0 });
+  });
+
+  it('rejects with a CloudError rather than letting the raw fetch failure escape', async () => {
+    const err = await getValidAccessToken('google', { clientId: 'cid' }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(CloudError);
+    expect((err as CloudError).kind).toBe('auth');
+  });
+
+  it('keeps the invalid_grant code so the UI can tell expiry from a real fault', async () => {
+    const err = await getValidAccessToken('google', { clientId: 'cid' }).catch((e: unknown) => e);
+    expect((err as CloudError).code).toBe('invalid_grant');
+    expect(isExpiredSignIn(err)).toBe(true);
+  });
+
+  it('says the sign-in expired, not that a sync failed', async () => {
+    await expect(getValidAccessToken('google', { clientId: 'cid' })).rejects.toThrow(/sign-in has expired/);
+  });
+
+  it('does not classify an ordinary auth failure as an expired sign-in', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'invalid_client' }, 401)));
+    const err = await getValidAccessToken('google', { clientId: 'cid' }).catch((e: unknown) => e);
+    expect(isExpiredSignIn(err)).toBe(false);
+  });
+});
+
+describe('getValidAccessToken — the other reconnect cases', () => {
+  it('marks "never connected" as an expired sign-in so the UI offers Connect', async () => {
+    const err = await getValidAccessToken('onedrive', { clientId: 'cid' }).catch((e: unknown) => e);
+    expect((err as CloudError).code).toBe('not_connected');
+    expect(isExpiredSignIn(err)).toBe(true);
+  });
+
+  it('marks an expired token with no refresh token the same way (the web implicit flow)', async () => {
+    await saveTokens('google', { accessToken: 'old', expiresAt: 0 });
+    const err = await getValidAccessToken('google', { clientId: 'cid' }).catch((e: unknown) => e);
+    expect((err as CloudError).code).toBe('expired_token');
+    expect(isExpiredSignIn(err)).toBe(true);
   });
 });

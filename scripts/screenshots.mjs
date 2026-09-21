@@ -155,7 +155,18 @@ const OVERLAYS = [
       await page.getByRole('menuitem', { name: /^Settings/ }).click();
     },
   ],
-  ['cloud', async (page) => page.click('#header-drive-folder-btn')],
+  // Settings > Cloud sync: the one-click Connect state. This is the shot that proves the panel
+  // shows a button per provider and no credential fields — the Advanced disclosure stays folded.
+  [
+    'cloud',
+    async (page) => {
+      await page.click('#app-menu-btn');
+      await page.getByRole('menuitem', { name: /^Settings/ }).click();
+      await page.getByRole('tab', { name: /Cloud sync/i }).first().click();
+      await page.waitForTimeout(250);
+    },
+  ],
+  ['cloud-project', async (page) => page.click('#header-drive-folder-btn')],
   ['ai-assistant', async (page) => page.click('#ai-assistant-btn')],
   ['task-editor', async (page) => page.click('[data-tour="new-task"]')],
   [

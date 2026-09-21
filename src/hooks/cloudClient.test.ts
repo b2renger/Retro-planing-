@@ -4,7 +4,10 @@ import type { SyncState } from '../services/cloud/syncEngine';
 import type { CloudSettings } from '../types';
 import {
   compareDocuments,
+  isProviderConfigured,
   lastLocalChangeOf,
+  plainPermissions,
+  providerCredentials,
   linkFromSyncState,
   oauthConfig,
   redirectAdvice,
@@ -43,6 +46,34 @@ describe('oauthConfig', () => {
       clientId: 'x',
       clientSecret: undefined,
     });
+  });
+});
+
+describe('providerCredentials', () => {
+  it('reports a pasted client id as the user override', () => {
+    expect(providerCredentials(SETTINGS, 'google').source).toBe('user');
+    expect(providerCredentials(SETTINGS, 'onedrive').source).toBe('user');
+  });
+
+  it('reports "none" when neither the user nor this build supplied an id', () => {
+    const empty: CloudSettings = { google: { clientId: '' }, onedrive: { clientId: '' } };
+    // The test build sets no VITE_* ids, so this is the unconfigured-build case exactly.
+    expect(providerCredentials(empty, 'google').source).toBe('none');
+    expect(isProviderConfigured(empty, 'google')).toBe(false);
+  });
+
+  it('is configured as soon as a client id exists', () => {
+    expect(isProviderConfigured(SETTINGS, 'onedrive')).toBe(true);
+  });
+});
+
+describe('plainPermissions', () => {
+  it('has one plain sentence per requested scope, with no raw scope URL left over', () => {
+    for (const providerId of ['google', 'onedrive'] as const) {
+      const lines = plainPermissions(providerId);
+      expect(lines).toHaveLength(scopeExplanations(providerId).length);
+      for (const line of lines) expect(line).not.toContain('googleapis.com/auth');
+    }
   });
 });
 

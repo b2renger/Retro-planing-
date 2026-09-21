@@ -82,7 +82,8 @@ export const CloudLinkedView: React.FC<Props> = ({ project, onError }) => {
         { protectDocId: activeViewTab === 'markdown' ? activeDocument?.id : undefined }
       );
       setOutcome(result);
-      if (result.error) onError(result.error);
+      // An expired sign-in is not a panel error: CloudPanel shows its own calm Reconnect band.
+      if (result.error && !result.expired) onError(result.error);
       // The new sync state re-runs the effect below, which re-lists the folder against the
       // project the store now holds — re-listing here would read the pre-sync project.
     } finally {
@@ -110,6 +111,7 @@ export const CloudLinkedView: React.FC<Props> = ({ project, onError }) => {
             <p className="text-xs text-fg-muted mt-1">
               {PROVIDER_LABELS[link.providerId]} · {lastSync ? `last synced ${lastSync}` : 'never synced yet'}
               {cloudStatus.state === 'error' && cloudStatus.message ? ` · ${cloudStatus.message}` : ''}
+              {cloudStatus.state === 'expired' ? ' · sign-in expired' : ''}
             </p>
           </div>
           <div className="shrink-0 flex items-center gap-1.5">
@@ -141,6 +143,8 @@ export const CloudLinkedView: React.FC<Props> = ({ project, onError }) => {
                 </span>
               )}
             </p>
+          ) : outcome.expired ? (
+            <p className="text-xs text-amber-700 dark:text-amber-300">Sign-in expired — reconnect above and this run will go through untouched.</p>
           ) : (
             <p className="text-xs text-rose-700 dark:text-rose-300">{outcome.error ?? 'The run produced no result.'}</p>
           )}

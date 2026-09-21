@@ -26,6 +26,32 @@ function extractMessage(text: string): string {
   return text.slice(0, 300);
 }
 
+/**
+ * Extracts the provider's machine-readable error code, when the body carries one.
+ *
+ * OAuth token endpoints answer `{ "error": "invalid_grant", "error_description": "…" }`, and the
+ * description is what the user reads — but the *code* is what tells the app that the grant is
+ * gone and a reconnect is the fix rather than a retry. `extractMessage` prefers the description,
+ * so the code has to be read separately or it is lost.
+ */
+export function extractCode(text: string): string | undefined {
+  try {
+    const j: unknown = JSON.parse(text);
+    if (!j || typeof j !== 'object') return undefined;
+    const err = (j as { error?: unknown }).error;
+    if (typeof err === 'string') return err;
+    if (err && typeof err === 'object') {
+      const status = (err as { status?: unknown }).status;
+      if (typeof status === 'string') return status;
+      const code = (err as { code?: unknown }).code;
+      if (typeof code === 'string') return code;
+    }
+  } catch {
+    /* not JSON */
+  }
+  return undefined;
+}
+
 /** Maps an HTTP status (plus body hints) to a `CloudErrorKind`. */
 export function kindForStatus(status: number, bodyText: string): CloudErrorKind {
   if (status === 401) return 'auth';
@@ -45,7 +71,7 @@ export function kindForStatus(status: number, bodyText: string): CloudErrorKind 
 export function throwCloudError(res: HttpResponse, context: string): never {
   const kind = kindForStatus(res.status, res.text);
   const detail = extractMessage(res.text);
-  throw new CloudError(kind, `${context}: HTTP ${res.status}${detail ? ' — ' + detail : ''}`, res.status);
+  throw new CloudError(kind, `${context}: HTTP ${res.status}${detail ? ' — ' + detail : ''}`, res.status, extractCode(res.text));
 }
 
 /**

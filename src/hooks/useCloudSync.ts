@@ -8,8 +8,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { executeSync, fetchRemoteSnapshot, planSync, type SyncAction, type SyncSummary } from '../services/cloud/syncEngine';
-import { isCloudError } from '../services/cloud/types';
-import type { CloudSettings, MarkdownDoc, Notification, Project, ProjectCloudLink } from '../types';
+import { isCloudError, isExpiredSignIn } from '../services/cloud/types';
+import type { CloudSettings, CloudStatus, MarkdownDoc, Notification, Project, ProjectCloudLink } from '../types';
 import { createProvider, lastLocalChangeOf, linkFromSyncState, PROVIDER_LABELS, summaryLine } from './cloudClient';
 
 /** Poll interval while things are healthy. */
@@ -24,7 +24,7 @@ export interface SyncDeps {
   cloudSettings: CloudSettings;
   applyCloudPatch: (projectId: string, patch: { documents?: MarkdownDoc[]; projectPatch?: Partial<Project> }) => void;
   setCloudLink: (projectId: string, link: ProjectCloudLink | null) => void;
-  setCloudStatus: (status: { state: 'idle' | 'syncing' | 'ok' | 'error'; message?: string; lastSyncAt?: string }) => void;
+  setCloudStatus: (status: CloudStatus) => void;
   addNotification: (n: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
 }
 
@@ -51,6 +51,11 @@ export interface SyncOutcome {
   error?: string;
   /** True when the token is gone or unrefreshable: the UI must offer Connect again. */
   needsReconnect?: boolean;
+  /**
+   * True when the *only* thing wrong is an expired sign-in. Nothing was lost and nothing has to
+   * be re-entered — a single Reconnect click resumes. Callers must not render this as an error.
+   */
+  expired?: boolean;
   lastSyncAt?: string;
 }
 
@@ -122,17 +127,28 @@ export async function runProjectSync(project: Project, deps: SyncDeps, opts: Syn
     return { ok, summary: result.summary, errors, warnings, deferred, lastSyncAt: result.state.lastSyncAt };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const needsReconnect = isCloudError(err) && err.kind === 'auth';
-    deps.setCloudStatus({ state: 'error', message, lastSyncAt: link.lastSyncAt });
+    const expired = isExpiredSignIn(err);
+    const needsReconnect = expired || (isCloudError(err) && err.kind === 'auth');
+    // An expired sign-in gets its own status, never `error`: the chip and the panel then show a
+    // Reconnect button instead of a red failure the user cannot act on.
+    deps.setCloudStatus(
+      expired
+        ? { state: 'expired', message, lastSyncAt: link.lastSyncAt, providerId: link.providerId }
+        : { state: 'error', message, lastSyncAt: link.lastSyncAt }
+    );
     if (opts.notifyErrors !== false) {
       deps.addNotification({
-        title: needsReconnect ? `${PROVIDER_LABELS[link.providerId]} needs reconnecting` : `${PROVIDER_LABELS[link.providerId]} sync failed`,
-        message,
+        title: expired
+          ? `${PROVIDER_LABELS[link.providerId]} sign-in expired`
+          : needsReconnect
+            ? `${PROVIDER_LABELS[link.providerId]} needs reconnecting`
+            : `${PROVIDER_LABELS[link.providerId]} sync failed`,
+        message: expired ? 'Sign in again from the cloud panel to resume syncing. Nothing was lost.' : message,
         type: 'status_update',
         projectId: project.id,
       });
     }
-    return { ok: false, errors: hardErrors.map((m) => ({ action: 'sync', message: m })), warnings, deferred: [], error: message, needsReconnect };
+    return { ok: false, errors: hardErrors.map((m) => ({ action: 'sync', message: m })), warnings, deferred: [], error: message, needsReconnect, expired };
   }
 }
 

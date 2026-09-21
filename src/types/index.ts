@@ -247,10 +247,17 @@ export interface CloudSettings {
   onedrive: { clientId: string };
 }
 
+/**
+ * `expired` is deliberately NOT `error`: a Google refresh token issued by a project in Testing
+ * mode dies after seven days (the price of the restricted `drive` scope), so an expired sign-in
+ * is a routine, expected event with a one-click cure. The UI must never dress it as a failure.
+ */
 export interface CloudStatus {
-  state: 'idle' | 'syncing' | 'ok' | 'error';
+  state: 'idle' | 'syncing' | 'ok' | 'error' | 'expired';
   message?: string;
   lastSyncAt?: string; // ISO 8601
+  /** Which account needs signing in again. Only set with `state: 'expired'`. */
+  providerId?: CloudProviderId;
 }
 
 export type CloudAccounts = Partial<Record<CloudProviderId, CloudAccount>>;

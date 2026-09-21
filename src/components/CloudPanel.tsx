@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, HardDrive, Settings } from 'lucide-react';
+import { AlertTriangle, HardDrive, Loader2, LogIn, Settings } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Modal } from './ui/Modal';
 import { CloudLinkSetup } from './cloud/CloudLinkSetup';
@@ -7,6 +7,7 @@ import { CloudLinkedView } from './cloud/CloudLinkedView';
 import { PROVIDER_LABELS } from '../hooks/cloudClient';
 import { BTN_PRIMARY, BTN_SECONDARY } from './settings/controls';
 import { requestSettingsTab } from './settings/settingsTabs';
+import { useCloudConnect } from '../hooks/useCloudConnect';
 import type { CloudProviderId } from '../services/cloud/types';
 
 const ALL_PROVIDERS: CloudProviderId[] = ['google', 'onedrive'];
@@ -17,8 +18,9 @@ const ALL_PROVIDERS: CloudProviderId[] = ['google', 'onedrive'];
  * has not actually happened — every claim comes from the store or from a live provider call.
  */
 export const CloudPanel: React.FC = () => {
-  const { isCloudPanelOpen, setIsCloudPanelOpen, setIsSettingsOpen, activeProject, cloudAccounts } = useApp();
+  const { isCloudPanelOpen, setIsCloudPanelOpen, setIsSettingsOpen, activeProject, cloudAccounts, cloudStatus } = useApp();
   const [error, setError] = React.useState<string | null>(null);
+  const { busy, connect } = useCloudConnect();
 
   const close = () => setIsCloudPanelOpen(false);
   const openSettings = () => {
@@ -87,6 +89,23 @@ export const CloudPanel: React.FC = () => {
             <button type="button" onClick={openSettings} className={BTN_PRIMARY}>
               <Settings className="w-3.5 h-3.5" />
               <span>Reconnect</span>
+            </button>
+          </div>
+        )}
+
+        {activeProject && link && linkedProviderConnected && cloudStatus.state === 'expired' && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-2">
+            <h3 className="text-sm font-bold text-amber-800 dark:text-amber-200 flex items-center gap-2">
+              <LogIn className="w-4 h-4 shrink-0" />
+              Sign in again to resume syncing
+            </h3>
+            <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+              {PROVIDER_LABELS[link.providerId]} ends a sign-in every seven days while this app is unverified. Your files, your folder and this project’s link
+              are untouched — one click puts the connection back and syncing carries on where it stopped.
+            </p>
+            <button type="button" onClick={() => void connect(link.providerId)} className={BTN_PRIMARY} disabled={busy === link.providerId}>
+              {busy === link.providerId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogIn className="w-3.5 h-3.5" />}
+              <span>{busy === link.providerId ? 'Signing in…' : 'Reconnect'}</span>
             </button>
           </div>
         )}
