@@ -1,7 +1,7 @@
 {
   "name": "retroplaningstudio",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "RetroPlaningStudio - retro-planning and design-ops studio: timeline, tasks, markdown docs, AI assistants, cloud sync and desktop builds.",
   "author": "b2renger",
@@ -20,11 +20,12 @@
     "electron:dev": "npm run build:electron && electron . --dev",
     "gen:icon": "node scripts/gen-icon.cjs",
     "verify:macsign": "node scripts/verify-mac-signature.cjs",
-    "package:mac": "npm run build:all && electron-builder --mac --arm64 --x64 --publish never && node scripts/verify-mac-signature.cjs",
+    "package:mac": "npm run build:all && electron-builder --mac --arm64 --x64 --publish never && node scripts/verify-mac-signature.cjs && npm run verify:launch",
     "package:win": "npm run build:all && electron-builder --win --x64 --publish never",
     "package:all": "npm run build:all && electron-builder --mac --arm64 --x64 --win --x64 --publish never && node scripts/verify-mac-signature.cjs",
     "package:dir": "npm run build:all && electron-builder --dir",
-    "build:web": "vite build"
+    "build:web": "vite build",
+    "verify:launch": "node scripts/verify-launch.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
