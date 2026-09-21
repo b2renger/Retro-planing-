@@ -2,7 +2,6 @@
  * Pure helpers behind the settings panels. Kept out of the components so they can be unit tested
  * without a DOM (see `helpers.test.ts`).
  */
-import type { SecretsBackend } from '../../state/secrets';
 import { normalizeLlmOnLanEndpoint, normalizeOpenAiBaseUrl } from '../../services/ai/providers/openaiCompatible';
 import { PROVIDER_CATALOG } from '../../services/ai/registry';
 import type { AiProviderConfig, AiProviderId } from '../../services/ai/types';
@@ -45,18 +44,6 @@ export function canLoadModels(providerId: AiProviderId, draft: { apiKey?: string
   if (entry.requiresKey && !draft.apiKey?.trim()) return false;
   if (entry.requiresBaseUrl && !draft.baseUrl?.trim()) return false;
   return true;
-}
-
-/** Where API keys end up on this build. Says exactly that — no safety claim beyond it. */
-export function secretsStorageNote(backend: SecretsBackend): string {
-  switch (backend) {
-    case 'secure-store':
-      return 'Keys are encrypted by your operating system keychain and never written to the app’s own files.';
-    case 'local-storage':
-      return 'Keys are stored in this browser’s local storage, in clear text. Anything that can run script on this page can read them.';
-    default:
-      return 'No storage is available on this device, so keys live in memory only and are lost when the page reloads.';
-  }
 }
 
 /** `Label`, `Label 2`, `Label 3`… — first name not already taken (case-insensitive). */

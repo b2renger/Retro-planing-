@@ -8,12 +8,12 @@ import {
   DOC_STATE_LABELS,
   openCloudUrl,
   PROVIDER_LABELS,
-  relativeTime,
   summaryLine,
   type DocStatusRow,
   type DocSyncState,
 } from '../../hooks/cloudClient';
 import { runProjectSync, type SyncOutcome } from '../../hooks/useCloudSync';
+import { relativeTime } from '../../utils/time';
 import { BTN_DANGER, BTN_PRIMARY, BTN_SECONDARY } from '../settings/controls';
 import type { Project } from '../../types';
 

@@ -8,7 +8,6 @@ import {
   linkFromSyncState,
   oauthConfig,
   redirectAdvice,
-  relativeTime,
   scopeExplanations,
   summaryLine,
 } from './cloudClient';
@@ -76,22 +75,6 @@ describe('scopeExplanations', () => {
       expect(rows.length).toBeGreaterThan(0);
       for (const row of rows) expect(row.meaning).not.toBe('Requested by the provider.');
     }
-  });
-});
-
-describe('relativeTime', () => {
-  const now = Date.parse('2024-03-01T12:00:00.000Z');
-  it('formats the usual buckets', () => {
-    expect(relativeTime('2024-03-01T11:59:56.000Z', now)).toBe('just now');
-    expect(relativeTime('2024-03-01T11:59:30.000Z', now)).toBe('30 s ago');
-    expect(relativeTime('2024-03-01T11:56:00.000Z', now)).toBe('4 min ago');
-    expect(relativeTime('2024-03-01T09:00:00.000Z', now)).toBe('3 h ago');
-    expect(relativeTime('2024-02-26T12:00:00.000Z', now)).toBe('4 d ago');
-  });
-
-  it('returns null rather than inventing a time', () => {
-    expect(relativeTime(undefined, now)).toBeNull();
-    expect(relativeTime('not a date', now)).toBeNull();
   });
 });
 

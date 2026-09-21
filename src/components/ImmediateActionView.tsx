@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useApp, useActiveProject } from '../context/AppContext';
-import { MOCK_USERS } from '../data/mockData';
 import {
-  AlertTriangle,
   Clock,
   CheckCircle2,
   Calendar,
@@ -10,23 +8,17 @@ import {
   ArrowRight,
   HelpCircle,
   Plus,
-  Play,
-  Zap,
   Flame,
   FileText,
   Check,
-  Filter,
-  CheckCheck,
   ChevronRight,
-  ShieldCheck,
-  Database,
+  User,
 } from 'lucide-react';
-import { Task } from '../types';
 import { analyzeDependencies } from '../services/ai/tasks';
+import { resolveAssignee } from './assignee';
 
 export const ImmediateActionView: React.FC = () => {
   const {
-    currentUser,
     updateTaskStatus,
     toggleChecklistItem,
     resolveClarification,
@@ -34,6 +26,7 @@ export const ImmediateActionView: React.FC = () => {
     setIsCreateTaskModalOpen,
     setEditingTaskId,
     activeAiProvider,
+    teamMembers,
   } = useApp();
   const activeProject = useActiveProject();
 
@@ -54,11 +47,6 @@ export const ImmediateActionView: React.FC = () => {
     () => activeProject.tasks.filter((t) => t.status === 'in-progress'),
     [activeProject.tasks]
   );
-  const unresolvedQuestions = useMemo(
-    () => activeProject.clarificationQuestions.filter((q) => !q.resolved),
-    [activeProject.clarificationQuestions]
-  );
-
   // Filtered list based on tab
   const displayedTasks = useMemo(() => {
     switch (activeFilter) {
@@ -80,8 +68,6 @@ export const ImmediateActionView: React.FC = () => {
           });
     }
   }, [activeFilter, criticalPathTasks, urgentTasks, inProgressTasks, activeProject.tasks]);
-
-  const upcomingMilestone = activeProject.milestones.find((m) => !m.completed) || activeProject.milestones[0];
 
   const handleRunAiAudit = async () => {
     setAiChecking(true);
@@ -111,9 +97,7 @@ export const ImmediateActionView: React.FC = () => {
     }
   };
 
-  const getAssignee = (userId: string) => {
-    return MOCK_USERS.find((u) => u.id === userId) || MOCK_USERS[0];
-  };
+  const getAssignee = (userId: string) => resolveAssignee(userId, teamMembers);
 
   const getPhase = (phaseId: string) => {
     return activeProject.phases.find((p) => p.id === phaseId);
@@ -349,12 +333,14 @@ export const ImmediateActionView: React.FC = () => {
                           {/* Deliverable Tokens & Meta */}
                           <div className="flex items-center justify-between pt-1 text-[10px] text-fg-muted flex-wrap gap-2">
                             <div className="flex items-center gap-2 shrink-0">
-                              <img
-                                src={assignee.avatar}
-                                alt={assignee.name}
-                                className="w-4 h-4 rounded-full object-cover shrink-0"
-                              />
-                              <span className="truncate max-w-[100px]">{assignee.name}</span>
+                              {assignee.avatar ? (
+                                <img src={assignee.avatar} alt="" className="w-4 h-4 rounded-full object-cover shrink-0" />
+                              ) : (
+                                <User className="w-3.5 h-3.5 text-fg-subtle shrink-0" aria-hidden="true" />
+                              )}
+                              <span className={`truncate max-w-[100px] ${assignee.known ? '' : 'italic text-fg-subtle'}`}>
+                                {assignee.name}
+                              </span>
                               <span>&bull;</span>
                               <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1 font-mono shrink-0">
                                 <Clock className="w-3 h-3" />

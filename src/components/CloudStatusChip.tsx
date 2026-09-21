@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Check, CloudOff, HardDrive, RefreshCw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { relativeTime } from '../hooks/cloudClient';
+import { relativeTime } from '../utils/time';
 
 /** Re-renders every 30 s so "synced 4 min ago" stays true without a global timer. */
 function useTick(intervalMs = 30_000): void {
@@ -13,10 +13,11 @@ function useTick(intervalMs = 30_000): void {
 }
 
 /**
- * Navbar chip for `cloudStatus`. It reports only what actually happened: an unlinked project
- * says so, and a "synced" label is rendered only when a sync really produced a timestamp.
+ * The project's cloud folder: state and the way in, in one control. It reports only what actually
+ * happened — an unlinked project says so, and a "synced" label appears only when a sync really
+ * produced a timestamp.
  */
-export const CloudStatusChip: React.FC = () => {
+export const CloudStatusChip: React.FC<{ id?: string }> = ({ id = 'cloud-status-chip' }) => {
   const { cloudStatus, activeProject, setIsCloudPanelOpen } = useApp();
   useTick();
 
@@ -58,7 +59,7 @@ export const CloudStatusChip: React.FC = () => {
 
   return (
     <button
-      id="cloud-status-chip"
+      id={id}
       type="button"
       onClick={() => setIsCloudPanelOpen(true)}
       title={title}

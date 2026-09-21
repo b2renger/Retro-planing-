@@ -1,23 +1,30 @@
 import React, { useState } from 'react';
 import { useApp, useActiveProject } from '../context/AppContext';
-import { MOCK_USERS } from '../data/mockData';
+import { timestampLabel } from '../utils/time';
 import {
   GitCommit,
   Clock,
-  RotateCcw,
   Sparkles,
   Calendar,
-  FileText,
-  User,
-  Filter,
   CheckCircle2,
 } from 'lucide-react';
 import { HistoryEntry } from '../types';
 
 export const HistoryAuditView: React.FC = () => {
   const activeProject = useActiveProject();
+  const { teamMembers } = useApp();
   const [filterAction, setFilterAction] = useState<string>('all');
   const [filterUser, setFilterUser] = useState<string>('all');
+
+  // Current members, plus anyone who acted on this project and has since been removed — otherwise
+  // their entries would be unreachable through the filter.
+  const actorOptions = React.useMemo(() => {
+    const byId = new Map<string, string>(teamMembers.map((u) => [u.id, u.name]));
+    for (const entry of activeProject.history) {
+      if (entry.userId && !byId.has(entry.userId)) byId.set(entry.userId, `${entry.userName} (removed)`);
+    }
+    return Array.from(byId, ([id, name]) => ({ id, name }));
+  }, [teamMembers, activeProject.history]);
 
   const filteredHistory = activeProject.history.filter((h) => {
     const matchesAction = filterAction === 'all' || h.actionType === filterAction;
@@ -75,20 +82,6 @@ export const HistoryAuditView: React.FC = () => {
     }
   };
 
-  const formatTimestamp = (ts: string) => {
-    try {
-      const d = new Date(ts);
-      return d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return ts;
-    }
-  };
-
   return (
     <div className="w-full max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6 overflow-hidden">
       {/* Header & Filter Controls */}
@@ -126,7 +119,7 @@ export const HistoryAuditView: React.FC = () => {
             className="px-3 py-1.5 rounded-xl bg-input border border-line text-xs text-fg focus:outline-none"
           >
             <option value="all" className="bg-card">All Collaborators</option>
-            {MOCK_USERS.map((u) => (
+            {actorOptions.map((u) => (
               <option key={u.id} value={u.id} className="bg-card">
                 {u.name}
               </option>
@@ -143,7 +136,9 @@ export const HistoryAuditView: React.FC = () => {
           </div>
         ) : (
           <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-elevated">
-            {filteredHistory.map((entry) => (
+            {filteredHistory.map((entry) => {
+              const when = timestampLabel(entry.timestamp);
+              return (
               <div key={entry.id} className="relative group">
                 <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-blue-500 border-2 border-card ring-2 ring-blue-500/20" />
 
@@ -160,10 +155,14 @@ export const HistoryAuditView: React.FC = () => {
                       {getActionBadge(entry.actionType)}
                     </div>
 
-                    <div className="flex items-center gap-2 text-[11px] text-fg-muted font-mono">
-                      <Clock className="w-3 h-3" />
-                      <span>{formatTimestamp(entry.timestamp)}</span>
-                    </div>
+                    {when && (
+                      <div className="flex items-center gap-2 text-[11px] text-fg-muted">
+                        <Clock className="w-3 h-3" />
+                        <time dateTime={entry.timestamp} title={when.title}>
+                          {when.text}
+                        </time>
+                      </div>
+                    )}
                   </div>
 
                   <p className="text-xs text-fg leading-relaxed">{entry.description}</p>
@@ -183,7 +182,8 @@ export const HistoryAuditView: React.FC = () => {
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

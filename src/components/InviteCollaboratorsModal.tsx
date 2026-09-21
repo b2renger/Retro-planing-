@@ -12,9 +12,6 @@ import {
   Users,
   Trash2,
   CheckCircle2,
-  AlertCircle,
-  ExternalLink,
-  ChevronRight,
   UserCheck,
 } from 'lucide-react';
 import { useApp, useActiveProject } from '../context/AppContext';

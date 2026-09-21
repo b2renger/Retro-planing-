@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Bell, Check, Clock, AlertTriangle, Sparkles, ArrowRight, X } from 'lucide-react';
+import { timestampLabel } from '../utils/time';
+import { Bell, Check, Clock, Sparkles, X } from 'lucide-react';
 
 interface NotificationCenterProps {
   onClose: () => void;
@@ -74,7 +75,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onClose 
             No notifications in this filter.
           </div>
         ) : (
-          filtered.map((n) => (
+          filtered.map((n) => {
+            const when = timestampLabel(n.timestamp);
+            return (
             <div
               key={n.id}
               onClick={() => {
@@ -110,7 +113,11 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onClose 
                   <span className={`text-xs font-semibold truncate ${!n.read ? 'text-fg' : 'text-fg-muted'}`}>
                     {n.title}
                   </span>
-                  <span className="text-[10px] text-fg-muted shrink-0">{n.timestamp}</span>
+                  {when && (
+                    <time dateTime={n.timestamp} title={when.title} className="text-[10px] text-fg-muted shrink-0">
+                      {when.text}
+                    </time>
+                  )}
                 </div>
                 <p className="text-[11px] text-fg-muted mt-0.5 line-clamp-2 leading-relaxed">{n.message}</p>
               </div>
@@ -119,7 +126,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onClose 
                 <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />
               )}
             </div>
-          ))
+            );
+          })
         )}
       </div>
 

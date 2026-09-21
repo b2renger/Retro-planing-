@@ -25,7 +25,7 @@ there is no specificity race between the theme layer and the `.dark` block.
 `src/state/themeBoot.ts` sets the `dark` / `light` class, `color-scheme` and `data-theme` on
 `<html>` synchronously at import time (before React renders), so a light-theme user never sees a
 dark flash. `theme` is `'dark' | 'light' | 'system'`; `'system'` follows `prefers-color-scheme`
-live. The Navbar exposes all three via a segmented `role="radiogroup"` control.
+live. The navbar menu (`navbar/AppMenu.tsx`) exposes all three via a segmented `role="radiogroup"` control.
 
 **Tailwind 4.3 note.** Both `@variant name (...)` and `@custom-variant name (...)` are accepted at
 the top level for *defining* a variant — verified by compiling a probe stylesheet; both emit
@@ -133,10 +133,11 @@ The card is always `bg-card border border-line rounded-2xl shadow-2xl max-h-[85v
 `bg-black/50 backdrop-blur-sm` backdrop. Do not re-style those — one backdrop, one card colour.
 
 **Submit buttons in the footer:** the footer is outside the `<form>`, so give the form an `id` and
-the button `form={THAT_ID}`. `CreateTaskModal` and `CreateProjectModal` both do this.
+the button `form={THAT_ID}`. `TaskModal` and `CreateProjectModal` both do this.
 
-Users: `settings/SettingsModal`, `CloudPanel`, `CreateTaskModal`, `CreateProjectModal`,
-`AiAssistantModal`, `InviteCollaboratorsModal`, `tutorial/ExitDialog`, and the task inspector in
+Users: `settings/SettingsModal`, `CloudPanel`, `TaskModal` (create **and** edit — one form, one
+validation path), `CreateProjectModal`, `AiAssistantModal`, `InviteCollaboratorsModal`,
+`hardware/HardwareEditor`, `hardware/MediaEditor`, `tutorial/ExitDialog`, and the task inspector in
 `RetroplanningTimeline`. The tutorial coachmark (`tutorial/Coachmark.tsx`) is deliberately **not** a
 modal — it is a `role="dialog"` popover with `aria-modal="false"` over a `pointer-events-none`
 spotlight, so the app underneath stays usable while it is shown.

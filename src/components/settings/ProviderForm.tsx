@@ -1,12 +1,13 @@
 import React from 'react';
 import { ArrowLeft, CheckCircle2, ExternalLink, Loader2, XCircle } from 'lucide-react';
+import { capabilities } from '../../capabilities';
 import { useApp } from '../../context/AppContext';
 import { listModels, testConnection, type ConnectionTestResult } from '../../services/ai/client';
 import { PROVIDER_CATALOG } from '../../services/ai/registry';
 import type { AiProviderConfig, AiProviderId, ModelInfo } from '../../services/ai/types';
 import { BTN_GHOST, BTN_PRIMARY, BTN_SECONDARY, Field, INPUT_CLASS, LINK_CLASS } from './controls';
 import { FarmDiscovery } from './FarmDiscovery';
-import { canLoadModels, displayEndpoint, draftToConfig, missingRequirements, secretsStorageNote, uniqueLabel } from './helpers';
+import { canLoadModels, displayEndpoint, draftToConfig, missingRequirements, uniqueLabel } from './helpers';
 
 const OTHER = '__other__';
 
@@ -24,7 +25,8 @@ export interface ProviderFormProps {
  * the farm finder instead of a plain URL field.
  */
 export const ProviderForm: React.FC<ProviderFormProps> = ({ family, existing, onDone, onCancel }) => {
-  const { aiSettings, addAiProvider, updateAiProvider, secretsBackend, secretsReady } = useApp();
+  const { aiSettings, addAiProvider, updateAiProvider, secretsReady } = useApp();
+  const { keyStorageNote } = capabilities();
   const entry = PROVIDER_CATALOG[family];
   const isFarm = family === 'llmonlan';
 
@@ -160,7 +162,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({ family, existing, on
               htmlFor="provider-key"
               hint={
                 <>
-                  {secretsStorageNote(secretsBackend)}{' '}
+                  {keyStorageNote}{' '}
                   <a href={entry.docsUrl} target="_blank" rel="noreferrer" className={LINK_CLASS}>
                     Get a key
                   </a>
@@ -180,7 +182,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({ family, existing, on
               />
             </Field>
           ) : (
-            <Field label="API key" suffix="optional" htmlFor="provider-key" hint={`${entry.keyHint}. ${secretsStorageNote(secretsBackend)}`}>
+            <Field label="API key" suffix="optional" htmlFor="provider-key" hint={`${entry.keyHint}. ${keyStorageNote}`}>
               <input
                 id="provider-key"
                 type="password"

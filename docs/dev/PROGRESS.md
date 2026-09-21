@@ -454,3 +454,121 @@ demo task and flipped the real delivery date) can never happen again.
   experience for now.
 - `docs/audit/FEATURE-AUDIT.md` rows 63-65 and 73-74 still describe the old surfaces; they are now
   historical.
+
+## 2026-09-21 — Capability gating + the polish backlog (DONE, not committed)
+
+Two jobs: make the web build honest about what it cannot do, and clear the backlog the previous
+three handoffs left behind.
+
+### Part 1 — `src/capabilities.ts`
+One module, the only place `window.desktop` is read (`desktopBridge()`), the only place a build
+capability is decided. `capabilities()` (memoised) → `{ hasDesktop, canDiscoverFarms, canUseLanFarms,
+canOauthLoopback, canOpenExternal, canSaveNatively, secretsBackend: 'keychain' | 'localStorage',
+secretsPersisted, keyStorageNote, platformLabel, buildLabel }`. `computeCapabilities(env)` is the
+pure function behind it; `src/capabilities.test.ts` (16 tests) covers **all four**
+`canUseLanFarms({hasDesktop, protocol})` combinations plus the bridge-feature and secrets cases.
+
+`canUseLanFarms` is false **only** for a browser on an `https:` page: a secure page may not call
+`http://192.168.1.20:4000`, the browser blocks it before it leaves. Desktop → true (main process
+makes the call); browser on `http:` (local dev) → true.
+
+Wired:
+- `settings/LanFarmNotice.tsx` (new) — the explanation + link to the README's desktop-app section
+  (`DESKTOP_DOWNLOAD_URL`). Rendered by `AiProvidersPanel` in place of the LlmOnLan card in the
+  provider picker, and by `FarmDiscovery` in place of the whole farm form, when `!canUseLanFarms`.
+  The "Find a LlmOnLan farm" shortcut buttons are not rendered then either.
+- `FarmDiscovery` scan button → `canDiscoverFarms` (was its own `window.desktop?.discoverFarms` probe).
+- `AboutPanel` build line → `caps.buildLabel`.
+- Key-storage copy → `caps.keyStorageNote` in `AiProvidersPanel` + `ProviderForm`;
+  `CloudSyncPanel` clear-text warning → `caps.secretsBackend === 'localStorage'`.
+  `secretsStorageNote` is gone from `settings/helpers.ts` (its two tests moved to capabilities).
+- `hooks/cloudClient.ts`: `isDesktopRuntime()` → `capabilities().canOauthLoopback`; `openCloudUrl`
+  → `desktopBridge()`.
+- The facade still exposes its own three-valued `secretsBackend` (`'secure-store' | 'local-storage'
+  | 'none'`); **no component reads it any more**. Left in place rather than churn the facade.
+
+### Part 2 — the backlog
+1. **`MOCK_USERS` out of every component.** New pure `src/components/assignee.ts`
+   (`resolveAssignee`, `shortAssigneeName`, `UNASSIGNED`) + 7 tests. An unknown `assigneeId` now
+   renders **Unassigned** (italic, no avatar, a person icon instead), never the first mock user —
+   that fallback made a removed member's tasks look like someone else's. Used by `TaskBoard` and
+   `ImmediateActionView`. `HistoryAuditView`'s collaborator filter is built from `teamMembers` plus
+   any actor in this project's history who is no longer a member (labelled "(removed)"), so their
+   entries stay reachable.
+2. **One task form.** `CreateTaskModal.tsx` and `EditTaskModal.tsx` are **deleted**; `TaskModal.tsx`
+   serves both modes (create bound to `isCreateTaskModalOpen`, edit to `editingTaskId`; edit wins if
+   both are set) over the shared `editTask/TaskFormFields.tsx`. One validation path (`validateDraft`).
+   `editTask/draft.ts` gained `firstPhaseId`, `emptyDraft(project)` and `draftToNewTask(draft,
+   projectId)` (+11 tests). Defaults are **empty** — no dates, hours, deliverables, checklist, tags
+   or assignee — and the phase is the active project's first by `order`, recomputed on every open
+   (the draft is re-seeded on a `seed` key that goes through `null` when the dialog closes), which is
+   audit row 26. In create mode field errors appear after the first submit attempt, not on a blank form.
+3. **No hardcoded scheduling claims.** `ProjectHeader`'s metric strip is entirely
+   `computeProjectHealth`: target date + days remaining, slack/overrun + overdue, flagged-critical
+   count, tasks done. `calculateDaysRemaining` (with its `catch { return 60 }`) is gone, as is
+   "% Safe" in permanent green. With no valid target date the strip says "No target date set" /
+   "Needs a target date" instead of showing a 0. Same in `HardwareMediaView`.
+4. **Hardware & Media is editable (option a).** `updateProject({hardwareItems, mediaAssets})` already
+   works, so the view now adds/edits/removes both lists through the facade: `hardware/manifest.ts`
+   (pure: summaries, `upsertById`, `removeById`, validation — 12 tests), `hardware/HardwareEditor.tsx`
+   and `hardware/MediaEditor.tsx` (shared `Modal`), `hardware/HardwareList.tsx`,
+   `hardware/MediaList.tsx`, `hardware/listChrome.tsx`. Every number is counted from the two lists;
+   "100% Booked & Confirmed", "Dual 20K Projection • 8.1 Spatial Dante", "12 To-Do Checkpoints" and
+   "6 Days Safety Margin" are gone. **The Booking / Testing / Review tabs are deleted**: they matched
+   tasks with `phaseId.includes('booking')` and were empty for every project created in the app
+   (audit row 35). Tasks live on the board and the timeline; nothing reachable was lost.
+5. **One navigation model.**
+   - View tabs: `ProjectHeader` (unchanged, active tab was `text-white` on `bg-elevated` — fixed to `text-fg`).
+   - Project-scoped action row in `ProjectHeader`: cloud folder (`CloudStatusChip`, which now takes an
+     `id` prop and carries `#header-drive-folder-btn` — status *and* the way in, in one control),
+     export, AI assistant (moved from the navbar), New task.
+   - App-scoped: ONE navbar menu (`navbar/AppMenu.tsx`) — account + persona, notifications (the
+     `NotificationCenter` opens from the same trigger), settings, tutorial, invite, theme, and
+     workspaces below `md` where the bar has no switcher. `Navbar.tsx` is now 140 lines.
+   - Deleted: the navbar's standalone Invite button, its AI-provider chip, its bell, its persona menu,
+     its theme strip and the whole mobile drawer (which duplicated four view tabs); `ProjectHeader`'s
+     Invite block and its "Crunch Notes" button (a second path to the Markdown tab).
+   - `TeamCollaborationView`'s "Invite New Collaborator" stays: it is that view's own primary action,
+     not chrome, so no action is now offered twice in the chrome on one screen.
+   - `navbar/useDismiss.ts` (new) closes the app menu, the workspace dropdown and the project picker
+     on Escape or an outside pointer press — audit P1 said none of them did.
+   - Tutorial anchors preserved: `#header-drive-folder-btn`, `#header-export-btn`, `data-tour="new-task"`.
+     `data-tour="ai-settings"` moved to the **menu trigger** — a coachmark can only point at something
+     on screen, and the Settings item sits behind a closed menu. `src/components/tutorial/**` untouched.
+6. **Timestamps.** `relativeTime` moved out of `hooks/cloudClient.ts` into `src/utils/time.ts`, which
+   also has `absoluteTime` and `timestampLabel(iso) => {text, title} | null` (13 tests).
+   `NotificationCenter`, `TeamCollaborationView` (comments + invitations) and `HistoryAuditView` now
+   render `<time dateTime={iso} title={absolute}>4 min ago</time>`; the four cloud call sites import
+   from the new module. `HistoryAuditView`'s `en-US` `formatTimestamp` is gone.
+7. **`noUnusedLocals` / `noUnusedParameters` are on in `tsconfig.json`** and the tree is clean. 43
+   findings fixed: ~35 dead lucide imports across 6 components, dead facade reads
+   (`toggleChecklistItem` in `TaskBoard`, `updateTeamMemberRole` in `TeamCollaborationView`,
+   `currentUser` in `ImmediateActionView`), dead locals (`unresolvedQuestions`, `upcomingMilestone`,
+   `phaseIdx` in `server.ts`) and two unused `req` params in `server.ts` (now `_req`).
+
+### Docs
+`docs/dev/STATE-API.md`: new "Build capabilities" section, `capabilities.ts` + `utils/time.ts` in the
+files table, `editingTaskId` now points at `TaskModal`. `docs/dev/THEME.md`: Modal users list
+(`TaskModal`, `hardware/*Editor`), theme control now lives in the navbar menu.
+The facade itself did **not** change.
+
+### Verified
+`npx tsc --noEmit` clean (with the two new strictness flags) · `npx vitest run` **498 passed / 43
+files** (was 450/39) · `npx vite build` clean (index 709 kB, export chunk separate) ·
+`grep -rn "MOCK_USERS" src/components` empty · `grep -rn "window\.desktop" src/components src/hooks`
+empty · `grep -rn "bg-\[#" src/components` empty. Not committed, as instructed.
+
+### Known gaps / next steps
+- Still **no DOM test harness** (vitest is `environment: 'node'`, `*.test.ts` only). Everything new is
+  covered at the pure-function level; the first manual pass should check, in a browser:
+  the navbar menu (open, Escape, outside click, notifications panel from inside it), create-task in a
+  second project landing in that project's first phase, hardware add/edit/remove round-tripping
+  through `updateProject`, and the LlmOnLan notice on an https build.
+- `capabilities()` is memoised for the process lifetime. Tests use `computeCapabilities`;
+  `resetCapabilities()` exists if a future DOM harness needs it.
+- `AiAssistantModal` still renders a `toLocaleTimeString` chat stamp (already formatted, not ISO) —
+  left alone.
+- `CreateProjectModal` still writes `retroplanningScore: 94` on create; the reducer recomputes the
+  score immediately after, so nothing fake reaches the screen, but the literal should go.
+- `docs/audit/FEATURE-AUDIT.md` rows 4, 26, 34, 35, 36, 40 and the P0 "Duplicate, competing
+  navigation" bullet are now historical.

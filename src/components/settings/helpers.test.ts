@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canLoadModels, displayEndpoint, draftToConfig, formatBytes, missingRequirements, secretsStorageNote, uniqueLabel } from './helpers';
+import { canLoadModels, displayEndpoint, draftToConfig, formatBytes, missingRequirements, uniqueLabel } from './helpers';
 
 describe('displayEndpoint', () => {
   it('is empty for empty input so the caller can hide the line', () => {
@@ -45,16 +45,6 @@ describe('canLoadModels', () => {
     expect(canLoadModels('openai', { apiKey: 'sk-x' })).toBe(true);
     expect(canLoadModels('llmonlan', {})).toBe(false);
     expect(canLoadModels('llmonlan', { baseUrl: '192.168.1.20' })).toBe(true);
-  });
-});
-
-describe('secretsStorageNote', () => {
-  it('names the OS keychain on desktop', () => {
-    expect(secretsStorageNote('secure-store')).toMatch(/operating system keychain/);
-  });
-
-  it('says clear text on the web build', () => {
-    expect(secretsStorageNote('local-storage')).toMatch(/clear text/);
   });
 });
 

@@ -15,6 +15,8 @@ Files:
 | `src/state/themeBoot.ts` | Applies the theme to `<html>` before React renders; `applyTheme`, `resolveTheme`, `watchSystemTheme`. |
 | `src/state/avatar.ts` | `initialsAvatar(name, color)` local SVG data URI (no network). |
 | `src/context/AppContext.tsx` | `AppProvider`, `useApp()`, `useActiveProject()`, re-exports `computeProjectHealth`. |
+| `src/capabilities.ts` | Not part of the store: what this *build* can do (desktop bridge, LAN farms, key storage). See below. |
+| `src/utils/time.ts` | `relativeTime`, `absoluteTime`, `timestampLabel` — the one way a stored ISO string reaches the screen. |
 
 ## Rendering rule
 
@@ -45,7 +47,7 @@ Projects and navigation
 
 Tasks
 - `addTask(taskWithoutId) => Task`, `updateTask(task)` (logs `status_change` with a diff when the status changed, else `update`), `deleteTask(id)` (undoable; dependency references are dropped), `updateTaskStatus(id, status)`, `toggleChecklistItem(taskId, itemId)` (no history entry).
-- `editingTaskId`, `setEditingTaskId(id | null)` — reserved for an edit-task modal.
+- `editingTaskId`, `setEditingTaskId(id | null)` — opens `TaskModal` in edit mode; `isCreateTaskModalOpen` opens the same component in create mode (an open editor wins if both are set).
 
 Phases and milestones
 - `addPhase(phaseWithoutId) => Phase`, `updatePhase(id, patch)`, `deletePhase(id)` (undoable; its tasks move to the first remaining phase by `order`, or `phaseId: ''`), `updatePhaseDates(id, start, end)`.
@@ -124,6 +126,27 @@ Keys, all JSON: `rps_v1_projects`, `rps_v1_workspaces`, `rps_v1_teamMembers`, `r
 - `rps_v1_tutorialState` holds the whole `TutorialState` (progress + the sandbox reference), validated by `reconcileTutorial` at boot. The old `rps_v1_tutorial` step array is no longer read or written — its ids belonged to the previous tutorial — and the legacy `retroplan_tutorial_steps_v4_media` key is not migrated; `clearAll()` still sweeps both.
 - Backup: `exportAllJson(state)` → `{format:'rps-backup', version:1, exportedAt, data}` with secrets stripped; `importAllJson(text)` validates (projects through `parseProjectJson`) and throws `BackupError` with the offending path; `importProjectJson(text)` = `parseProjectJson`.
 - `runStorageSelfTest()` writes/reads/removes a probe key and reports `{ok, message, usedBytes, keyCount}` for a diagnostics panel. No fake test suite.
+
+## Build capabilities (`src/capabilities.ts`)
+
+The single place anything asks what this build can do. Nothing under `src/components` or `src/hooks`
+reads `window.desktop` itself — `desktopBridge()` in this module is the only accessor.
+
+`capabilities()` returns `{ hasDesktop, canDiscoverFarms, canUseLanFarms, canOauthLoopback,
+canOpenExternal, canSaveNatively, secretsBackend: 'keychain' | 'localStorage', secretsPersisted,
+keyStorageNote, platformLabel, buildLabel }`, memoised (neither the bridge nor the page protocol can
+change without a reload). `computeCapabilities(env)` is the pure function behind it and takes the
+raw facts, so all of it is testable outside a browser (`src/capabilities.test.ts`).
+
+`canUseLanFarms({hasDesktop, protocol})` deserves the attention: a LlmOnLan farm lives at a plain
+`http://` LAN address, and a page served over `https:` (GitHub Pages) may not call one — the browser
+blocks mixed content before the request leaves the machine. So it is **true** on desktop (the main
+process makes the call) and on any `http:` page (local dev), and **false** only for a browser on an
+`https:` page, where `settings/LanFarmNotice` explains why and links to the desktop download.
+
+`secretsBackend` here is the policy answer ('keychain' when the OS secure store is present, else
+'localStorage') and carries `keyStorageNote`, the sentence the settings panels show about where keys
+are kept. `src/state/secrets.ts` keeps its own three-valued `secretsBackend()` for the store itself.
 
 ## Secrets policy (`src/state/secrets.ts`)
 

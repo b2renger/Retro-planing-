@@ -1,20 +1,15 @@
 import React, { useState } from 'react';
 import { useApp, useActiveProject } from '../context/AppContext';
+import { absoluteTime, timestampLabel } from '../utils/time';
 import {
   Users,
   MessageSquare,
   Send,
-  Sparkles,
-  ShieldCheck,
-  CheckCircle2,
   Clock,
-  Activity,
   UserPlus,
   UserCheck,
   UserX,
   Trash2,
-  Mail,
-  Shield,
   Copy,
   Check,
 } from 'lucide-react';
@@ -27,7 +22,6 @@ export const TeamCollaborationView: React.FC = () => {
     invitations,
     setIsInviteModalOpen,
     removeTeamMember,
-    updateTeamMemberRole,
     revokeInvitation,
     addComment,
     addNotification,
@@ -241,7 +235,15 @@ export const TeamCollaborationView: React.FC = () => {
                         </span>
                       </div>
                       <div className="text-[10px] text-fg-muted mt-0.5">
-                        Invited by {inv.invitedBy} on {new Date(inv.invitedAt).toLocaleDateString()}
+                        Invited by {inv.invitedBy}
+                        {timestampLabel(inv.invitedAt) && (
+                          <>
+                            {' '}
+                            <time dateTime={inv.invitedAt} title={absoluteTime(inv.invitedAt) ?? undefined}>
+                              {timestampLabel(inv.invitedAt)?.text}
+                            </time>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -301,7 +303,15 @@ export const TeamCollaborationView: React.FC = () => {
                         />
                         <span className="font-bold text-xs text-fg">{comm.authorName}</span>
                       </div>
-                      <span className="text-[10px] text-fg-subtle">{comm.timestamp}</span>
+                      {timestampLabel(comm.timestamp) && (
+                        <time
+                          dateTime={comm.timestamp}
+                          title={absoluteTime(comm.timestamp) ?? undefined}
+                          className="text-[10px] text-fg-subtle"
+                        >
+                          {timestampLabel(comm.timestamp)?.text}
+                        </time>
+                      )}
                     </div>
                     <p className="text-xs text-fg pl-7 leading-relaxed">{comm.content}</p>
                   </div>

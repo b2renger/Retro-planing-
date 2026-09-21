@@ -10,21 +10,11 @@ import {
   Code,
   Eye,
   Columns,
-  List,
-  CheckSquare,
-  Hash,
-  Table,
   Plus,
   Trash2,
-  Copy,
-  ExternalLink,
-  ChevronRight,
-  ShieldAlert,
-  ArrowRight,
   Settings,
   AlertTriangle,
 } from 'lucide-react';
-import { MarkdownDoc } from '../types';
 import { crunchMarkdownNotes, type CrunchOutcome } from '../services/ai/tasks';
 
 export const MarkdownStudio: React.FC = () => {

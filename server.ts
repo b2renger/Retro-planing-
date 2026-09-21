@@ -39,7 +39,7 @@ function normalizeModel(requestedModel?: string): string {
 }
 
 // Health check endpoint
-app.get("/api/health", (req, res) => {
+app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
     hasServerApiKey: Boolean(process.env.GEMINI_API_KEY),
@@ -322,7 +322,6 @@ Provide a concise, highly practical, designer-focused response. Include actionab
 function generateSmartFallbackStructure(text: string, targetDate = "2026-11-20", projectName = "Design Sprint") {
   const lines = (text || "").split("\n").filter((l) => l.trim().length > 0);
   const tasks: any[] = [];
-  let phaseIdx = 1;
 
   // Extract checklist items
   lines.forEach((line, idx) => {
@@ -530,7 +529,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    app.get("*", (req, res) => {
+    app.get("*", (_req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }

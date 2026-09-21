@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useApp, useActiveProject, computeProjectHealth } from '../context/AppContext';
 import {
   Calendar,
   Clock,
-  ShieldCheck,
   ChevronDown,
   Plus,
   Zap,
@@ -14,16 +13,15 @@ import {
   Users,
   CheckCircle2,
   GraduationCap,
-  AlertTriangle,
   Flame,
   CheckCheck,
-  Database,
-  UserPlus,
-  Play,
-  HardDrive,
+  Timer,
   Tv,
 } from 'lucide-react';
 import { ViewTab } from '../types';
+import { parseDay } from '../services/export/common';
+import { CloudStatusChip } from './CloudStatusChip';
+import { useDismiss } from './navbar/useDismiss';
 import { ExportMenu } from './ExportMenu';
 
 export const ProjectHeader: React.FC = () => {
@@ -34,37 +32,20 @@ export const ProjectHeader: React.FC = () => {
     setActiveViewTab,
     setIsCreateTaskModalOpen,
     setIsCreateProjectModalOpen,
-    setIsInviteModalOpen,
-    setIsCloudPanelOpen,
-    teamMembers,
+    setIsAiAssistantOpen,
   } = useApp();
   const activeProject = useActiveProject();
 
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const closePicker = useCallback(() => setIsProjectDropdownOpen(false), []);
+  useDismiss(pickerRef, closePicker, isProjectDropdownOpen);
   const health = computeProjectHealth(activeProject);
 
-  // Calculate days remaining to target delivery date
-  const calculateDaysRemaining = (targetDateStr: string) => {
-    try {
-      const today = new Date();
-      const target = new Date(targetDateStr);
-      const diffTime = target.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays;
-    } catch {
-      return 60;
-    }
-  };
-
-  const daysRemaining = calculateDaysRemaining(activeProject.targetDeliveryDate);
-
-  // Calculate granular retroplanning metrics
-  const totalTasks = activeProject.tasks.length;
-  const completedTasks = activeProject.tasks.filter((t) => t.status === 'done').length;
-  const inProgressTasks = activeProject.tasks.filter((t) => t.status === 'in-progress').length;
+  // Every number below comes from `computeProjectHealth`; nothing here is a constant.
+  const hasTarget = parseDay(activeProject.targetDeliveryDate) !== null;
   const criticalTasks = activeProject.tasks.filter((t) => t.isCriticalPath).length;
-  const unresolvedQuestions = activeProject.clarificationQuestions.filter((q) => !q.resolved).length;
-  const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const completionPercentage = health.tasksTotal > 0 ? Math.round((health.tasksDone / health.tasksTotal) * 100) : null;
 
   const tabs: { id: ViewTab; label: string; icon: React.FC<{ className?: string }>; badge?: number }[] = [
     {
@@ -116,9 +97,12 @@ export const ProjectHeader: React.FC = () => {
         {/* Top Row: Project Selector + Main Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 min-w-0">
           {/* Left: Project Selector Dropdown */}
-          <div className="relative min-w-0 max-w-full">
+          <div className="relative min-w-0 max-w-full" ref={pickerRef}>
             <button
               id="project-selector-dropdown-btn"
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={isProjectDropdownOpen}
               onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
               className="group flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-elevated hover:bg-line border border-line text-left transition-all w-full sm:w-auto max-w-full"
             >
@@ -203,139 +187,125 @@ export const ProjectHeader: React.FC = () => {
             )}
           </div>
 
-          {/* Right Fast Actions */}
+          {/* Project actions. App-scoped items (settings, tutorial, invite, theme, notifications,
+              account) all live in the navbar menu, so nothing here is offered twice. */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap">
-            {/* Team Collaborator Avatar Stack & Invite Trigger */}
-            <div className="flex items-center bg-elevated hover:bg-line border border-line rounded-xl p-1 pr-2 gap-1.5 transition-all">
-              <div className="flex -space-x-1.5 overflow-hidden pl-1">
-                {teamMembers.slice(0, 3).map((m) => (
-                  <img
-                    key={m.id}
-                    src={m.avatar}
-                    alt={m.name}
-                    title={`${m.name} (${m.role})`}
-                    className="inline-block h-5 w-5 rounded-full ring-1 ring-card object-cover"
-                  />
-                ))}
-              </div>
-              <button
-                id="header-invite-btn"
-                onClick={() => setIsInviteModalOpen(true)}
-                className="flex items-center gap-1 text-[11px] font-semibold text-purple-700 dark:text-purple-300 hover:text-purple-800 dark:hover:text-purple-200 transition-colors"
-                title="Invite collaborators to this project"
-              >
-                <UserPlus className="w-3 h-3" />
-                <span>Invite</span>
-              </button>
-            </div>
-
-            {/* Dedicated Google Drive Project Folder */}
-            <button
-              id="header-drive-folder-btn"
-              onClick={() => setIsCloudPanelOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-700 dark:text-blue-300 text-xs font-semibold transition-colors"
-              title="Cloud folder for this project"
-            >
-              <HardDrive className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-              <span className="hidden sm:inline">Cloud</span>
-              <span className="sm:hidden">Cloud</span>
-              {activeProject.cloud && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              )}
-            </button>
+            <CloudStatusChip id="header-drive-folder-btn" />
 
             {/* Exports: spreadsheets, Markdown, images, JSON, and cloud uploads */}
             <ExportMenu project={activeProject} />
 
-            {/* Live Database Status & Durability Test Suite */}
             <button
-              onClick={() => setActiveViewTab('markdown')}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-700 dark:text-blue-300 text-xs font-semibold transition-colors"
+              id="ai-assistant-btn"
+              type="button"
+              onClick={() => setIsAiAssistantOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-800 dark:text-purple-200 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+              title="Ask the AI assistant about this project"
             >
-              <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-              <span className="hidden xs:inline">Crunch Notes</span>
-              <span className="xs:hidden">Notes</span>
+              <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+              <span className="hidden sm:inline">AI assistant</span>
+              <span className="sm:hidden">AI</span>
             </button>
 
             <button
               data-tour="new-task"
+              type="button"
               onClick={() => setIsCreateTaskModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md shadow-purple-500/20 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md shadow-purple-500/20 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
             >
               <Plus className="w-3.5 h-3.5 shrink-0" />
-              <span>New Task</span>
+              <span>New task</span>
             </button>
           </div>
         </div>
 
-        {/* Informative Rétroplanning Metrics Strip: High Information Density, Zero Clutter */}
+        {/* Metrics strip. Every value is derived by `computeProjectHealth`; when a number cannot be
+            computed (no valid target date, no tasks) the slot says so instead of showing a filler. */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-elevated border border-line rounded-xl p-2.5 text-xs">
-          {/* Metric 1: Delivery Runway & Countdown */}
+          {/* Target delivery date and the countdown to it */}
           <div className="space-y-1 min-w-0 pr-2">
             <div className="flex items-center gap-1 text-[10px] text-fg-muted uppercase font-semibold tracking-wider">
               <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
-              <span className="truncate">Target Launch</span>
+              <span className="truncate">Target delivery</span>
             </div>
             <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className="font-semibold text-fg font-mono text-xs sm:text-sm truncate">
-                {activeProject.targetDeliveryDate}
-              </span>
-              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-mono font-semibold">
-                ({daysRemaining}d left)
-              </span>
+              {hasTarget ? (
+                <>
+                  <span className="font-semibold text-fg font-mono text-xs sm:text-sm truncate">{activeProject.targetDeliveryDate}</span>
+                  <span className="text-[10px] font-mono font-semibold text-amber-700 dark:text-amber-400">
+                    {health.daysRemaining >= 0 ? `${health.daysRemaining}d left` : `${-health.daysRemaining}d past`}
+                  </span>
+                </>
+              ) : (
+                <span className="text-[11px] text-fg-muted">No target date set</span>
+              )}
             </div>
           </div>
 
-          {/* Metric 2: Rétroplanning Buffer Health */}
+          {/* Slack between the end of the schedule and the target */}
           <div className="space-y-1 min-w-0 pr-2 border-l border-line pl-2">
             <div className="flex items-center gap-1 text-[10px] text-fg-muted uppercase font-semibold tracking-wider">
-              <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span className="truncate">Buffer Safety</span>
+              <Timer className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="truncate">{hasTarget && health.scheduleEndsAfterTarget ? 'Overrun' : 'Slack'}</span>
             </div>
             <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
-                {activeProject.retroplanningScore}% Safe
-              </span>
-              <span className="text-[10px] text-fg-muted">
-                ({health.slackDays >= 0 ? `${health.slackDays}d slack` : `${-health.slackDays}d over target`}, {health.overdueTasks} overdue)
-              </span>
+              {hasTarget ? (
+                <>
+                  <span
+                    className={`font-semibold text-xs sm:text-sm ${
+                      health.scheduleEndsAfterTarget ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-400'
+                    }`}
+                  >
+                    {Math.abs(health.slackDays)}d
+                  </span>
+                  <span className="text-[10px] text-fg-muted">
+                    {health.scheduleEndsAfterTarget ? 'past the target' : 'before the target'}
+                    {health.overdueTasks > 0 ? ` · ${health.overdueTasks} overdue` : ''}
+                  </span>
+                </>
+              ) : (
+                <span className="text-[11px] text-fg-muted">
+                  Needs a target date{health.overdueTasks > 0 ? ` · ${health.overdueTasks} overdue` : ''}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Metric 3: Critical Path Zero-Float Tasks */}
+          {/* Tasks the user has flagged critical. The computed critical path lives on the timeline. */}
           <div className="space-y-1 min-w-0 pr-2 sm:border-l sm:border-line sm:pl-2">
             <div className="flex items-center gap-1 text-[10px] text-fg-muted uppercase font-semibold tracking-wider">
               <Flame className="w-3 h-3 text-rose-600 dark:text-rose-400 shrink-0" />
-              <span className="truncate">Critical Path</span>
+              <span className="truncate">Flagged critical</span>
             </div>
             <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className="font-semibold text-rose-700 dark:text-rose-300 text-xs sm:text-sm">
-                {criticalTasks} Tasks Locked
-              </span>
-              <span className="text-[10px] text-fg-muted">{health.scheduleEndsAfterTarget ? 'Schedule overruns target' : 'Within target'}</span>
+              <span className="font-semibold text-rose-700 dark:text-rose-300 text-xs sm:text-sm">{criticalTasks}</span>
+              <span className="text-[10px] text-fg-muted">{criticalTasks === 1 ? 'task' : 'tasks'}</span>
             </div>
           </div>
 
-          {/* Metric 4: Deliverables Velocity & Progress */}
+          {/* Completed tasks */}
           <div className="space-y-1 min-w-0 border-l border-line pl-2">
             <div className="flex items-center justify-between text-[10px] text-fg-muted uppercase font-semibold tracking-wider">
               <div className="flex items-center gap-1 truncate">
                 <CheckCheck className="w-3 h-3 text-purple-600 dark:text-purple-400 shrink-0" />
-                <span className="truncate">Deliverables</span>
+                <span className="truncate">Tasks done</span>
               </div>
-              <span className="text-purple-700 dark:text-purple-300 font-mono text-[10px]">{completionPercentage}%</span>
+              {completionPercentage !== null && (
+                <span className="text-purple-700 dark:text-purple-300 font-mono text-[10px]">{completionPercentage}%</span>
+              )}
             </div>
-            <div className="space-y-1">
-              <div className="text-[11px] font-semibold text-fg">
-                {completedTasks}/{totalTasks} Completed
+            {completionPercentage === null ? (
+              <p className="text-[11px] text-fg-muted">No task yet</p>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-[11px] font-semibold text-fg">
+                  {health.tasksDone}/{health.tasksTotal} completed
+                </div>
+                <div className="w-full bg-line h-1 rounded-full overflow-hidden">
+                  <div className="bg-purple-500 h-full rounded-full transition-all duration-300" style={{ width: `${completionPercentage}%` }} />
+                </div>
               </div>
-              <div className="w-full bg-elevated h-1 rounded-full overflow-hidden">
-                <div
-                  className="bg-purple-500 h-full rounded-full transition-all duration-300"
-                  style={{ width: `${completionPercentage}%` }}
-                />
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -351,7 +321,7 @@ export const ProjectHeader: React.FC = () => {
                 onClick={() => setActiveViewTab(tab.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all shrink-0 select-none ${
                   isActive
-                    ? 'bg-elevated text-white shadow-sm'
+                    ? 'bg-elevated text-fg shadow-sm'
                     : 'text-fg-muted hover:text-fg hover:bg-elevated'
                 }`}
               >

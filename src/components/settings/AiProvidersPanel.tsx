@@ -1,12 +1,14 @@
 import React from 'react';
 import { CheckCircle2, Loader2, Plus, Radar, Star, XCircle } from 'lucide-react';
+import { capabilities } from '../../capabilities';
 import { useApp } from '../../context/AppContext';
 import { testConnection, type ConnectionTestResult } from '../../services/ai/client';
 import { PROVIDER_CATALOG } from '../../services/ai/registry';
 import type { AiProviderConfig, AiProviderId } from '../../services/ai/types';
 import { BTN_DANGER, BTN_GHOST, BTN_PRIMARY, BTN_SECONDARY, PanelHeading } from './controls';
 import { ProviderForm } from './ProviderForm';
-import { PROVIDER_BLURB, secretsStorageNote } from './helpers';
+import { PROVIDER_BLURB } from './helpers';
+import { LanFarmNotice } from './LanFarmNotice';
 
 type View = { kind: 'list' } | { kind: 'pick' } | { kind: 'form'; family: AiProviderId; existing?: AiProviderConfig };
 
@@ -115,7 +117,8 @@ const ProviderCard: React.FC<{
 
 /** AI providers tab: the configured list, the add flow and the LlmOnLan shortcut. */
 export const AiProvidersPanel: React.FC = () => {
-  const { aiSettings, activeAiProvider, removeAiProvider, setDefaultAiProvider, secretsBackend } = useApp();
+  const { aiSettings, activeAiProvider, removeAiProvider, setDefaultAiProvider } = useApp();
+  const caps = capabilities();
   const [view, setView] = React.useState<View>({ kind: 'list' });
   const [tests, setTests] = React.useState<Record<string, TestState>>({});
   const [confirmRemoveId, setConfirmRemoveId] = React.useState<string | null>(null);
@@ -142,18 +145,24 @@ export const AiProvidersPanel: React.FC = () => {
       <div className="space-y-4">
         <PanelHeading title="Choose a provider" description="Hosted services need a key. Local and LAN servers need an address." />
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {FAMILIES.map((family) => (
-            <li key={family}>
-              <button
-                type="button"
-                onClick={() => setView({ kind: 'form', family })}
-                className="w-full h-full text-left p-3 rounded-xl bg-elevated border border-line hover:border-line-strong hover:bg-line transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-              >
-                <span className="block text-xs font-semibold text-fg">{PROVIDER_CATALOG[family].label}</span>
-                <span className="block text-[11px] text-fg-muted leading-relaxed mt-0.5">{PROVIDER_BLURB[family]}</span>
-              </button>
-            </li>
-          ))}
+          {FAMILIES.map((family) =>
+            family === 'llmonlan' && !caps.canUseLanFarms ? (
+              <li key={family} className="sm:col-span-2">
+                <LanFarmNotice />
+              </li>
+            ) : (
+              <li key={family}>
+                <button
+                  type="button"
+                  onClick={() => setView({ kind: 'form', family })}
+                  className="w-full h-full text-left p-3 rounded-xl bg-elevated border border-line hover:border-line-strong hover:bg-line transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  <span className="block text-xs font-semibold text-fg">{PROVIDER_CATALOG[family].label}</span>
+                  <span className="block text-[11px] text-fg-muted leading-relaxed mt-0.5">{PROVIDER_BLURB[family]}</span>
+                </button>
+              </li>
+            ),
+          )}
         </ul>
         <button type="button" onClick={() => setView({ kind: 'list' })} className={BTN_GHOST}>
           Cancel
@@ -180,10 +189,12 @@ export const AiProvidersPanel: React.FC = () => {
               <Plus className="w-3.5 h-3.5" />
               <span>Add provider</span>
             </button>
-            <button type="button" onClick={() => setView({ kind: 'form', family: 'llmonlan' })} className={BTN_SECONDARY}>
-              <Radar className="w-3.5 h-3.5" />
-              <span>Find a LlmOnLan farm</span>
-            </button>
+            {caps.canUseLanFarms && (
+              <button type="button" onClick={() => setView({ kind: 'form', family: 'llmonlan' })} className={BTN_SECONDARY}>
+                <Radar className="w-3.5 h-3.5" />
+                <span>Find a LlmOnLan farm</span>
+              </button>
+            )}
           </div>
         </div>
       ) : (
@@ -214,15 +225,17 @@ export const AiProvidersPanel: React.FC = () => {
               <Plus className="w-3.5 h-3.5" />
               <span>Add provider</span>
             </button>
-            <button type="button" onClick={() => setView({ kind: 'form', family: 'llmonlan' })} className={BTN_SECONDARY}>
-              <Radar className="w-3.5 h-3.5" />
-              <span>Find a LlmOnLan farm</span>
-            </button>
+            {caps.canUseLanFarms && (
+              <button type="button" onClick={() => setView({ kind: 'form', family: 'llmonlan' })} className={BTN_SECONDARY}>
+                <Radar className="w-3.5 h-3.5" />
+                <span>Find a LlmOnLan farm</span>
+              </button>
+            )}
           </div>
         </>
       )}
 
-      <p className="text-[11px] text-fg-muted leading-relaxed border-t border-line pt-3">{secretsStorageNote(secretsBackend)}</p>
+      <p className="text-[11px] text-fg-muted leading-relaxed border-t border-line pt-3">{caps.keyStorageNote}</p>
     </div>
   );
 };

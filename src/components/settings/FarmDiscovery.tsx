@@ -1,9 +1,11 @@
 import React from 'react';
 import { CheckCircle2, Loader2, Radar, Server, XCircle } from 'lucide-react';
+import { capabilities } from '../../capabilities';
 import { discoverFarms, farmToProviderConfig, probeFarm, type FarmInfo, type FarmProbeResult } from '../../services/ai/farms';
 import type { AiProviderConfig } from '../../services/ai/types';
 import { BTN_SECONDARY, Field, INPUT_CLASS } from './controls';
 import { displayEndpoint } from './helpers';
+import { LanFarmNotice } from './LanFarmNotice';
 
 const SCAN_MS = 4000;
 
@@ -16,11 +18,6 @@ export interface FarmDiscoveryProps {
   onMasterKeyChange: (value: string) => void;
   /** Called with a ready-made config when the user picks a discovered farm. */
   onUseFarm: (cfg: AiProviderConfig) => void;
-}
-
-/** True only in the Electron build, where the main process can join the multicast group. */
-function hasDesktopDiscovery(): boolean {
-  return typeof window !== 'undefined' && typeof window.desktop?.discoverFarms === 'function';
 }
 
 const FarmCard: React.FC<{ farm: FarmInfo; busy: boolean; onUse: () => void }> = ({ farm, busy, onUse }) => (
@@ -48,7 +45,7 @@ const FarmCard: React.FC<{ farm: FarmInfo; busy: boolean; onUse: () => void }> =
  * It owns the base-URL and master-key fields of the LlmOnLan form so an address is typed once.
  */
 export const FarmDiscovery: React.FC<FarmDiscoveryProps> = ({ endpoint, onEndpointChange, masterKey, onMasterKeyChange, onUseFarm }) => {
-  const [desktop] = React.useState(hasDesktopDiscovery);
+  const { canDiscoverFarms, canUseLanFarms } = capabilities();
   const [scanning, setScanning] = React.useState(false);
   const [scanned, setScanned] = React.useState(false);
   const [farms, setFarms] = React.useState<FarmInfo[]>([]);
@@ -93,12 +90,15 @@ export const FarmDiscovery: React.FC<FarmDiscoveryProps> = ({ endpoint, onEndpoi
     }
   };
 
+  // An https page cannot reach a http LAN address at all, so there is no form worth showing.
+  if (!canUseLanFarms) return <LanFarmNotice />;
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <h4 className="text-xs font-bold text-fg uppercase tracking-wide">Find a farm</h4>
-          {desktop && (
+          {canDiscoverFarms && (
             <button type="button" onClick={scan} disabled={scanning} className={BTN_SECONDARY}>
               {scanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radar className="w-3.5 h-3.5" />}
               <span>{scanning ? 'Scanning…' : 'Scan network'}</span>
@@ -106,7 +106,7 @@ export const FarmDiscovery: React.FC<FarmDiscoveryProps> = ({ endpoint, onEndpoi
           )}
         </div>
 
-        {desktop ? (
+        {canDiscoverFarms ? (
           <>
             {scanning && <p className="text-[11px] text-fg-muted">Listening for farms on the local network… ({SCAN_MS / 1000} s)</p>}
             {scanError && (

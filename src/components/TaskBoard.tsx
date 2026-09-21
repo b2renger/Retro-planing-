@@ -1,29 +1,23 @@
 import React, { useState } from 'react';
 import { useApp, useActiveProject } from '../context/AppContext';
-import { MOCK_USERS } from '../data/mockData';
+import { resolveAssignee, shortAssigneeName } from './assignee';
 import {
   Kanban,
   List,
   Plus,
-  Filter,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  ChevronRight,
-  MoreHorizontal,
   Pencil,
   User,
   Zap,
 } from 'lucide-react';
-import { Task, TaskStatus, TaskPriority } from '../types';
+import { TaskStatus } from '../types';
 import { TASK_STATUSES, TASK_STATUS_ACCENTS, TASK_STATUS_LABELS } from './taskFields';
 
 export const TaskBoard: React.FC = () => {
   const {
     updateTaskStatus,
-    toggleChecklistItem,
     setIsCreateTaskModalOpen,
     setEditingTaskId,
+    teamMembers,
   } = useApp();
   const activeProject = useActiveProject();
 
@@ -46,9 +40,7 @@ export const TaskBoard: React.FC = () => {
     return matchesPhase && matchesSearch;
   });
 
-  const getAssignee = (userId: string) => {
-    return MOCK_USERS.find((u) => u.id === userId) || MOCK_USERS[0];
-  };
+  const getAssignee = (userId: string) => resolveAssignee(userId, teamMembers);
 
   const getPhase = (phaseId: string) => {
     return activeProject.phases.find((p) => p.id === phaseId);
@@ -212,13 +204,15 @@ export const TaskBoard: React.FC = () => {
 
                           {/* Bottom Card Controls: Assignee, Due Date & Quick Move */}
                           <div className="flex items-center justify-between pt-2 border-t border-line text-[11px] text-fg-muted">
-                            <div className="flex items-center gap-1.5">
-                              <img
-                                src={assignee.avatar}
-                                alt={assignee.name}
-                                className="w-4 h-4 rounded-full object-cover"
-                              />
-                              <span className="truncate max-w-[80px]">{assignee.name.split(' ')[0]}</span>
+                            <div className="flex items-center gap-1.5" title={assignee.name}>
+                              {assignee.avatar ? (
+                                <img src={assignee.avatar} alt="" className="w-4 h-4 rounded-full object-cover" />
+                              ) : (
+                                <User className="w-3.5 h-3.5 text-fg-subtle shrink-0" aria-hidden="true" />
+                              )}
+                              <span className={`truncate max-w-[80px] ${assignee.known ? '' : 'italic text-fg-subtle'}`}>
+                                {shortAssigneeName(assignee)}
+                              </span>
                             </div>
 
                             {/* Status mover select */}
@@ -284,8 +278,12 @@ export const TaskBoard: React.FC = () => {
                     </td>
                     <td className="p-3.5">
                       <div className="flex items-center gap-1.5">
-                        <img src={assignee.avatar} alt={assignee.name} className="w-4 h-4 rounded-full object-cover" />
-                        <span>{assignee.name}</span>
+                        {assignee.avatar ? (
+                          <img src={assignee.avatar} alt="" className="w-4 h-4 rounded-full object-cover" />
+                        ) : (
+                          <User className="w-3.5 h-3.5 text-fg-subtle shrink-0" aria-hidden="true" />
+                        )}
+                        <span className={assignee.known ? '' : 'italic text-fg-subtle'}>{assignee.name}</span>
                       </div>
                     </td>
                     <td className="p-3.5">

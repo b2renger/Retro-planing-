@@ -41,6 +41,56 @@ export function toDraft(task: Task): TaskDraft {
   };
 }
 
+/** The project's first phase by `order` — where a new task lands unless the user says otherwise. */
+export function firstPhaseId(project: Project): string {
+  const sorted = [...project.phases].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  return sorted[0]?.id ?? '';
+}
+
+/**
+ * A blank draft for a new task. Nothing is invented: no dates, no hours, no checklist, no
+ * deliverables, nobody assigned. Only the phase is filled in, with the project's first — and it is
+ * recomputed every time the form opens, so switching project can never leave a foreign phase id
+ * behind (the bug that made new tasks vanish from every lane).
+ */
+export function emptyDraft(project: Project): TaskDraft {
+  return {
+    title: '',
+    description: '',
+    phaseId: firstPhaseId(project),
+    assigneeId: '',
+    status: 'todo',
+    priority: 'medium',
+    startDate: '',
+    dueDate: '',
+    estimatedHours: '',
+    dependencies: [],
+    deliverables: [],
+    checklist: [],
+    tags: [],
+  };
+}
+
+/** A validated draft as the new task to hand to `addTask` (the facade assigns the id). */
+export function draftToNewTask(draft: TaskDraft, projectId: string): Omit<Task, 'id'> {
+  return {
+    projectId,
+    phaseId: draft.phaseId,
+    title: draft.title.trim(),
+    description: draft.description,
+    status: draft.status,
+    priority: draft.priority,
+    assigneeId: draft.assigneeId,
+    startDate: draft.startDate,
+    dueDate: draft.dueDate,
+    estimatedHours: Number(draft.estimatedHours),
+    dependencies: [...draft.dependencies],
+    deliverables: [...draft.deliverables],
+    checklist: draft.checklist.map((item) => ({ ...item })),
+    tags: [...draft.tags],
+  };
+}
+
 /** Field-level messages. `null` means the field is fine. */
 export interface DraftValidation {
   title: string | null;

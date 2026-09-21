@@ -13,8 +13,7 @@ import { HistoryAuditView } from './components/HistoryAuditView';
 import { TeamCollaborationView } from './components/TeamCollaborationView';
 import { AiAssistantModal } from './components/AiAssistantModal';
 import { CloudPanel } from './components/CloudPanel';
-import { CreateTaskModal } from './components/CreateTaskModal';
-import { EditTaskModal } from './components/EditTaskModal';
+import { TaskModal } from './components/TaskModal';
 import { CreateProjectModal } from './components/CreateProjectModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { TutorialBanner } from './components/tutorial/TutorialBanner';
@@ -85,8 +84,7 @@ const AppContent: React.FC = () => {
           </main>
           <AiAssistantModal />
           <CloudPanel />
-          <CreateTaskModal />
-          <EditTaskModal />
+          <TaskModal />
           <InviteCollaboratorsModal />
         </>
       ) : (

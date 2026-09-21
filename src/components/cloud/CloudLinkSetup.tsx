@@ -10,7 +10,8 @@ import {
   type ProjectFolderIds,
 } from '../../services/cloud/syncEngine';
 import type { CloudProviderId } from '../../services/cloud/types';
-import { createProvider, linkFromSyncState, PROVIDER_LABELS, relativeTime } from '../../hooks/cloudClient';
+import { createProvider, linkFromSyncState, PROVIDER_LABELS } from '../../hooks/cloudClient';
+import { relativeTime } from '../../utils/time';
 import { runProjectSync } from '../../hooks/useCloudSync';
 import { BTN_PRIMARY, BTN_SECONDARY } from '../settings/controls';
 import type { Project } from '../../types';

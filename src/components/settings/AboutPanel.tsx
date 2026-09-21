@@ -1,6 +1,7 @@
 import React from 'react';
 import { ExternalLink, GraduationCap } from 'lucide-react';
 import { description as APP_DESCRIPTION, version as APP_VERSION } from '../../../package.json';
+import { capabilities } from '../../capabilities';
 import { useApp } from '../../context/AppContext';
 import { FIRST_STEP_ID, TUTORIAL_STEPS } from '../tutorial/steps';
 import { LINK_CLASS, PanelHeading } from './controls';
@@ -14,7 +15,7 @@ const IN_REPO_DOCS = ['docs/dev/LLMONLAN.md — the LAN farm integration', 'docs
 
 /** Version, build kind and where the documentation lives. */
 export const AboutPanel: React.FC = () => {
-  const desktop = typeof window !== 'undefined' ? window.desktop : undefined;
+  const caps = capabilities();
   const { tutorial, startTutorial, resetTutorial, setIsSettingsOpen } = useApp();
   const doneCount = tutorial.completedStepIds.length;
 
@@ -39,7 +40,7 @@ export const AboutPanel: React.FC = () => {
         </div>
         <div className="flex justify-between gap-4 p-2 rounded-lg bg-elevated border border-line">
           <dt className="text-fg-muted">Build</dt>
-          <dd className="text-fg">{desktop ? `Desktop (${desktop.platform}, Electron ${desktop.version})` : 'Web browser'}</dd>
+          <dd className="text-fg">{caps.buildLabel}</dd>
         </div>
       </dl>
 

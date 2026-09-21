@@ -3,6 +3,7 @@
  * OAuth client ids, the copy the setup screen needs (redirect URI, scopes), and the pure
  * comparisons the cloud panel renders. Nothing here performs a sync — see `useCloudSync.ts`.
  */
+import { capabilities, desktopBridge } from '../capabilities';
 import { createGoogleDriveProvider } from '../services/cloud/googleDrive';
 import { docFileName } from '../services/cloud/layout';
 import { createOneDriveProvider } from '../services/cloud/oneDrive';
@@ -41,7 +42,7 @@ export function scopeExplanations(providerId: CloudProviderId): Array<{ scope: s
 
 /** True when the Electron bridge is present, i.e. sign-in uses the loopback flow. */
 export function isDesktopRuntime(): boolean {
-  return typeof window !== 'undefined' && Boolean(window.desktop?.oauthLoopback);
+  return capabilities().canOauthLoopback;
 }
 
 /** What the user must register as a redirect URI, for this build and this provider. */
@@ -201,31 +202,12 @@ export function summaryLine(summary: SyncSummary): string {
   return parts.length ? parts.join(', ') : 'nothing to do';
 }
 
-/**
- * `"4 min ago"` style. Returns `null` for a missing or unparseable timestamp so callers render
- * nothing rather than a fake time.
- */
-export function relativeTime(iso: string | undefined, now: number = Date.now()): string | null {
-  if (!iso) return null;
-  const then = Date.parse(iso);
-  if (!Number.isFinite(then)) return null;
-  const seconds = Math.round((now - then) / 1000);
-  if (seconds < 0) return 'just now';
-  if (seconds < 10) return 'just now';
-  if (seconds < 60) return `${seconds} s ago`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days} d ago`;
-}
-
 /** Opens a cloud URL: the system browser on desktop, a new tab on the web. */
 export function openCloudUrl(url: string): void {
   if (typeof window === 'undefined') return;
-  if (window.desktop?.openExternal) {
-    void window.desktop.openExternal(url);
+  const bridge = capabilities().canOpenExternal ? desktopBridge() : undefined;
+  if (bridge) {
+    void bridge.openExternal(url);
     return;
   }
   window.open(url, '_blank', 'noopener,noreferrer');

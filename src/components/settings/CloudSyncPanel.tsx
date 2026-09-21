@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check, Cloud, Copy, ExternalLink, Loader2, Plug, Unplug } from 'lucide-react';
+import { capabilities } from '../../capabilities';
 import { useApp } from '../../context/AppContext';
 import { runAuthFlow } from '../../services/cloud/oauth';
 import { clearTokens, saveTokens } from '../../services/cloud/tokenStore';
@@ -11,9 +12,9 @@ import {
   PROVIDER_CONSOLE,
   PROVIDER_LABELS,
   redirectAdvice,
-  relativeTime,
   scopeExplanations,
 } from '../../hooks/cloudClient';
+import { relativeTime } from '../../utils/time';
 import { BTN_DANGER, BTN_PRIMARY, BTN_SECONDARY, Field, INPUT_CLASS, LINK_CLASS, PanelHeading } from './controls';
 
 const PROVIDERS: CloudProviderId[] = ['google', 'onedrive'];
@@ -238,7 +239,8 @@ const ProviderCard: React.FC<{ providerId: CloudProviderId }> = ({ providerId })
  * A provider is shown as connected only after its account has actually been fetched.
  */
 export const CloudSyncPanel: React.FC = () => {
-  const { secretsBackend, setIsCloudPanelOpen, activeProject } = useApp();
+  const { setIsCloudPanelOpen, activeProject } = useApp();
+  const { secretsBackend } = capabilities();
 
   return (
     <div className="space-y-4">
@@ -247,7 +249,7 @@ export const CloudSyncPanel: React.FC = () => {
         description="Link a project to a folder in your own Google Drive or OneDrive. The folder is the source of truth: on first contact the cloud copy wins, and afterwards the newer side wins per file."
       />
 
-      {secretsBackend === 'local-storage' && (
+      {secretsBackend === 'localStorage' && (
         <p className="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2.5 py-2 leading-relaxed">
           This build has no OS secure store, so the client secret and the OAuth tokens are kept in this browser’s local storage in clear text.
         </p>
