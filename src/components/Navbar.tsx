@@ -38,13 +38,13 @@ export const Navbar: React.FC = () => {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1 sm:gap-1.5 leading-none">
-                <span className="font-semibold text-fg tracking-tight text-xs sm:text-sm truncate">RetroPlan</span>
+                <span className="font-semibold text-fg tracking-tight text-xs sm:text-sm truncate">RetroPlaning</span>
                 <span className="text-[9px] sm:text-[10px] font-semibold px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 shrink-0">
                   STUDIO
                 </span>
               </div>
               <p className="text-[9px] sm:text-[10px] text-fg-muted leading-none mt-0.5 sm:mt-1 truncate hidden xs:block">
-                Design Ops &amp; Retroplanning
+                Plan backwards from the date that matters
               </p>
             </div>
           </div>

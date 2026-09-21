@@ -784,7 +784,7 @@ export const MEDIA_INSTALLATION_PROJECT: Project = {
       actionType: 'retroplan_shift',
       targetType: 'timeline',
       targetTitle: 'Opening Night Milestone',
-      description: 'Locked opening night milestone to November 20, 2026. Backward scheduling engine confirmed 6 buffer safety days.',
+      description: 'Locked the opening night milestone to November 20, 2026.',
     },
     {
       id: 'h2',
