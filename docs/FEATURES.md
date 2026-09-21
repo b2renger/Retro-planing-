@@ -9,7 +9,7 @@ Status vocabulary, used strictly:
 | **Planned** | Specified, not yet written. |
 | **Cut** | Existed in the generated original, deliberately removed. Reason given. |
 
-Last updated 2026-09-21 02:45. Test counts are from `npm test`.
+Last updated 2026-09-21 05:40. Test counts are from `npm test`.
 
 ---
 
@@ -40,9 +40,9 @@ Last updated 2026-09-21 02:45. Test counts are from `npm test`.
 |---|---|---|
 | Markdown documents per project, create, edit, delete, save | Wired | |
 | Drag-and-drop import of `.md` notes | Wired | Files only, not folders. |
-| Live preview | Wired | Headings, checkboxes, bullets, bold, inline code. No tables, fenced code, links or images yet. |
+| Live preview | Wired | Full GitHub-flavoured markdown: tables, fenced code, links, images, task lists, strikethrough. Loaded on demand. |
 | Quick-insert snippets | Wired | |
-| Full markdown parser (tables, code fences, links) | Planned | |
+| Link and image safety | Wired | Scheme-allowlisted; script-scheme links render as text and remote images do not auto-fetch. |
 | Unsaved-changes guard when switching documents | Planned | Edits are currently discarded silently. |
 
 ## 3. AI

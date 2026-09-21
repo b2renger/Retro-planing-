@@ -148,6 +148,14 @@ someone else's name.
 
 **E2.** Drag a `.md` file from your desktop onto the notes area. It should import.
 
+**E2b.** Use all three Quick Insert templates (checklist, JSON block, SLA table). **All three must render
+in the preview** — until tonight the app inserted snippets its own preview could not display. The table
+should scroll inside its own box rather than widening the page.
+
+**E2c.** Paste this into a document and check the preview: a link like `[safe](https://example.com)`
+should be a working link that opens in a new tab; a link like `[bad](javascript:alert(1))` must render
+as plain text, **not** as a clickable link.
+
 **E3.** ⚠ With **no AI provider configured**, use "Crunch with AI" on a document. It must produce a plan
 **and clearly tell you it was generated locally without AI**. The old version presented this as an AI
 result, which is the single most misleading thing the original did.
@@ -326,8 +334,6 @@ Things I know are not done, so you do not spend time finding them:
   accounts.
 - **Invitations are local only.** No email is sent. The screen says so.
 - **Permissions are not enforced.** They are stored and displayed but nothing checks them.
-- **Markdown preview is partial.** Headings, lists, checkboxes, bold and inline code render; tables,
-  fenced code blocks, links and images do not.
 - **No real-time collaboration.** Two people editing the same project sync through the drive, not live.
 - **The leaked Firebase key is still in git history** at commits `949b750` and `397bcaf`. Deleting the
   file did not remove it. Rotate or restrict that key.
