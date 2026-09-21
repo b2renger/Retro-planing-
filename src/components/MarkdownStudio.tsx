@@ -415,6 +415,7 @@ export const MarkdownStudio: React.FC = () => {
             <div className="flex items-center justify-between pb-2 border-b border-line">
               <span className="text-xs font-bold text-fg uppercase tracking-wider">Project Files</span>
               <button
+                data-tour="new-document"
                 onClick={() =>
                   createDocument({
                     title: 'New Design Spec',

@@ -9,6 +9,7 @@ Files:
 | `src/state/ids.ts` | `newId(prefix)` via `crypto.randomUUID()` (time+random fallback). |
 | `src/state/projectsReducer.ts` | Pure `projectsReducer(projects, action)`, action creators `projectsActions`, `computeProjectHealth`, `normalizeProject`, date helpers. |
 | `src/state/appReducer.ts` | Root reducer (projects + team, notifications, tutorial, settings, ui, undo). |
+| `src/state/tutorial.ts` | Tutorial progress + the sandbox: `TutorialState`, `DEFAULT_TUTORIAL`, `reconcileTutorial`, `buildSandboxProject`. |
 | `src/state/persistence.ts` | localStorage namespace `rps_v1_*`, `load`/`save`, legacy migration, backup import/export, `runStorageSelfTest`. |
 | `src/state/secrets.ts` | API keys / OAuth client secrets: OS secure store when available, else localStorage. |
 | `src/state/themeBoot.ts` | Applies the theme to `<html>` before React renders; `applyTheme`, `resolveTheme`, `watchSystemTheme`. |
@@ -65,8 +66,15 @@ Notifications
 - `notifications`, `unreadCount`, `addNotification({title, message, type, projectId?, taskId?})` (ISO timestamp, cap 100, identical title+message within 2 s is dropped), `markNotificationRead(id)`, `markAllNotificationsRead()`, `dismissNotification(id)`, `clearNotifications()`.
 - The facade itself emits no notifications for the user's own actions; callers (cloud sync, AI results, scheduled checks) decide.
 
-Tutorial (navigation only, no data writes)
-- `tutorialSteps`, `completeTutorialStep(id)`, `resetTutorial()` (clears flags, jumps to the template project's timeline), `startTutorial()` (jumps to the template project's timeline and opens the drawer), `isTutorialDrawerOpen`, `setIsTutorialDrawerOpen(open)`.
+Tutorial (never writes to a project the user owns — see the sandbox below)
+- `tutorial: TutorialState` — `{ status: 'idle' | 'running', currentStepId, completedStepIds, completedAt, inviteDismissed, sandbox }`. `completedAt` is the "tutorial finished at least once" flag the first-run invitation reads; `sandbox` is `{ projectId, returnProjectId, returnViewTab, startedAt }` or `null`.
+- `startTutorial(firstStepId)` — builds a throwaway copy of the bundled sample project (`buildSandboxProject`), appends it, remembers the project and view the user came from, and switches to it. When a live sandbox already exists this is a **resume**: no second copy, the stored `currentStepId` is kept.
+- `goToTutorialStep(id)`, `completeTutorialStep(id)` — navigation and progress only.
+- `endTutorial({ removeSandbox, completed })` — leaves. `removeSandbox: true` (the UI default) deletes the practice project and puts the user back on `returnProjectId` / `returnViewTab`; `false` keeps it as an ordinary project. `completed: true` stamps `completedAt` and clears `currentStepId` so the next start begins at step 1.
+- `resetTutorial()` — clears `completedStepIds`, `completedAt` and `currentStepId`; does not touch a running sandbox.
+- `dismissTutorialInvite()` — hides the first-run invitation for good.
+
+**The sandbox.** `tutorial/start` and `tutorial/end` add and remove the practice project *inside the reducer*, deliberately not through `createProject` / `deleteProject`: no undo snapshot is pushed, no notification is emitted, and the user's own `projects` come out of a full round trip byte-identical (proved in `src/state/tutorial.test.ts`). The copy is built from the `MEDIA_INSTALLATION_PROJECT` constant — never from the user's own copy of it — with a fresh id, `isTutorialTemplate: true`, an empty history, no comments and no cloud link. `reconcileTutorial` drops a sandbox whose project no longer exists at boot and stops the tutorial with it. Step content (`TUTORIAL_STEPS`, anchors, completion predicates) lives in `src/components/tutorial/steps.ts`; the store only ever holds step **ids**.
 
 Modal flags (local state, not persisted)
 - `isCloudPanelOpen`, `isAiAssistantOpen`, `isCreateTaskModalOpen`, `isCreateProjectModalOpen`, `isSettingsOpen`, `isInviteModalOpen` + their `setIs…(open)` setters.
@@ -104,16 +112,16 @@ Every action carries `projectId`, `actor {id, name, avatar}` and `at` (ISO). Cre
 
 Invariants: history is prepended and capped at 300 entries; timestamps are ISO; ids come from `newId`; unknown project / no-op returns the same array reference; the derived `retroplanningScore` is recomputed after every action except the two `cloud/*` ones.
 
-Root actions (`src/state/appReducer.ts`): `projects` (wraps a projects action and repairs `ui.activeProjectId` when it no longer exists), `ui/patch`, `notifications/*`, `team/*`, `tutorial/*`, `ai/*`, `secrets/hydrate`, `cloud/*`, `undo/push`, `undo/pop`, `store/restoreAll`, `storage/error`.
+Root actions (`src/state/appReducer.ts`): `projects` (wraps a projects action and repairs `ui.activeProjectId` when it no longer exists), `ui/patch`, `notifications/*`, `team/*`, `tutorial/start|goto|complete|end|reset|dismissInvite`, `ai/*`, `secrets/hydrate`, `cloud/*`, `undo/push`, `undo/pop`, `store/restoreAll`, `storage/error`.
 
 ## Persistence (`src/state/persistence.ts`)
 
-Keys, all JSON: `rps_v1_projects`, `rps_v1_workspaces`, `rps_v1_teamMembers`, `rps_v1_invitations`, `rps_v1_notifications`, `rps_v1_aiSettings`, `rps_v1_cloudSettings`, `rps_v1_cloudAccounts`, `rps_v1_tutorial`, `rps_v1_ui` (`{activeProjectId, activeViewTab, activeDocumentId, currentUserId, activeWorkspaceId, theme}`), plus the marker `rps_v1_migratedAt` and the secret index `rps_v1_secretIds`.
+Keys, all JSON: `rps_v1_projects`, `rps_v1_workspaces`, `rps_v1_teamMembers`, `rps_v1_invitations`, `rps_v1_notifications`, `rps_v1_aiSettings`, `rps_v1_cloudSettings`, `rps_v1_cloudAccounts`, `rps_v1_tutorialState`, `rps_v1_ui` (`{activeProjectId, activeViewTab, activeDocumentId, currentUserId, activeWorkspaceId, theme}`), plus the marker `rps_v1_migratedAt` and the secret index `rps_v1_secretIds`.
 
 - Each slice is saved by its own effect in `AppProvider`; `save()` never throws and returns `{ok, error?}` → `storageError`.
 - Boot: `load()` reads every slice (a corrupt slice is skipped and reported). Sample data (`INITIAL_PROJECTS`, `MOCK_USERS`, …) is used only for slices that were never saved; an empty saved `projects` array stays empty.
 - Migration: on first run (no `rps_v1_*` key) the old `retroplan_*_v4_media` keys are converted once: fake Drive fields dropped, non-ISO timestamps replaced, the seeded demo invitation removed, a custom Gemini key becomes a `gemini` provider, `retroplan_theme` becomes `ui.theme`. Old keys are left untouched.
-- Tutorial steps are re-based on the current `TUTORIAL_STEPS` at boot; only completion flags persist.
+- `rps_v1_tutorialState` holds the whole `TutorialState` (progress + the sandbox reference), validated by `reconcileTutorial` at boot. The old `rps_v1_tutorial` step array is no longer read or written — its ids belonged to the previous tutorial — and the legacy `retroplan_tutorial_steps_v4_media` key is not migrated; `clearAll()` still sweeps both.
 - Backup: `exportAllJson(state)` → `{format:'rps-backup', version:1, exportedAt, data}` with secrets stripped; `importAllJson(text)` validates (projects through `parseProjectJson`) and throws `BackupError` with the offending path; `importProjectJson(text)` = `parseProjectJson`.
 - `runStorageSelfTest()` writes/reads/removes a probe key and reports `{ok, message, usedBytes, keyCount}` for a diagnostics panel. No fake test suite.
 

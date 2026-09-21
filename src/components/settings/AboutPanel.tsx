@@ -1,6 +1,8 @@
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, GraduationCap } from 'lucide-react';
 import { description as APP_DESCRIPTION, version as APP_VERSION } from '../../../package.json';
+import { useApp } from '../../context/AppContext';
+import { FIRST_STEP_ID, TUTORIAL_STEPS } from '../tutorial/steps';
 import { LINK_CLASS, PanelHeading } from './controls';
 
 const DOCS: { label: string; href: string; note: string }[] = [
@@ -13,6 +15,14 @@ const IN_REPO_DOCS = ['docs/dev/LLMONLAN.md — the LAN farm integration', 'docs
 /** Version, build kind and where the documentation lives. */
 export const AboutPanel: React.FC = () => {
   const desktop = typeof window !== 'undefined' ? window.desktop : undefined;
+  const { tutorial, startTutorial, resetTutorial, setIsSettingsOpen } = useApp();
+  const doneCount = tutorial.completedStepIds.length;
+
+  const restart = (): void => {
+    resetTutorial();
+    setIsSettingsOpen(false);
+    startTutorial(FIRST_STEP_ID);
+  };
 
   return (
     <div className="space-y-5">
@@ -32,6 +42,24 @@ export const AboutPanel: React.FC = () => {
           <dd className="text-fg">{desktop ? `Desktop (${desktop.platform}, Electron ${desktop.version})` : 'Web browser'}</dd>
         </div>
       </dl>
+
+      <div className="space-y-2 rounded-xl border border-line bg-elevated p-3">
+        <h4 className="flex items-center gap-1.5 text-xs font-bold text-fg">
+          <GraduationCap className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+          <span>Tutorial</span>
+        </h4>
+        <p className="text-[11px] leading-relaxed text-fg-muted">
+          {TUTORIAL_STEPS.length} steps through the app, run on a throwaway practice copy of the sample project — your own projects are never touched.
+          {doneCount > 0 ? ` You have finished ${doneCount} of ${TUTORIAL_STEPS.length}.` : ''}
+        </p>
+        <button
+          type="button"
+          onClick={restart}
+          className="rounded-lg bg-purple-600 px-3 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-purple-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+        >
+          {doneCount > 0 ? 'Restart the tutorial' : 'Start the tutorial'}
+        </button>
+      </div>
 
       <div className="space-y-2">
         <h4 className="text-xs font-bold text-fg">Documentation</h4>

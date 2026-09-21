@@ -389,3 +389,68 @@ buffer bar replaced by `computeProjectHealth` · `buildGanttModel` warnings surf
 `grep -rn "bg-\[#" src/components` empty · `grep -rn "MOCK_USERS" src/components/timeline
 src/components/EditTaskModal.tsx src/components/editTask` empty · every new file < 310 lines.
 Not committed, as instructed.
+
+## 2026-09-21 02:30 — In-app interactive tutorial (one system, sandboxed)
+
+Replaced the two half-surfaces (`TutorialDrawer.tsx` docked panel, `InteractiveTourGuide.tsx`
+floating dock — audit rows 63/64) with a single coachmark engine under `src/components/tutorial/`,
+and rebuilt the tutorial store slice around a **sandbox** so audit row 65 ("Watch Live Demo" wrote a
+demo task and flipped the real delivery date) can never happen again.
+
+### Added
+- `src/state/tutorial.ts` — `TutorialState`, `DEFAULT_TUTORIAL`, `reconcileTutorial(persisted, projects)`,
+  `buildSandboxProject({workspaceId, at})` (deep copy of `MEDIA_INSTALLATION_PROJECT`: fresh
+  `tutorial-…` id, `isTutorialTemplate`, no history/comments/cloud link). All pure.
+- `src/components/tutorial/steps.ts` — 8 steps as data (`id, title, body, tab, anchor, placement,
+  task, isComplete(ctx), optional?`) + `snapshotProject()` and the `TutorialSnapshot`/`TutorialFlags`
+  types the predicates compare. No React, fully unit-tested.
+- `placement.ts` (`computePlacement` flip/clamp/centre + `spotlightPanels`), `useAnchor.ts`
+  (selector → live rect, first *rendered* match, rAF on scroll/resize + MutationObserver + 500 ms
+  net, `scrollAnchorIntoView`), `Coachmark.tsx`, `TutorialController.tsx`, `TutorialBanner.tsx`
+  (banner + first-run invite), `ExitDialog.tsx`.
+- Tests: `src/components/tutorial/steps.test.ts` (12), `placement.test.ts` (13),
+  `src/state/tutorial.test.ts` (12, incl. the byte-identity proof).
+
+### Changed
+- `appReducer.ts`: `tutorialSteps: TutorialStep[]` → `tutorial: TutorialState`; new actions
+  `tutorial/start|goto|complete|end|reset|dismissInvite`. `start`/`end` add and remove the sandbox
+  project inside the reducer — NOT via `createProject`/`deleteProject` — so no undo snapshot and no
+  notification are produced.
+- `persistence.ts`: slice `tutorial` (array) → `tutorialState` (object, key `rps_v1_tutorialState`);
+  legacy `retroplan_tutorial_steps_v4_media` is no longer migrated (ids belonged to the old steps);
+  `clearAll()` also sweeps the orphaned `rps_v1_tutorial`. Two assertions in `persistence.test.ts`
+  updated accordingly.
+- `AppContext.tsx`: facade is now `tutorial`, `startTutorial(firstStepId)`, `goToTutorialStep`,
+  `completeTutorialStep`, `endTutorial({removeSandbox, completed})`, `resetTutorial`,
+  `dismissTutorialInvite`. `isTutorialDrawerOpen` is gone.
+- `types/index.ts` and `data/mockData.ts`: `TutorialStep` + `TUTORIAL_STEPS` deleted.
+- Anchors added (attributes only): `data-tour="gantt"` (GanttChart), `task-dependencies`
+  (editTask/DependencyPicker), `new-task` (ProjectHeader + TaskBoard), `new-document`
+  (MarkdownStudio), `ai-settings` (Navbar desktop + mobile). Existing ids reused for the rest
+  (`#retroplanning-target-date-input`, `#header-drive-folder-btn`, `#header-export-btn`).
+- Entry points: Navbar menu item (desktop user menu + mobile drawer), Settings → About → “Restart
+  the tutorial”, and the first-run invite. `ProjectHeader`’s “Feature Tour” button was removed, so
+  there is exactly one way in per surface.
+- `docs/dev/STATE-API.md` (tutorial + sandbox + persistence key), `docs/dev/THEME.md` (Modal users).
+
+### Deleted
+`src/components/InteractiveTourGuide.tsx`, `src/components/TutorialDrawer.tsx`.
+
+### Verified
+`npx tsc --noEmit` clean · `npx vitest run` **450 passed / 39 files** (was 413/36; +37) ·
+`npx vite build` clean · `grep -rn "InteractiveTourGuide\|TutorialDrawer\|tutorialSteps" src` empty ·
+`grep -rn "bg-\[#" src/components` empty · every new file < 210 lines. Not committed, as instructed.
+
+### Known gaps / next steps
+- **No DOM harness** (vitest is `environment: 'node'`, `*.test.ts` only), so the coachmark, the
+  anchor tracking and the controller's auto-advance have no automated coverage — only the pure
+  maths and the pure predicates. The first manual pass in a browser should check: step 1 does not
+  self-complete on open (fixed by making the per-step baseline *state*, not a ref), the spotlight
+  hole lands on the right element at each step, and Escape → remove sandbox → back on the previous
+  project.
+- The spotlight dim panels are `pointer-events-none`, i.e. the whole app stays clickable, not only
+  the target. Deliberate (never trap the user), but it is not a strict modal spotlight.
+- The mobile drawer is `z-[100]`, above the coachmark (`z-[62]`); the tutorial is a desktop-first
+  experience for now.
+- `docs/audit/FEATURE-AUDIT.md` rows 63-65 and 73-74 still describe the old surfaces; they are now
+  historical.

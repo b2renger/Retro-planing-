@@ -79,11 +79,11 @@ describe('save / load roundtrip', () => {
   });
 
   it('skips a corrupted slice, keeps the others, and reports it', () => {
-    const st = memoryStorage({ [keyFor('projects')]: '{not json', [keyFor('teamMembers')]: '{"not":"an array"}', [keyFor('tutorial')]: '[]' });
+    const st = memoryStorage({ [keyFor('projects')]: '{not json', [keyFor('teamMembers')]: '{"not":"an array"}', [keyFor('tutorialState')]: '{}' });
     const res = load(st);
     expect(res.state.projects).toBeUndefined();
     expect(res.state.teamMembers).toBeUndefined();
-    expect(res.state.tutorial).toEqual([]);
+    expect(res.state.tutorialState).toEqual({});
     expect(res.errors).toHaveLength(2);
     expect(res.errors[0]).toContain(keyFor('projects'));
   });
@@ -120,7 +120,8 @@ describe('migration from retroplan_*_v4_media', () => {
     expect(res.state.invitations!.map((i) => i.id)).toEqual(['inv-2']);
     expect(res.state.aiSettings!.providers[0]).toMatchObject({ providerId: 'gemini', apiKey: 'AIza-secret', model: 'gemini-2.5-pro', enabled: true });
     expect(res.state.aiSettings!.defaultProviderId).toBe(res.state.aiSettings!.providers[0].id);
-    expect(res.state.tutorial).toEqual([{ id: 'tut-1', completed: true }, { id: 'tut-2', completed: false }]);
+    // The old step list is deliberately NOT migrated: the tutorial was rebuilt with new step ids.
+    expect(res.state.tutorialState).toBeUndefined();
     expect(res.state.ui).toEqual({ theme: 'light' });
 
     // new keys written, marker set, old keys untouched

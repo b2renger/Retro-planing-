@@ -27,7 +27,7 @@ export const DependencyPicker: React.FC<DependencyPickerProps> = ({ tasks, taskI
   }, [tasks, taskId, selected]);
 
   return (
-    <fieldset>
+    <fieldset data-tour="task-dependencies">
       <legend className="mb-1 block font-semibold text-fg-muted">Depends on</legend>
       {options.length === 0 ? (
         <p className="text-fg-subtle">This project has no other task to depend on.</p>

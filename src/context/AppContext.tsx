@@ -29,7 +29,6 @@ import type {
   TaskStatus,
   TeamInvitation,
   Theme,
-  TutorialStep,
   User,
   ViewTab,
   Workspace,
@@ -38,6 +37,7 @@ import { MOCK_USERS } from '../data/mockData';
 import { initialsAvatar } from '../state/avatar';
 import { newId } from '../state/ids';
 import { appReducer, initialState, type AppState } from '../state/appReducer';
+import { buildSandboxProject, type TutorialState } from '../state/tutorial';
 import {
   exportAllJson,
   importAllJson,
@@ -134,13 +134,16 @@ export interface AppContextType {
   dismissNotification: (id: string) => void;
   clearNotifications: () => void;
 
-  // Tutorial (navigation only)
-  tutorialSteps: TutorialStep[];
+  // Tutorial — progress, current step and the sandbox project (see src/state/tutorial.ts)
+  tutorial: TutorialState;
+  /** Starts or resumes the tutorial: creates the sandbox project and switches to it. */
+  startTutorial: (firstStepId: string) => void;
+  goToTutorialStep: (stepId: string) => void;
   completeTutorialStep: (stepId: string) => void;
+  /** Leaves the tutorial. `removeSandbox` deletes the practice project and returns to the previous one. */
+  endTutorial: (options: { removeSandbox: boolean; completed: boolean }) => void;
   resetTutorial: () => void;
-  startTutorial: () => void;
-  isTutorialDrawerOpen: boolean;
-  setIsTutorialDrawerOpen: (open: boolean) => void;
+  dismissTutorialInvite: () => void;
 
   // Modal flags
   isCloudPanelOpen: boolean;
@@ -199,7 +202,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [state, dispatch] = useReducer(appReducer, undefined, init);
 
   // Local, non-persisted UI flags.
-  const [isTutorialDrawerOpen, setIsTutorialDrawerOpen] = useState(false);
   const [isCloudPanelOpen, setIsCloudPanelOpen] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
@@ -212,7 +214,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // ---------------------------------------------------------------------------
   // Derived
   // ---------------------------------------------------------------------------
-  const { projects, workspaces, teamMembers, invitations, notifications, aiSettings, cloudSettings, cloudAccounts, cloudStatus, tutorialSteps, ui, undoStack, secretsReady, storageError } = state;
+  const { projects, workspaces, teamMembers, invitations, notifications, aiSettings, cloudSettings, cloudAccounts, cloudStatus, tutorial, ui, undoStack, secretsReady, storageError } = state;
 
   const currentUser = useMemo(() => teamMembers.find((u) => u.id === ui.currentUserId) ?? teamMembers[0] ?? FALLBACK_USER, [teamMembers, ui.currentUserId]);
   const activeWorkspace = useMemo(() => workspaces.find((w) => w.id === ui.activeWorkspaceId) ?? workspaces[0], [workspaces, ui.activeWorkspaceId]);
@@ -252,7 +254,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => persist('teamMembers', teamMembers), [teamMembers, persist]);
   useEffect(() => persist('invitations', invitations), [invitations, persist]);
   useEffect(() => persist('notifications', notifications), [notifications, persist]);
-  useEffect(() => persist('tutorial', tutorialSteps), [tutorialSteps, persist]);
+  useEffect(() => persist('tutorialState', tutorial), [tutorial, persist]);
   useEffect(() => persist('cloudAccounts', cloudAccounts), [cloudAccounts, persist]);
   useEffect(() => persist('ui', ui), [ui, persist]);
   useEffect(() => {
@@ -478,18 +480,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const clearNotifications = useCallback(() => dispatch({ type: 'notifications/clear' }), []);
 
   // ---------------------------------------------------------------------------
-  // Tutorial (navigation only)
+  // Tutorial
   // ---------------------------------------------------------------------------
   const completeTutorialStep = useCallback((stepId: string) => dispatch({ type: 'tutorial/complete', stepId }), []);
-  const tutorialProjectId = useMemo(() => projects.find((p) => p.isTutorialTemplate)?.id ?? projects[0]?.id ?? null, [projects]);
-  const startTutorial = useCallback(() => {
-    dispatch({ type: 'ui/patch', patch: { activeProjectId: tutorialProjectId, activeViewTab: 'retroplanning', activeDocumentId: null } });
-    setIsTutorialDrawerOpen(true);
-  }, [tutorialProjectId]);
-  const resetTutorial = useCallback(() => {
-    dispatch({ type: 'tutorial/reset' });
-    dispatch({ type: 'ui/patch', patch: { activeProjectId: tutorialProjectId, activeViewTab: 'retroplanning', activeDocumentId: null } });
-  }, [tutorialProjectId]);
+  const goToTutorialStep = useCallback((stepId: string) => dispatch({ type: 'tutorial/goto', stepId }), []);
+  /**
+   * The sandbox is built here and handed to the reducer, which appends it directly — not through
+   * `createProject` — so starting the tutorial pushes no undo snapshot and writes no notification.
+   * The reducer ignores the new copy when a live sandbox already exists (that is a resume).
+   */
+  const startTutorial = useCallback((firstStepId: string) => {
+    const at = new Date().toISOString();
+    const project = buildSandboxProject({ workspaceId: ctxRef.current.workspaceId, at });
+    dispatch({ type: 'tutorial/start', project, firstStepId, at });
+  }, []);
+  const endTutorial = useCallback(
+    (options: { removeSandbox: boolean; completed: boolean }) =>
+      dispatch({ type: 'tutorial/end', removeSandbox: options.removeSandbox, completed: options.completed, at: new Date().toISOString() }),
+    []
+  );
+  const resetTutorial = useCallback(() => dispatch({ type: 'tutorial/reset' }), []);
+  const dismissTutorialInvite = useCallback(() => dispatch({ type: 'tutorial/dismissInvite' }), []);
 
   // ---------------------------------------------------------------------------
   // Undo
@@ -515,7 +526,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       aiSettings: s.aiSettings,
       cloudSettings: s.cloudSettings,
       cloudAccounts: s.cloudAccounts,
-      tutorial: s.tutorialSteps,
+      tutorialState: s.tutorial,
       ui: s.ui,
     });
   }, []);
@@ -648,12 +659,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       markAllNotificationsRead,
       dismissNotification,
       clearNotifications,
-      tutorialSteps,
-      completeTutorialStep,
-      resetTutorial,
+      tutorial,
       startTutorial,
-      isTutorialDrawerOpen,
-      setIsTutorialDrawerOpen,
+      goToTutorialStep,
+      completeTutorialStep,
+      endTutorial,
+      resetTutorial,
+      dismissTutorialInvite,
       isCloudPanelOpen,
       setIsCloudPanelOpen,
       isAiAssistantOpen,
@@ -697,8 +709,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       editingTaskId, addPhase, updatePhase, deletePhase, updatePhaseDates, addMilestone, updateMilestone, deleteMilestone, toggleMilestoneComplete,
       updateTargetDeliveryDate, activeDocument, setActiveDocumentId, saveDocument, createDocument, deleteDocument, importDroppedFiles,
       applyAiStructuredData, addComment, addHistoryLog, resolveClarification, notifications, unreadCount, addNotification, markNotificationRead,
-      markAllNotificationsRead, dismissNotification, clearNotifications, tutorialSteps, completeTutorialStep, resetTutorial, startTutorial,
-      isTutorialDrawerOpen, isCloudPanelOpen, isAiAssistantOpen, isCreateTaskModalOpen, isCreateProjectModalOpen, isSettingsOpen, isInviteModalOpen,
+      markAllNotificationsRead, dismissNotification, clearNotifications, tutorial, startTutorial, goToTutorialStep, completeTutorialStep,
+      endTutorial, resetTutorial, dismissTutorialInvite, isCloudPanelOpen, isAiAssistantOpen, isCreateTaskModalOpen, isCreateProjectModalOpen, isSettingsOpen, isInviteModalOpen,
       undo, canUndo, undoLabel, storageError, exportBackup, importBackup, importProjectFromJson, aiSettings, activeAiProvider, addAiProvider,
       updateAiProvider, removeAiProvider, setDefaultAiProvider, secretsReady, cloudSettings, updateCloudSettings, cloudAccounts, setCloudAccount,
       cloudStatus, setCloudStatus, setCloudLink, applyCloudPatch,

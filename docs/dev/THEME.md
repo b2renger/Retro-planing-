@@ -136,6 +136,7 @@ The card is always `bg-card border border-line rounded-2xl shadow-2xl max-h-[85v
 the button `form={THAT_ID}`. `CreateTaskModal` and `CreateProjectModal` both do this.
 
 Users: `settings/SettingsModal`, `CloudPanel`, `CreateTaskModal`, `CreateProjectModal`,
-`AiAssistantModal`, `InviteCollaboratorsModal`, and the task inspector in
-`RetroplanningTimeline`. `TutorialDrawer` is deliberately **not** a modal — it is a non-blocking
-docked panel (`role="complementary"`) that coexists with the app.
+`AiAssistantModal`, `InviteCollaboratorsModal`, `tutorial/ExitDialog`, and the task inspector in
+`RetroplanningTimeline`. The tutorial coachmark (`tutorial/Coachmark.tsx`) is deliberately **not** a
+modal — it is a `role="dialog"` popover with `aria-modal="false"` over a `pointer-events-none`
+spotlight, so the app underneath stays usable while it is shown.

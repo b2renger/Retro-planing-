@@ -1,4 +1,4 @@
-import { User, Workspace, Project, Notification, TutorialStep, HardwareItem, MediaAssetItem } from '../types';
+import { User, Workspace, Project, Notification, HardwareItem, MediaAssetItem } from '../types';
 import { initialsAvatar } from '../state/avatar';
 
 export const MOCK_USERS: User[] = [
@@ -37,90 +37,6 @@ export const MOCK_USERS: User[] = [
     role: 'AV Systems & TouchDesigner Specialist',
     color: '#10B981',
     status: 'crunching',
-  },
-];
-
-export const TUTORIAL_STEPS: TutorialStep[] = [
-  {
-    id: 'tut-1',
-    title: '1. Timeline and target date',
-    description: 'The timeline shows phases, tasks and milestones against the target delivery date. Changing the target date either moves only the anchor or shifts every date by the same number of days; both are recorded in the history.',
-    targetTab: 'retroplanning',
-    actionRequired: 'Open the timeline and review the target delivery date',
-    actionPrompt: 'Change the target date and choose whether the schedule should move with it.',
-    completed: false,
-    featureHighlight: 'Days remaining, overdue tasks and schedule slack are computed from the real dates.',
-    keyBenefits: [
-      'Phases, tasks and milestones on one Gantt view',
-      'Anchor-only or shift-all date changes, both logged',
-      'Health numbers derived from dates, not typed in',
-    ],
-  },
-  {
-    id: 'tut-2',
-    title: '2. Immediate actions',
-    description: 'A triage view of urgent and critical-path tasks, the countdown to delivery, and open questions that still need an answer.',
-    targetTab: 'immediate',
-    actionRequired: 'Review the urgent tasks and open questions',
-    actionPrompt: 'Answer an open question or move an urgent task forward.',
-    completed: false,
-    featureHighlight: 'One screen for what needs attention today.',
-    keyBenefits: ['Countdown to the target date', 'Urgent and critical-path tasks first', 'Open questions with suggested answers'],
-  },
-  {
-    id: 'tut-3',
-    title: '3. Hardware and media',
-    description: 'The sample project lists projection, audio, server and rigging equipment, plus the video and sound assets to produce, with their booking and production status.',
-    targetTab: 'hardware',
-    actionRequired: 'Browse the hardware manifest and media roster',
-    actionPrompt: 'Filter the hardware list by category and check the media asset status.',
-    completed: false,
-    featureHighlight: 'Equipment and assets are stored with the project and exported with it.',
-    keyBenefits: ['Hardware by category with vendor and booking status', 'Video and sound assets with format and status', 'Phase-linked booking and testing tasks'],
-  },
-  {
-    id: 'tut-4',
-    title: '4. Tasks and checklists',
-    description: 'Tasks are grouped by status. Use the status control to move a task between columns and tick checklist items as you go; deleting a task can be undone.',
-    targetTab: 'tasks',
-    actionRequired: 'Change a task status or tick a checklist item',
-    actionPrompt: 'Move a task to In progress or complete a checklist item.',
-    completed: false,
-    featureHighlight: 'Every change is recorded in the project history.',
-    keyBenefits: ['Kanban and table views', 'Checklist progress per task', 'Filter by phase, search by title'],
-  },
-  {
-    id: 'tut-5',
-    title: '5. Markdown documents',
-    description: 'Write briefs and notes in Markdown with a live preview. With an AI provider configured in Settings, notes can be turned into a proposed schedule that you apply (replace) or merge, with undo.',
-    targetTab: 'markdown',
-    actionRequired: 'Open the installation brief',
-    actionPrompt: 'Edit a document, or drop a .md file onto the studio to import it.',
-    completed: false,
-    featureHighlight: 'Documents live with the project and are included in exports and cloud sync.',
-    keyBenefits: ['Split editor and preview', 'Import .md files by drag and drop', 'AI structuring only when a provider is configured'],
-  },
-  {
-    id: 'tut-6',
-    title: '6. Team and comments',
-    description: 'Invite collaborators by email to create a pending invitation, comment on the project, and see workload per member. Invitations are stored locally in this version; no email is sent.',
-    targetTab: 'collaboration',
-    actionRequired: 'Review the team and leave a comment',
-    actionPrompt: 'Post a comment or create an invitation.',
-    completed: false,
-    featureHighlight: 'Team data is local to this browser or desktop app.',
-    keyBenefits: ['Workload per team member', 'Comments attached to the project', 'Pending invitations you can revoke'],
-  },
-  {
-    id: 'tut-7',
-    title: '7. History, backup and settings',
-    description: 'Every change is logged with who and when. Export the whole store as JSON, import it back, and configure AI providers and cloud storage in Settings.',
-    targetTab: 'history',
-    actionRequired: 'Open the history view',
-    actionPrompt: 'Filter the history by action or person, then open Settings.',
-    completed: false,
-    featureHighlight: 'Data stays on this device unless you connect a cloud folder.',
-    keyBenefits: ['Full audit trail per project', 'JSON backup and restore', 'AI and cloud providers configured by you'],
   },
 ];
 

@@ -35,7 +35,6 @@ export const ProjectHeader: React.FC = () => {
     setIsCreateTaskModalOpen,
     setIsCreateProjectModalOpen,
     setIsInviteModalOpen,
-    setIsTutorialDrawerOpen,
     setIsCloudPanelOpen,
     teamMembers,
   } = useApp();
@@ -248,18 +247,6 @@ export const ProjectHeader: React.FC = () => {
             {/* Exports: spreadsheets, Markdown, images, JSON, and cloud uploads */}
             <ExportMenu project={activeProject} />
 
-            {/* Interactive Demo Launcher */}
-            <button
-              id="header-interactive-tour-btn"
-              onClick={() => setIsTutorialDrawerOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-semibold transition-colors"
-              title="Open the guided tour"
-            >
-              <GraduationCap className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
-              <span className="hidden sm:inline">Feature Tour</span>
-              <span className="sm:hidden">Tour</span>
-            </button>
-
             {/* Live Database Status & Durability Test Suite */}
             <button
               onClick={() => setActiveViewTab('markdown')}
@@ -271,6 +258,7 @@ export const ProjectHeader: React.FC = () => {
             </button>
 
             <button
+              data-tour="new-task"
               onClick={() => setIsCreateTaskModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md shadow-purple-500/20 transition-all cursor-pointer"
             >

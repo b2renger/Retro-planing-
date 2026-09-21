@@ -17,7 +17,8 @@ import { CreateTaskModal } from './components/CreateTaskModal';
 import { EditTaskModal } from './components/EditTaskModal';
 import { CreateProjectModal } from './components/CreateProjectModal';
 import { SettingsModal } from './components/settings/SettingsModal';
-import { TutorialDrawer } from './components/TutorialDrawer';
+import { TutorialBanner } from './components/tutorial/TutorialBanner';
+import { TutorialController } from './components/tutorial/TutorialController';
 import { InviteCollaboratorsModal } from './components/InviteCollaboratorsModal';
 
 const EmptyState: React.FC = () => {
@@ -62,6 +63,7 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-app text-fg flex flex-col font-sans selection:bg-purple-500/30 selection:text-purple-200 transition-colors duration-200">
       <Navbar />
+      <TutorialBanner />
 
       {storageError && (
         <div role="alert" className="bg-rose-600 text-white text-xs px-4 py-2 text-center">
@@ -85,7 +87,6 @@ const AppContent: React.FC = () => {
           <CloudPanel />
           <CreateTaskModal />
           <EditTaskModal />
-          <TutorialDrawer />
           <InviteCollaboratorsModal />
         </>
       ) : (
@@ -94,6 +95,7 @@ const AppContent: React.FC = () => {
 
       <CreateProjectModal />
       <SettingsModal />
+      <TutorialController />
     </div>
   );
 };

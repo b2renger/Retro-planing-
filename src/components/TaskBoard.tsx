@@ -107,6 +107,7 @@ export const TaskBoard: React.FC = () => {
           </div>
 
           <button
+            data-tour="new-task"
             onClick={() => setIsCreateTaskModalOpen(true)}
             className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-purple-500/20 transition-all cursor-pointer"
           >

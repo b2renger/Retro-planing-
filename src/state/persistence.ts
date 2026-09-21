@@ -13,13 +13,13 @@ import type {
   Project,
   TeamInvitation,
   Theme,
-  TutorialStep,
   User,
   ViewTab,
   Workspace,
 } from '../types';
 import { parseProjectJson } from '../services/export/json';
 import { newId } from './ids';
+import type { TutorialState } from './tutorial';
 
 export const NAMESPACE = 'rps_v1_';
 
@@ -41,7 +41,7 @@ export interface PersistedState {
   aiSettings?: AiSettings;
   cloudSettings?: CloudSettings;
   cloudAccounts?: CloudAccounts;
-  tutorial?: TutorialStep[];
+  tutorialState?: TutorialState;
   ui?: Partial<UiState>;
 }
 
@@ -56,11 +56,18 @@ export const SLICES: readonly Slice[] = [
   'aiSettings',
   'cloudSettings',
   'cloudAccounts',
-  'tutorial',
+  'tutorialState',
   'ui',
 ];
 
-const ARRAY_SLICES: ReadonlySet<Slice> = new Set<Slice>(['projects', 'workspaces', 'teamMembers', 'invitations', 'notifications', 'tutorial']);
+/**
+ * Keys of the namespace that are no longer slices. `rps_v1_tutorial` held the old step list; the
+ * tutorial now stores progress in `rps_v1_tutorialState`. Kept here so "reset app data" still
+ * sweeps them.
+ */
+const ORPHAN_KEYS: readonly string[] = [`${NAMESPACE}tutorial`];
+
+const ARRAY_SLICES: ReadonlySet<Slice> = new Set<Slice>(['projects', 'workspaces', 'teamMembers', 'invitations', 'notifications']);
 
 export const MIGRATED_KEY = `${NAMESPACE}migratedAt`;
 
@@ -182,9 +189,9 @@ export function load(storage: StorageLike | null = defaultStorage()): LoadResult
 /** Removes every `rps_v1_*` key (used by "reset app data"). */
 export function clearAll(storage: StorageLike | null = defaultStorage()): void {
   if (!storage) return;
-  for (const slice of SLICES) {
+  for (const key of [...SLICES.map(keyFor), ...ORPHAN_KEYS]) {
     try {
-      storage.removeItem(keyFor(slice));
+      storage.removeItem(key);
     } catch {
       /* ignore */
     }
@@ -262,12 +269,8 @@ export function migrateLegacy(storage: StorageLike): PersistedState | null {
       .map((n) => ({ ...n, timestamp: isoOr(n.timestamp, now) }));
   }
 
-  const tutorial = readJson<unknown>(storage, LEGACY_KEYS.tutorial).value;
-  if (Array.isArray(tutorial)) {
-    found = true;
-    // Step text and shape changed; only the completion flags are worth keeping.
-    out.tutorial = (tutorial as TutorialStep[]).map((s) => ({ ...s, completed: Boolean(s.completed) }));
-  }
+  // The legacy tutorial steps are not migrated: the tutorial was rebuilt with different steps and
+  // different ids, so old completion flags would mark the wrong things as done.
 
   const api = readJson<{ useCustomKey?: boolean; apiKey?: string; selectedModel?: string }>(storage, LEGACY_KEYS.apiSettings).value;
   if (api && typeof api === 'object') {
@@ -385,7 +388,7 @@ export function importAllJson(text: string): PersistedState {
       }
     });
   }
-  for (const slice of ['teamMembers', 'workspaces', 'invitations', 'notifications', 'tutorial'] as const) {
+  for (const slice of ['teamMembers', 'workspaces', 'invitations', 'notifications'] as const) {
     const items = out[slice];
     if (!items) continue;
     items.forEach((item, i) => {

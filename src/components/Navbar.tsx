@@ -24,6 +24,7 @@ import {
   Monitor,
 } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter';
+import { FIRST_STEP_ID } from './tutorial/steps';
 import { CloudStatusChip } from './CloudStatusChip';
 
 const THEME_OPTIONS = [
@@ -49,9 +50,13 @@ export const Navbar: React.FC = () => {
     setIsAiAssistantOpen,
     setIsCreateProjectModalOpen,
     setIsSettingsOpen,
-    setIsTutorialDrawerOpen,
     setIsInviteModalOpen,
+    tutorial,
+    startTutorial,
   } = useApp();
+
+  const tutorialLabel = tutorial.currentStepId && tutorial.status !== 'running' ? 'Resume the tutorial' : 'Tutorial';
+  const openTutorial = (): void => startTutorial(tutorial.currentStepId ?? FIRST_STEP_ID);
 
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -159,6 +164,7 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* API Key Status (Desktop) */}
           <button
+            data-tour="ai-settings"
             onClick={() => setIsSettingsOpen(true)}
             className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-elevated hover:bg-line border border-line text-fg-muted text-xs font-medium transition-colors"
             title={activeAiProvider ? `AI provider: ${activeAiProvider.label} (${activeAiProvider.model})` : 'No AI provider configured — open settings'}
@@ -257,6 +263,17 @@ export const Navbar: React.FC = () => {
                   <p className="text-[10px] text-fg-muted font-mono">{currentUser.email}</p>
                   <p className="text-[10px] text-purple-600 dark:text-purple-400 font-medium mt-0.5">{currentUser.role}</p>
                 </div>
+                <button
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    openTutorial();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-xs text-left font-medium text-fg hover:bg-elevated transition-colors cursor-pointer"
+                >
+                  <GraduationCap className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
+                  <span>{tutorialLabel}</span>
+                </button>
+                <div className="border-t border-line my-1" />
                 <div className="text-[10px] font-semibold text-fg-muted px-2 py-1 uppercase tracking-wider">
                   Switch Collaborator Persona
                 </div>
@@ -411,18 +428,19 @@ export const Navbar: React.FC = () => {
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  setIsTutorialDrawerOpen(true);
+                  openTutorial();
                 }}
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-card border border-line text-xs text-fg"
               >
                 <div className="flex items-center gap-2.5">
                   <GraduationCap className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                  <span>Interactive Tutorial Guide</span>
+                  <span>{tutorialLabel}</span>
                 </div>
-                <span className="text-[10px] text-purple-600 dark:text-purple-400">View</span>
+                <span className="text-[10px] text-purple-600 dark:text-purple-400">Start</span>
               </button>
 
               <button
+                data-tour="ai-settings"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
                   setIsSettingsOpen(true);

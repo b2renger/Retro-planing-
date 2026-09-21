@@ -233,18 +233,6 @@ export interface TeamInvitation {
   note?: string;
 }
 
-export interface TutorialStep {
-  id: string;
-  title: string;
-  description: string;
-  targetTab: ViewTab;
-  actionRequired: string;
-  completed: boolean;
-  featureHighlight?: string;
-  keyBenefits?: string[];
-  actionPrompt?: string;
-}
-
 export type ViewTab = 'immediate' | 'retroplanning' | 'hardware' | 'tasks' | 'markdown' | 'collaboration' | 'history';
 
 /** AI provider settings. `apiKey` values are kept out of localStorage when a secure store exists (see src/state/secrets.ts). */

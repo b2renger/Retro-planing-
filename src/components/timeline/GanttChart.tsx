@@ -165,7 +165,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   const activeId = taskDrag.preview?.id ?? selectedTaskId ?? hoveredId;
 
   return (
-    <div className="flex overflow-hidden rounded-2xl border border-line bg-card shadow-sm dark:shadow-xl">
+    <div data-tour="gantt" className="flex overflow-hidden rounded-2xl border border-line bg-card shadow-sm dark:shadow-xl">
       {/* Frozen labels */}
       <div className="shrink-0 border-r border-line bg-card" style={{ width: LABEL_WIDTH }}>
         <div className="flex h-9 items-center border-b border-line px-3 text-[10px] font-bold uppercase tracking-wider text-fg-muted">

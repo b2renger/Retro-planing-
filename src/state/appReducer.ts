@@ -13,13 +13,13 @@ import type {
   Notification,
   Project,
   TeamInvitation,
-  TutorialStep,
   User,
   Workspace,
 } from '../types';
-import { INITIAL_NOTIFICATIONS, INITIAL_PROJECTS, INITIAL_WORKSPACES, MOCK_USERS, TUTORIAL_STEPS } from '../data/mockData';
+import { INITIAL_NOTIFICATIONS, INITIAL_PROJECTS, INITIAL_WORKSPACES, MOCK_USERS } from '../data/mockData';
 import type { PersistedState, UiState } from './persistence';
 import { projectsReducer, type ProjectsAction } from './projectsReducer';
+import { reconcileTutorial, type TutorialSandbox, type TutorialState } from './tutorial';
 import { GOOGLE_CLIENT_SECRET_ID, aiSecretId } from './secrets';
 
 export const NOTIFICATION_CAP = 100;
@@ -46,7 +46,7 @@ export interface AppState {
   cloudSettings: CloudSettings;
   cloudAccounts: CloudAccounts;
   cloudStatus: CloudStatus;
-  tutorialSteps: TutorialStep[];
+  tutorial: TutorialState;
   ui: UiState;
   undoStack: UndoSnapshot[];
   secretsReady: boolean;
@@ -65,18 +65,13 @@ export const DEFAULT_UI: UiState = {
   theme: 'system',
 };
 
-/** Merge persisted tutorial completion flags onto the current step definitions (texts may change between versions). */
-export function reconcileTutorial(persisted: TutorialStep[] | undefined): TutorialStep[] {
-  const done = new Set((persisted ?? []).filter((s) => s && s.completed).map((s) => s.id));
-  return TUTORIAL_STEPS.map((s) => ({ ...s, completed: done.has(s.id) }));
-}
-
 /** Builds the boot state from what `load()` returned; seeds the sample data only for slices that were never saved. */
 export function initialState(persisted: PersistedState, theme: UiState['theme'], errors: string[] = []): AppState {
   const workspaces = persisted.workspaces && persisted.workspaces.length > 0 ? persisted.workspaces : INITIAL_WORKSPACES;
   const teamMembers = persisted.teamMembers && persisted.teamMembers.length > 0 ? persisted.teamMembers : MOCK_USERS;
+  const projects = persisted.projects ?? INITIAL_PROJECTS;
   return {
-    projects: persisted.projects ?? INITIAL_PROJECTS,
+    projects,
     workspaces,
     teamMembers,
     invitations: persisted.invitations ?? [],
@@ -90,7 +85,7 @@ export function initialState(persisted: PersistedState, theme: UiState['theme'],
       : DEFAULT_CLOUD_SETTINGS,
     cloudAccounts: persisted.cloudAccounts ?? {},
     cloudStatus: { state: 'idle' },
-    tutorialSteps: reconcileTutorial(persisted.tutorial),
+    tutorial: reconcileTutorial(persisted.tutorialState, projects),
     ui: { ...DEFAULT_UI, ...(persisted.ui ?? {}), theme },
     undoStack: [],
     secretsReady: false,
@@ -111,8 +106,12 @@ export type AppAction =
   | { type: 'team/revoke'; invitationId: string }
   | { type: 'team/remove'; userId: string; reassignTo: string }
   | { type: 'team/updateRole'; userId: string; role: string }
+  | { type: 'tutorial/start'; project: Project; firstStepId: string; at: string }
+  | { type: 'tutorial/goto'; stepId: string }
   | { type: 'tutorial/complete'; stepId: string }
+  | { type: 'tutorial/end'; removeSandbox: boolean; completed: boolean; at: string }
   | { type: 'tutorial/reset' }
+  | { type: 'tutorial/dismissInvite' }
   | { type: 'ai/add'; provider: AiProviderConfig }
   | { type: 'ai/update'; id: string; patch: Partial<AiProviderConfig> }
   | { type: 'ai/remove'; id: string }
@@ -209,12 +208,57 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         workspaces: state.workspaces.map((ws) => ({ ...ws, members: ws.members.map((m) => (m.id === action.userId ? { ...m, role: action.role } : m)) })),
       };
 
+    // ---- Tutorial ------------------------------------------------------------------
+    // The sandbox is created and destroyed here so it never goes through `createProject` /
+    // `deleteProject`: no undo snapshot, no notification, nothing in the user's own projects.
+    case 'tutorial/start': {
+      const live = state.tutorial.sandbox && state.projects.some((p) => p.id === state.tutorial.sandbox?.projectId) ? state.tutorial.sandbox : null;
+      const sandbox: TutorialSandbox = live ?? {
+        projectId: action.project.id,
+        returnProjectId: state.ui.activeProjectId,
+        returnViewTab: state.ui.activeViewTab,
+        startedAt: action.at,
+      };
+      return {
+        ...state,
+        projects: live ? state.projects : [...state.projects, action.project],
+        tutorial: { ...state.tutorial, status: 'running', currentStepId: state.tutorial.currentStepId ?? action.firstStepId, sandbox },
+        ui: { ...state.ui, activeProjectId: sandbox.projectId, activeDocumentId: null },
+      };
+    }
+    case 'tutorial/goto':
+      return state.tutorial.currentStepId === action.stepId ? state : { ...state, tutorial: { ...state.tutorial, currentStepId: action.stepId } };
     case 'tutorial/complete':
-      return state.tutorialSteps.some((s) => s.id === action.stepId && !s.completed)
-        ? { ...state, tutorialSteps: state.tutorialSteps.map((s) => (s.id === action.stepId ? { ...s, completed: true } : s)) }
-        : state;
+      return state.tutorial.completedStepIds.includes(action.stepId)
+        ? state
+        : { ...state, tutorial: { ...state.tutorial, completedStepIds: [...state.tutorial.completedStepIds, action.stepId] } };
+    case 'tutorial/end': {
+      const sandbox = state.tutorial.sandbox;
+      const projects = sandbox && action.removeSandbox ? state.projects.filter((p) => p.id !== sandbox.projectId) : state.projects;
+      const returnTo = sandbox && action.removeSandbox ? sandbox.returnProjectId : sandbox?.projectId ?? state.ui.activeProjectId;
+      const ui: UiState = {
+        ...state.ui,
+        activeProjectId: returnTo,
+        activeViewTab: sandbox?.returnViewTab ?? state.ui.activeViewTab,
+        activeDocumentId: null,
+      };
+      return fixActiveProject({
+        ...state,
+        projects,
+        tutorial: {
+          ...state.tutorial,
+          status: 'idle',
+          sandbox: null,
+          currentStepId: action.completed ? null : state.tutorial.currentStepId,
+          completedAt: action.completed ? action.at : state.tutorial.completedAt,
+        },
+        ui,
+      });
+    }
     case 'tutorial/reset':
-      return { ...state, tutorialSteps: TUTORIAL_STEPS.map((s) => ({ ...s, completed: false })) };
+      return { ...state, tutorial: { ...state.tutorial, currentStepId: null, completedStepIds: [], completedAt: null } };
+    case 'tutorial/dismissInvite':
+      return state.tutorial.inviteDismissed ? state : { ...state, tutorial: { ...state.tutorial, inviteDismissed: true } };
 
     case 'ai/add': {
       const providers = [...state.aiSettings.providers, action.provider];
@@ -306,7 +350,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
             : state.aiSettings,
           cloudSettings: s.cloudSettings ? { ...s.cloudSettings, google: { ...s.cloudSettings.google, clientSecret: s.cloudSettings.google.clientSecret ?? state.cloudSettings.google.clientSecret } } : state.cloudSettings,
           cloudAccounts: s.cloudAccounts ?? state.cloudAccounts,
-          tutorial: s.tutorial ?? state.tutorialSteps,
+          tutorialState: s.tutorialState ?? state.tutorial,
           ui: { ...state.ui, ...(s.ui ?? {}) },
         },
         state.ui.theme
