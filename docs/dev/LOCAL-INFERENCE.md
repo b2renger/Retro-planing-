@@ -96,3 +96,58 @@ untrustworthy.
    right phases? A one-afternoon spike answers it.
 3. Would the bundle cost be acceptable in the web build, or should tier 1 be desktop-only with the web
    build staying on tier 0?
+
+---
+
+## On JAX, and why the framework is the wrong question
+
+Asked whether JAX would help. It would not, for the same reason PyTorch does not: JAX is a Python
+library. Swapping one Python numerical framework for another leaves the actual constraint untouched —
+**this app is TypeScript running in a renderer on a machine with no Python installed, and no right to
+demand one.**
+
+The question that matters is not what trained the model but what format it ships in, because that is
+what decides whether a JavaScript runtime can load it:
+
+| Format | Runs in our app via | Notes |
+|---|---|---|
+| **ONNX** | `@huggingface/transformers`, `onnxruntime-web` | WASM everywhere, WebGPU where available. Works in the web build too. |
+| **GGUF** | `node-llama-cpp` | Native, desktop only, aimed at generative LLMs. |
+| **TF.js** | `@tensorflow/tfjs` | Viable, smaller model selection these days. |
+| PyTorch `.pt`, JAX/Flax | nothing in JS | Needs Python, which is the thing we are avoiding. |
+
+JAX is relevant only upstream: a JAX model can be exported through StableHLO and converted to ONNX or
+TFLite. If we ever *train* something ourselves, JAX is a fine choice — but what we ship is the export,
+not the framework.
+
+## Verified stack (checked 2026-09-21, versions and models confirmed to exist)
+
+| Piece | Package / model | Why |
+|---|---|---|
+| Runtime | `@huggingface/transformers` 4.3.0 | The maintained successor to `@xenova/transformers`. ONNX in the renderer, no server, no Python. |
+| Low-level alternative | `onnxruntime-web` 1.30.0 | If we want a hand-rolled pipeline instead of the transformers API. |
+| Multilingual embeddings | `Xenova/multilingual-e5-small` or `Xenova/paraphrase-multilingual-MiniLM-L12-v2` | Phase classification, duplicate detection, brief-to-task tracing. |
+| Typed yes/no with a probability | `Xenova/nli-deberta-v3-xsmall` | Zero-shot classification. **This is the closest match to what Laya offers**, in a format we can actually load. |
+| Dates in prose, no model at all | `chrono-node` 2.10.1 | Natural language date parsing, French included. |
+
+### The language point, which nearly got missed
+
+This project's own content is French: "Rétroplanning", "Vernissage", the sample brief. An
+English-only model would quietly underperform on exactly the documents these users write. Both
+embedding models above are multilingual, and `chrono-node` parses French dates. Any English-only
+choice — including Laya's default English checkpoint — would need its multilingual variant instead.
+
+### Consequence for deadline detection
+
+`chrono-node` handles it with **no model whatsoever**: parse the dates out of a document, then apply
+rules for proximity to words like *deadline*, *livraison*, *vernissage*, *opening*. That is tier 0
+done properly, it works identically in the web build, it adds roughly 50 kB rather than 25 MB, and it
+is explainable — you can show the user the sentence the date came from. Build this one first; it may
+be the only tier that ever ships.
+
+### Where this leaves Laya
+
+Its primitives are still the right shape, and it was a good pointer at the problem. But
+`nli-deberta-v3-xsmall` gives the same kind of answer in a format that loads in JavaScript today, with
+no Python, no sidecar, and support for the web build. Unless Laya's checkpoints turn out to export to
+ONNX cleanly, the ONNX route wins on delivery and the comparison is not close.
