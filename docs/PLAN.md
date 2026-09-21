@@ -1,3 +1,8 @@
+> **Historical.** This is the plan as written at the start of the build, kept because it records the
+> reasoning behind each phase. It is not a status document and parts of it were superseded — the cloud
+> and AI designs changed during implementation, and the phase order was revised. For what actually
+> exists, read [FEATURES.md](FEATURES.md); for what happened and why, read [dev/PROGRESS.md](dev/PROGRESS.md).
+
 # RetroPlaningStudio — Implementation Plan (night of 2026-09-20 → 07:00)
 
 Goal: a testable desktop + web build with real (not simulated) integrations:
