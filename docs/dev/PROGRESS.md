@@ -723,3 +723,27 @@ Read `docs/FEATURES.md` for what exists, `docs/HUMAN-TESTS.md` for what still ne
 "Still open" list in the 05:00 entry above. The single most useful habit: run
 `npm run build:web && node scripts/screenshots.mjs` and LOOK at `.tmp/shots/`. Ten defects came out of
 doing that once; none of them was findable by grep or by a unit test.
+
+## 2026-09-21 06:40 — The builds did not open. Root cause and fix.
+b2renger reported none of the builds worked. I had verified `codesign` and the signature gate and
+called that done. **That was the mistake: I never launched a packaged app.** Signing is not running.
+
+Diagnosis (all empirical, on macOS 26.6.2):
+- Launched the packaged app under Playwright's Electron driver: it runs fine. URL resolves inside
+  app.asar, title correct, `#root` renders ~70 KB of DOM, zero console errors. So the *code* is fine.
+- Copied the app out of the dmg, applied the quarantine xattr a download gets, then:
+  `spctl -a -vvv -t execute` → **rejected**. `codesign --verify --deep --strict` → valid.
+  So: valid ad-hoc signature, no Apple Developer ID → Gatekeeper refuses.
+- `xattr -dr com.apple.quarantine` → app launches and renders normally.
+
+The README told users to right-click → Open. **Apple removed that bypass in macOS 15**, so the
+instruction could never have worked on b2renger's machine. Fixed in README and HUMAN-TESTS, plus
+`scripts/mac-first-run.sh`. Only notarization (paid Apple account) removes the step entirely.
+
+Released v0.1.0 with the four installers attached and the workaround at the top of the notes:
+https://github.com/b2renger/Retro-planing-/releases/tag/v0.1.0
+
+### Lesson for next time
+`npm run package:*` finishing green proves nothing about whether the app opens. Add a launch probe to
+the gate: Playwright's `_electron.launch()` against the packaged binary, assert a window appears and
+`#root` is non-empty. Windows still has NO such verification — those builds have never been run.
