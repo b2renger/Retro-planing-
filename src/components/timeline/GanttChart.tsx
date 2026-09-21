@@ -7,8 +7,8 @@ import { PhaseBar, RowLabel, TaskBar } from './GanttRow';
 import { useBarDrag } from './useBarDrag';
 import type { TimelineView } from './useTimelineScale';
 
-/** Width of the frozen label column. */
-const LABEL_WIDTH = 224;
+/** Width of the frozen label column. Wide enough that a real deliverable name survives it. */
+const LABEL_WIDTH = 300;
 /** Height of one milestone chip row. */
 const FLAG_ROW_HEIGHT = 22;
 /** Padding under the milestone strip, also used when there is no milestone at all. */
@@ -165,159 +165,177 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   const activeId = taskDrag.preview?.id ?? selectedTaskId ?? hoveredId;
 
   return (
-    <div data-tour="gantt" className="flex overflow-hidden rounded-2xl border border-line bg-card shadow-sm dark:shadow-xl">
-      {/* Frozen labels */}
-      <div className="shrink-0 border-r border-line bg-card" style={{ width: LABEL_WIDTH }}>
-        <div className="flex h-9 items-center border-b border-line px-3 text-[10px] font-bold uppercase tracking-wider text-fg-muted">
-          Phases &amp; lanes
+    <div
+      data-tour="gantt"
+      className="overflow-hidden rounded-2xl border border-line bg-card shadow-sm dark:shadow-xl"
+    >
+      <div className="flex">
+        {/* Frozen labels */}
+        <div className="shrink-0 border-r border-line bg-card" style={{ width: LABEL_WIDTH }}>
+          <div className="flex h-9 items-center border-b border-line px-3 text-[10px] font-bold uppercase tracking-wider text-fg-muted">
+            Phases &amp; lanes
+          </div>
+          <div style={{ height: stripHeight(flagLevels) }} />
+          <div className="relative" style={{ height: Math.max(view.bodyHeight, 48) }}>
+            {view.rows.map((row) => {
+              const group = view.groups.find((g) => g.id === row.phaseId);
+              return (
+                <RowLabel
+                  key={row.id}
+                  row={row}
+                  view={view}
+                  phase={phaseById.get(row.phaseId) ?? null}
+                  groupLabel={group?.label ?? row.phaseId}
+                  color={group?.color ?? 'transparent'}
+                />
+              );
+            })}
+          </div>
         </div>
-        <div style={{ height: stripHeight(flagLevels) }} />
-        <div className="relative" style={{ height: Math.max(view.bodyHeight, 48) }}>
-          {view.rows.map((row) => {
-            const group = view.groups.find((g) => g.id === row.phaseId);
-            return (
-              <RowLabel
-                key={row.id}
-                row={row}
-                view={view}
-                phase={phaseById.get(row.phaseId) ?? null}
-                groupLabel={group?.label ?? row.phaseId}
-                color={group?.color ?? 'transparent'}
-              />
-            );
-          })}
+
+        {/* Scrolling grid */}
+        <div className="flex-1 overflow-x-auto">
+          <div style={{ width: view.width, minWidth: '100%' }}>
+            {/* Axis */}
+            <div className="relative h-9 border-b border-line">
+              {view.ticks.map((tick) => (
+                <div
+                  key={tick.key}
+                  className={`absolute top-0 h-full border-l border-line ${
+                    tick.isWeekend && view.zoom === 'day' ? 'bg-elevated/60' : ''
+                  }`}
+                  style={{ left: tick.x, width: view.pxPerDay }}
+                >
+                  {tick.showLabel && (
+                    <span className="block whitespace-nowrap px-1 pt-2 font-mono text-[10px] text-fg-muted">
+                      {tick.label}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <MilestoneStrip view={view} levels={flagLevels} onToggle={onToggleMilestone} />
+
+            {/* Body */}
+            <div className="relative" style={{ height: Math.max(view.bodyHeight, 48), width: view.width }}>
+              {view.ticks.map((tick) => (
+                <div
+                  key={`grid-${tick.key}`}
+                  className={`absolute top-0 h-full border-l border-line ${
+                    tick.isWeekend && view.zoom === 'day' ? 'bg-elevated/50' : ''
+                  }`}
+                  style={{ left: tick.x, width: view.pxPerDay }}
+                />
+              ))}
+              {view.todayX !== null && (
+                <div
+                  className="pointer-events-none absolute top-0 h-full w-0.5 bg-purple-500"
+                  style={{ left: view.todayX }}
+                  title="Today"
+                />
+              )}
+              {view.targetX !== null && (
+                <div
+                  className="pointer-events-none absolute top-0 h-full w-0.5 bg-amber-500"
+                  style={{ left: view.targetX }}
+                  title={`Target delivery ${view.model.target ?? ''}`}
+                />
+              )}
+
+              <DependencyLayer view={view} activeId={activeId} />
+
+              {view.rows.length === 0 && (
+                <p className="absolute left-4 top-4 text-xs text-fg-muted">
+                  No phase or task matches the current filters.
+                </p>
+              )}
+
+              {view.rows.map((row) => {
+                if (row.kind === 'phase') {
+                  const group = view.groups.find((g) => g.id === row.phaseId);
+                  if (!group?.phaseRow) return null;
+                  return (
+                    <PhaseBar
+                      key={row.id}
+                      row={row}
+                      modelRow={group.phaseRow}
+                      phase={phaseById.get(row.phaseId) ?? null}
+                      view={view}
+                      drag={phaseDrag}
+                    />
+                  );
+                }
+                return row.taskIds.map((taskId, index) => {
+                  const modelRow = view.taskRowById.get(taskId);
+                  const task = view.taskById.get(taskId);
+                  if (!modelRow || !task) return null;
+                  // Lanes are packed by start date, so the bar after this one is the next id on the
+                  // row. Its left edge is where a label parked outside this bar has to stop.
+                  const geometry = barGeometry(modelRow.start, modelRow.end, view.model.from, view.pxPerDay);
+                  const nextRow = view.taskRowById.get(row.taskIds[index + 1] ?? '');
+                  const nextGeometry = nextRow
+                    ? barGeometry(nextRow.start, nextRow.end, view.model.from, view.pxPerDay)
+                    : null;
+                  const barEnd = geometry ? geometry.left + geometry.width : 0;
+                  const labelRoom = (nextGeometry ? nextGeometry.left : view.width) - barEnd;
+                  return (
+                    <TaskBar
+                      key={taskId}
+                      labelRoom={labelRoom}
+                      row={row}
+                      modelRow={modelRow}
+                      task={task}
+                      view={view}
+                      drag={taskDrag}
+                      selected={selectedTaskId === taskId}
+                      hovered={hoveredId === taskId}
+                      onComputedCritical={view.criticalIds.has(taskId)}
+                      highlightCritical={highlightCritical}
+                      onHover={setHoveredId}
+                      onSelect={onSelectTask}
+                      onOpen={onOpenTask}
+                      onNudge={nudge}
+                    />
+                  );
+                });
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Scrolling grid */}
-      <div className="flex-1 overflow-x-auto">
-        <div style={{ width: view.width, minWidth: '100%' }}>
-          {/* Axis */}
-          <div className="relative h-9 border-b border-line">
-            {view.ticks.map((tick) => (
-              <div
-                key={tick.key}
-                className={`absolute top-0 h-full border-l border-line ${
-                  tick.isWeekend && view.zoom === 'day' ? 'bg-elevated/60' : ''
-                }`}
-                style={{ left: tick.x, width: view.pxPerDay }}
-              >
-                <span className="block whitespace-nowrap px-1 pt-2 font-mono text-[10px] text-fg-muted">
-                  {tick.label}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <MilestoneStrip view={view} levels={flagLevels} onToggle={onToggleMilestone} />
-
-          {/* Body */}
-          <div className="relative" style={{ height: Math.max(view.bodyHeight, 48), width: view.width }}>
-            {view.ticks.map((tick) => (
-              <div
-                key={`grid-${tick.key}`}
-                className={`absolute top-0 h-full border-l border-line ${
-                  tick.isWeekend && view.zoom === 'day' ? 'bg-elevated/50' : ''
-                }`}
-                style={{ left: tick.x, width: view.pxPerDay }}
-              />
-            ))}
-            {view.todayX !== null && (
-              <div
-                className="pointer-events-none absolute top-0 h-full w-0.5 bg-purple-500"
-                style={{ left: view.todayX }}
-                title="Today"
-              />
-            )}
-            {view.targetX !== null && (
-              <div
-                className="pointer-events-none absolute top-0 h-full w-0.5 bg-amber-500"
-                style={{ left: view.targetX }}
-                title={`Target delivery ${view.model.target ?? ''}`}
-              />
-            )}
-
-            <DependencyLayer view={view} activeId={activeId} />
-
-            {view.rows.length === 0 && (
-              <p className="absolute left-4 top-4 text-xs text-fg-muted">
-                No phase or task matches the current filters.
-              </p>
-            )}
-
-            {view.rows.map((row) => {
-              if (row.kind === 'phase') {
-                const group = view.groups.find((g) => g.id === row.phaseId);
-                if (!group?.phaseRow) return null;
-                return (
-                  <PhaseBar
-                    key={row.id}
-                    row={row}
-                    modelRow={group.phaseRow}
-                    phase={phaseById.get(row.phaseId) ?? null}
-                    view={view}
-                    drag={phaseDrag}
-                  />
-                );
-              }
-              return row.taskIds.map((taskId) => {
-                const modelRow = view.taskRowById.get(taskId);
-                const task = view.taskById.get(taskId);
-                if (!modelRow || !task) return null;
-                return (
-                  <TaskBar
-                    key={taskId}
-                    row={row}
-                    modelRow={modelRow}
-                    task={task}
-                    view={view}
-                    drag={taskDrag}
-                    selected={selectedTaskId === taskId}
-                    hovered={hoveredId === taskId}
-                    onComputedCritical={view.criticalIds.has(taskId)}
-                    highlightCritical={highlightCritical}
-                    onHover={setHoveredId}
-                    onSelect={onSelectTask}
-                    onOpen={onOpenTask}
-                    onNudge={nudge}
-                  />
-                );
-              });
-            })}
-          </div>
-
-          {/* Legend */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line px-3 py-2.5 text-[11px] text-fg-muted">
-            <span className="flex items-center gap-1.5">
-              <Flame className="h-3 w-3 text-rose-600 dark:text-rose-400" />
-              Critical path — computed from dependencies and estimated hours
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-              Manually flagged on the task
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded bg-emerald-500/70" />
-              Done
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded bg-amber-400" />
-              Milestone
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-0.5 w-4 bg-rose-500" />
-              Dependency that cannot be met as scheduled
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-3 w-0.5 bg-purple-500" />
-              Today
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-3 w-0.5 bg-amber-500" />
-              Target delivery
-            </span>
-          </div>
-        </div>
+      {/* Legend. Outside the scroller: inside it, it was as wide as the whole day range and its
+          last items sat off screen until you scrolled the chart sideways. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line px-3 py-2.5 text-[11px] text-fg-muted">
+        <span className="flex items-center gap-1.5">
+          <Flame className="h-3 w-3 text-rose-600 dark:text-rose-400" />
+          Critical path — computed from dependencies and estimated hours
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+          Manually flagged on the task
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded bg-emerald-500/70" />
+          Done
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded bg-amber-400" />
+          Milestone
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-0.5 w-4 bg-rose-500" />
+          Dependency that cannot be met as scheduled
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-3 w-0.5 bg-purple-500" />
+          Today
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-3 w-0.5 bg-amber-500" />
+          Target delivery
+        </span>
       </div>
     </div>
   );

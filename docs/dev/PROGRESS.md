@@ -572,3 +572,74 @@ empty · `grep -rn "bg-\[#" src/components` empty. Not committed, as instructed.
   score immediately after, so nothing fake reaches the screen, but the literal should go.
 - `docs/audit/FEATURE-AUDIT.md` rows 4, 26, 34, 35, 36, 40 and the P0 "Duplicate, competing
   navigation" bullet are now historical.
+
+## 2026-09-21 — First visual pass: the app was looked at
+
+`npm run build:web && node scripts/screenshots.mjs` now captures **38** PNGs (19 states × 2 themes)
+into `.tmp/shots/` at 1440×900. Every fix below was found by opening those files, not by grep.
+
+### Harness (`scripts/screenshots.mjs`)
+- Dismisses the first-run tutorial invitation before the tab shots — it was covering the bottom-left
+  corner of all fourteen of them.
+- Asserts after each tab that `documentElement.scrollWidth === clientWidth`, so a page-level
+  horizontal scrollbar is reported as a problem instead of being something you have to notice.
+- Twelve new states, each from a freshly reloaded page: `retroplanning-days`,
+  `retroplanning-months` (the axis has to be checked at all three zooms),
+  `retroplanning-runway`, `retroplanning-workload`, `tasks-table`, `hardware-media`, `settings`
+  (opens on the AI providers tab), `cloud`, `ai-assistant`, `task-editor`, `task-inspector`,
+  `tutorial` (step 1 coachmark — last, because starting the tutorial writes a sandbox project).
+
+### Fixed
+1. **Axis labels collided** (`timeline/scale.ts`, `GanttChart.tsx`). At week zoom the range-start
+   tick and the first Monday were 13 px apart and printed on top of each other ("Sep 13 14").
+   `AxisTick` now carries `edge` and `showLabel`; `thinTickLabels` lets the regular cadence claim
+   its space first and hands a label to the range-edge tick only if room is left. A tick always
+   draws its grid line, labelled or not. `estimateTextWidth` is the shared estimator. 10 new tests
+   including "no two visible labels overlap, at every zoom".
+2. **Duplicate metric strip** (`timeline/TimelineToolbar.tsx`, `TargetDateControl.tsx`,
+   `RetroplanningTimeline.tsx`). The toolbar repeated Target delivery / Slack / Deliverables from
+   `ProjectHeader`, which is on screen on every tab. Both `HealthChip`s are gone, and the delivery
+   anchor is now a compact "Target date" button that states the action instead of restating the
+   date and countdown. `#retroplanning-target-date-input` (tutorial step 1) and the dialog are
+   unchanged. `health` and `locale` dropped out of `TimelineToolbarProps` with them.
+3. **Truncation** (`GanttChart.tsx`, `GanttRow.tsx`, `scale.ts`). Label column 224 → 300 px; phase
+   rows and bars carry a `title`. `barLabelPlacement` puts a label outside a bar too narrow to show
+   a readable run of it, and `outsideLabelWidth` caps that label at the gap to the next bar on the
+   row (lanes are packed by start date, so that is the next id) — otherwise two 50 px bars printed
+   their names over each other. 8 new tests.
+4. **Gantt legend** sat inside the horizontally scrolling grid, so at day zoom it was as wide as the
+   whole day range and its last three items were off screen. Moved below both columns.
+5. **Phase chips were unreadable in light** (`taskFields.ts` `phaseChipStyle`, used by
+   `ImmediateActionView` and `TaskBoard` ×2). A phase colour is data picked for a bar; emerald and
+   amber as 9 px text on a white card are ~2:1. The chip now mixes the colour 60/40 toward
+   `var(--s-fg)` with `color-mix`, which the browser resolves per theme — darker in light, lighter
+   in dark — so no hex is duplicated per theme.
+6. **Modal subtitles were cut mid-word** (`ui/Modal.tsx`): "…no AI provid…" in the assistant,
+   "1. BOOKING & PROCUREMENT (VENUE, HARDW…" in the task inspector. `truncate` → `line-clamp-2`;
+   the title keeps `truncate` and gained a `title` attribute.
+7. **Workload cards**: phase name and hours touched when the name filled the row (`120h` welded to
+   the name). Added the missing `gap-2`.
+8. **Table board**: due dates wrapped mid-string ("2026-09-⏎24") and phase pills wrapped to two
+   lines. Both `whitespace-nowrap`; the pill truncates at 180 px with a `title`.
+9. **Kanban card titles** had no `min-w-0 flex-1`, so they wrapped inside whatever the priority
+   badge left them rather than the column width.
+10. **Hardware notes** were `text-fg-subtle` (~4:1 on the dark card) for real content — now
+    `fg-muted`, and the truncated item name, vendor and note carry `title`.
+
+### Verified
+`npx tsc --noEmit` clean · `npx vitest run` **514 passed / 43 files** (was 498) · `npx vite build`
+clean · `grep -rn "bg-\[#" src/components` empty · harness reports no console error, no failed
+request and no page-level horizontal scroll in either theme. Not committed, as instructed.
+
+### Seen and deliberately left
+- A milestone chip on the last day of the range is centred on its date, so half of it hangs past the
+  grid width; it is reachable by scrolling the chart, but a clamp would be better.
+- `TeamCollaborationView`: the current user's row has no Switch/Revoke buttons, so its hours sit
+  flush right while the other three rows' hours stop short of them. Aligning them needs either a
+  reserved empty action slot or putting the actions before the figures; both are worse than the
+  inconsistency.
+- A bar under ~28 px with a neighbour right behind it now shows no label at all (only its tooltip).
+  That is deliberate — the alternative was two names printed over each other.
+- Kanban columns are narrow enough at 1440 px that a long title still wraps to five or six lines.
+- `ProjectHeader` shows the raw ISO target date (`2026-11-20`); the toolbar used to show it
+  formatted. Copy/format decision, not a defect.

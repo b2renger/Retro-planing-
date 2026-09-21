@@ -10,7 +10,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { TaskStatus } from '../types';
-import { TASK_STATUSES, TASK_STATUS_ACCENTS, TASK_STATUS_LABELS } from './taskFields';
+import { phaseChipStyle, TASK_STATUSES, TASK_STATUS_ACCENTS, TASK_STATUS_LABELS } from './taskFields';
 
 export const TaskBoard: React.FC = () => {
   const {
@@ -150,7 +150,7 @@ export const TaskBoard: React.FC = () => {
                               type="button"
                               onClick={() => setEditingTaskId(task.id)}
                               title="Edit this task"
-                              className="text-left font-semibold text-xs text-fg group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors"
+                              className="min-w-0 flex-1 text-left font-semibold text-xs text-fg break-words group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors"
                             >
                               {task.title}
                             </button>
@@ -176,10 +176,7 @@ export const TaskBoard: React.FC = () => {
                             {phase && (
                               <span
                                 className="text-[9px] font-medium px-2 py-0.5 rounded-full"
-                                style={{
-                                  backgroundColor: `${phase.color}20`,
-                                  color: phase.color,
-                                }}
+                                style={phaseChipStyle(phase.color)}
                               >
                                 {phase.name}
                               </span>
@@ -266,11 +263,9 @@ export const TaskBoard: React.FC = () => {
                     <td className="p-3.5">
                       {phase && (
                         <span
-                          className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-                          style={{
-                            backgroundColor: `${phase.color}20`,
-                            color: phase.color,
-                          }}
+                          title={phase.name}
+                          className="inline-block max-w-[180px] truncate align-middle text-[10px] font-medium px-2 py-0.5 rounded-full"
+                          style={phaseChipStyle(phase.color)}
                         >
                           {phase.name}
                         </span>
@@ -302,8 +297,8 @@ export const TaskBoard: React.FC = () => {
                         ))}
                       </select>
                     </td>
-                    <td className="p-3.5 font-mono text-amber-600 dark:text-amber-400">{t.dueDate}</td>
-                    <td className="p-3.5 font-mono">{t.estimatedHours}h</td>
+                    <td className="p-3.5 font-mono whitespace-nowrap text-amber-600 dark:text-amber-400">{t.dueDate}</td>
+                    <td className="p-3.5 font-mono whitespace-nowrap">{t.estimatedHours}h</td>
                     <td className="p-3.5 text-right">
                       <button
                         onClick={() => setEditingTaskId(t.id)}

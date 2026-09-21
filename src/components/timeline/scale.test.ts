@@ -3,17 +3,21 @@ import { getDay, parseISO } from 'date-fns';
 import {
   axisTicks,
   barGeometry,
+  barLabelPlacement,
   dayAtX,
   daysBetween,
   deltaDaysFromPx,
+  estimateTextWidth,
   FALLBACK_LOCALE,
   formatDay,
   formatDayRange,
   moveInterval,
+  outsideLabelWidth,
   rangeWidth,
   resizeInterval,
   resolveLocale,
   shiftDay,
+  thinTickLabels,
   xForDay,
   ZOOM_PX_PER_DAY,
 } from './scale';
@@ -163,5 +167,120 @@ describe('axisTicks', () => {
   it('returns nothing for an impossible range', () => {
     expect(axisTicks('2026-03-08', '2026-03-02', 'day', 34, L)).toEqual([]);
     expect(axisTicks('bad', '2026-03-02', 'day', 34, L)).toEqual([]);
+  });
+});
+
+describe('estimateTextWidth', () => {
+  it('grows with the length of the text and the font size', () => {
+    expect(estimateTextWidth('abcd', 10)).toBeCloseTo(4 * 10 * 0.55);
+    expect(estimateTextWidth('abcd', 20)).toBeCloseTo(2 * estimateTextWidth('abcd', 10));
+    expect(estimateTextWidth('abcd', 10, 'mono')).toBeGreaterThan(estimateTextWidth('abcd', 10, 'sans'));
+  });
+
+  it('is zero for an empty string or an impossible font size', () => {
+    expect(estimateTextWidth('', 10)).toBe(0);
+    expect(estimateTextWidth('abcd', 0)).toBe(0);
+    expect(estimateTextWidth('abcd', Number.NaN)).toBe(0);
+  });
+});
+
+describe('thinTickLabels', () => {
+  it('hides a label that would touch the one before it', () => {
+    const out = thinTickLabels([
+      { x: 0, label: 'Sep 13', edge: false },
+      { x: 4, label: 'Sep 14', edge: false },
+      { x: 400, label: 'Sep 21', edge: false },
+    ]);
+    expect(out.map((t) => t.showLabel)).toEqual([true, false, true]);
+  });
+
+  it('lets the cadence win over the tick that only pins the range start', () => {
+    const out = thinTickLabels([
+      { x: 0, label: 'Sep 13', edge: true },
+      { x: 13, label: 'Sep 14', edge: false },
+    ]);
+    expect(out.map((t) => t.showLabel)).toEqual([false, true]);
+  });
+
+  it('keeps the range-start label when no cadence label needs that space', () => {
+    const out = thinTickLabels([
+      { x: 0, label: 'Sep 13', edge: true },
+      { x: 91, label: 'Sep 21', edge: false },
+    ]);
+    expect(out.map((t) => t.showLabel)).toEqual([true, true]);
+  });
+});
+
+describe('axis labels never collide', () => {
+  it('drops the range-start label when the first Monday lands beside it', () => {
+    const ticks = axisTicks('2026-03-15', '2026-04-30', 'week', ZOOM_PX_PER_DAY.week, L);
+    expect(ticks[0].key).toBe('2026-03-15');
+    expect(ticks[0].edge).toBe(true);
+    expect(ticks[0].showLabel).toBe(false);
+    expect(ticks[1].key).toBe('2026-03-16');
+    expect(ticks[1].showLabel).toBe(true);
+  });
+
+  it('keeps every label when the range starts on a Monday', () => {
+    const ticks = axisTicks('2026-03-02', '2026-03-25', 'week', ZOOM_PX_PER_DAY.week, L);
+    expect(ticks.every((t) => t.showLabel)).toBe(true);
+  });
+
+  it('leaves room between two visible labels at every zoom', () => {
+    for (const zoom of ['day', 'week', 'month'] as const) {
+      const ticks = axisTicks('2026-03-15', '2026-09-30', zoom, ZOOM_PX_PER_DAY[zoom], L);
+      const shown = ticks.filter((t) => t.showLabel);
+      expect(shown.length).toBeGreaterThan(0);
+      for (let i = 1; i < shown.length; i++) {
+        const previousRight = shown[i - 1].x + estimateTextWidth(shown[i - 1].label, 10, 'mono');
+        expect(shown[i].x).toBeGreaterThanOrEqual(previousRight);
+      }
+    }
+  });
+});
+
+describe('barLabelPlacement', () => {
+  it('keeps the label inside a bar that can hold a readable run of it', () => {
+    expect(barLabelPlacement(240, 'Venue Booking & Electrical Power Survey')).toBe('inside');
+    expect(barLabelPlacement(80, 'Venue Booking & Electrical Power Survey')).toBe('inside');
+    // A short name in a one-day bar at day zoom still fits.
+    expect(barLabelPlacement(ZOOM_PX_PER_DAY.day, 'Ack')).toBe('inside');
+  });
+
+  it('moves the label outside a bar with no room for one', () => {
+    expect(barLabelPlacement(13, 'Acoustic Alignment, Dante Network Commissioning')).toBe('outside');
+    expect(barLabelPlacement(5, 'Final Safety Inspection')).toBe('outside');
+  });
+
+  it('counts the flame or lock icon a bar carries', () => {
+    expect(barLabelPlacement(60, 'Wide enough', 0)).toBe('inside');
+    expect(barLabelPlacement(60, 'Wide enough', 1)).toBe('outside');
+  });
+
+  it('puts the label outside when the width is not a number', () => {
+    expect(barLabelPlacement(Number.NaN, 'Anything')).toBe('outside');
+  });
+});
+
+describe('outsideLabelWidth', () => {
+  it('uses the room available, never more than the label needs', () => {
+    expect(outsideLabelWidth(400, 'Artist Creative Walkthrough')).toBe(
+      Math.round(estimateTextWidth('Artist Creative Walkthrough', 11))
+    );
+    expect(outsideLabelWidth(60, 'Artist Creative Walkthrough')).toBe(54);
+  });
+
+  it('draws nothing when the next bar is too close', () => {
+    expect(outsideLabelWidth(30, 'Artist Creative Walkthrough')).toBe(0);
+    expect(outsideLabelWidth(0, 'Artist Creative Walkthrough')).toBe(0);
+    expect(outsideLabelWidth(-40, 'Artist Creative Walkthrough')).toBe(0);
+  });
+
+  it('caps a very long label even with the whole chart to spare', () => {
+    expect(outsideLabelWidth(4000, 'x'.repeat(400))).toBe(220);
+  });
+
+  it('draws nothing when the room is not a number', () => {
+    expect(outsideLabelWidth(Number.NaN, 'Anything')).toBe(0);
   });
 });

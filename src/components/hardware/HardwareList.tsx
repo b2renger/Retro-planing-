@@ -80,7 +80,9 @@ export const HardwareList: React.FC<HardwareListProps> = ({
                     <Icon className="w-4 h-4 text-fg-muted" />
                   </span>
                   <div className="min-w-0">
-                    <h4 className="text-sm font-semibold text-fg truncate">{item.name || 'Untitled item'}</h4>
+                    <h4 className="text-sm font-semibold text-fg truncate" title={item.name || undefined}>
+                      {item.name || 'Untitled item'}
+                    </h4>
                     <p className="text-[11px] text-fg-muted truncate">
                       <span className="font-mono">Qty {item.quantity}</span> · {item.category}
                     </p>
@@ -104,11 +106,16 @@ export const HardwareList: React.FC<HardwareListProps> = ({
               {(item.vendor || item.notes) && (
                 <div className="flex items-center justify-between gap-2 text-[11px] text-fg-muted pt-1 border-t border-line">
                   {item.vendor && (
-                    <span className="truncate">
+                    <span className="truncate" title={item.vendor}>
                       Vendor: <strong className="text-fg">{item.vendor}</strong>
                     </span>
                   )}
-                  {item.notes && <span className="truncate text-fg-subtle italic">{item.notes}</span>}
+                  {/* A note is content, not a placeholder: `fg-subtle` left it at 4:1 on the dark card. */}
+                  {item.notes && (
+                    <span className="truncate italic" title={item.notes}>
+                      {item.notes}
+                    </span>
+                  )}
                 </div>
               )}
 

@@ -49,7 +49,9 @@ export const MediaList: React.FC<MediaListProps> = ({ assets, statusLine, confir
                   )}
                 </span>
                 <div className="min-w-0">
-                  <h4 className="text-sm font-semibold text-fg truncate">{asset.title || 'Untitled asset'}</h4>
+                  <h4 className="text-sm font-semibold text-fg truncate" title={asset.title || undefined}>
+                    {asset.title || 'Untitled asset'}
+                  </h4>
                   <p className="text-[11px] text-fg-muted truncate">
                     <span className="capitalize">{asset.type}</span>
                     {asset.duration ? <span className="font-mono"> · {asset.duration}</span> : null}

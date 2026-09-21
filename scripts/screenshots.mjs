@@ -57,6 +57,95 @@ const TABS = [
   ['audit', 'Audit Trail'],
 ];
 
+/** Clicks a view tab by its visible label. */
+const openTab = async (page, label) => {
+  await page.getByRole('button', { name: new RegExp(label, 'i') }).first().click();
+  await page.waitForTimeout(400);
+};
+
+/**
+ * The states a tab shot cannot reach: the dialogs, the other two timeline modes, the table
+ * board. Each is opened from a freshly reloaded page so one shot cannot leak state into the
+ * next. The tutorial goes last because starting it writes a sandbox project.
+ */
+const OVERLAYS = [
+  [
+    'retroplanning-days',
+    async (page) => {
+      await openTab(page, 'Rétroplanning');
+      await page.getByRole('button', { name: /^Days$/ }).first().click();
+      await page.mouse.wheel(0, 260);
+    },
+  ],
+  [
+    'retroplanning-months',
+    async (page) => {
+      await openTab(page, 'Rétroplanning');
+      await page.getByRole('button', { name: /^Months$/ }).first().click();
+      await page.mouse.wheel(0, 260);
+    },
+  ],
+  [
+    'retroplanning-runway',
+    async (page) => {
+      await openTab(page, 'Rétroplanning');
+      await page.click('#mode-runway-btn');
+    },
+  ],
+  [
+    'retroplanning-workload',
+    async (page) => {
+      await openTab(page, 'Rétroplanning');
+      await page.click('#mode-workload-btn');
+    },
+  ],
+  [
+    'tasks-table',
+    async (page) => {
+      await openTab(page, 'Tasks & Deliverables');
+      await page.getByRole('button', { name: /^Table$/ }).first().click();
+    },
+  ],
+  [
+    'hardware-media',
+    async (page) => {
+      await openTab(page, 'Hardware');
+      await page.getByRole('button', { name: /^Media \(/ }).first().click();
+    },
+  ],
+  [
+    'settings',
+    async (page) => {
+      await page.click('#app-menu-btn');
+      await page.getByRole('menuitem', { name: /^Settings/ }).click();
+    },
+  ],
+  ['cloud', async (page) => page.click('#header-drive-folder-btn')],
+  ['ai-assistant', async (page) => page.click('#ai-assistant-btn')],
+  ['task-editor', async (page) => page.click('[data-tour="new-task"]')],
+  [
+    'task-inspector',
+    async (page) => {
+      await openTab(page, 'Rétroplanning');
+      await page.locator('[data-tour="gantt"] button[aria-label^="Venue Booking"]').first().click();
+    },
+  ],
+  [
+    'tutorial',
+    async (page) => {
+      await page.click('#app-menu-btn');
+      await page.getByRole('menuitem', { name: /Tutorial/ }).click();
+    },
+  ],
+];
+
+/** Dismisses the first-run tutorial invitation, which otherwise covers the bottom-left corner. */
+async function dismissInvite(page) {
+  const notNow = page.getByRole('button', { name: /^Not now$/ });
+  if (await notNow.count()) await notNow.first().click().catch(() => {});
+  await page.waitForTimeout(150);
+}
+
 const problems = [];
 const browser = await chromium.launch();
 
@@ -85,6 +174,7 @@ for (const theme of ['dark', 'light']) {
   }, theme);
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
+  await dismissInvite(page);
 
   for (const [name, tab] of TABS) {
     const el = page.getByRole('button', { name: new RegExp(tab.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }).first();
@@ -96,7 +186,27 @@ for (const theme of ['dark', 'light']) {
       continue;
     }
     await page.screenshot({ path: path.join(OUT, `${theme}-${name}.png`), fullPage: false });
+    // The page itself must never scroll sideways; only the Gantt scrolls inside its own box.
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    if (overflow > 0) problems.push(`[${theme}] ${name}: the page scrolls horizontally by ${overflow}px`);
   }
+
+  for (const [name, open] of OVERLAYS) {
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForTimeout(500);
+    await dismissInvite(page);
+    try {
+      await open(page);
+    } catch (err) {
+      problems.push(`[${theme}] could not open ${name}: ${String(err).slice(0, 160)}`);
+      continue;
+    }
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: path.join(OUT, `${theme}-${name}.png`), fullPage: false });
+  }
+
   await ctx.close();
 }
 

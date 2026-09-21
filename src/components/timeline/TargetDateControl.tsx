@@ -2,16 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { CalendarClock, Flag } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { parseDay } from '../../services/export/common';
-import { daysBetween, formatDay } from './scale';
+import { daysBetween } from './scale';
 
 /** The two behaviours `updateTargetDeliveryDate` supports. */
 export type TargetDateMode = 'anchor-only' | 'shift-all';
 
 export interface TargetDateControlProps {
   targetDate: string;
-  locale: string;
-  /** Days between today and the target, or `null` when the stored date is unusable. */
-  daysRemaining: number | null;
   onApply: (date: string, mode: TargetDateMode) => void;
 }
 
@@ -29,13 +26,12 @@ const MODE_COPY: Record<TargetDateMode, { label: string; help: string }> = {
 /**
  * The delivery-date anchor. Changing it is never silent: the dialog asks which of the two
  * reducer modes to use and says what each one does before anything is written.
+ *
+ * The trigger states the action only. The date itself, and the days left before it, are in the
+ * project header on every tab, so repeating them here would show the same figure twice on one
+ * screen.
  */
-export const TargetDateControl: React.FC<TargetDateControlProps> = ({
-  targetDate,
-  locale,
-  daysRemaining,
-  onApply,
-}) => {
+export const TargetDateControl: React.FC<TargetDateControlProps> = ({ targetDate, onApply }) => {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(targetDate);
   const [mode, setMode] = useState<TargetDateMode | null>(null);
@@ -63,26 +59,11 @@ export const TargetDateControl: React.FC<TargetDateControlProps> = ({
         type="button"
         id="retroplanning-target-date-input"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-3 rounded-xl border border-line bg-elevated px-3.5 py-2 text-left transition-colors hover:border-line-strong"
+        title="Change the delivery date the whole plan hangs off"
+        className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-500/20 dark:text-amber-300"
       >
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
-          <Flag className="h-4 w-4" />
-        </span>
-        <span className="block">
-          <span className="block text-[10px] font-bold uppercase tracking-wider text-fg-muted">
-            Target delivery
-          </span>
-          <span className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold text-amber-600 dark:text-amber-400 sm:text-sm">
-              {parseDay(targetDate) ? formatDay(targetDate, locale, { dateStyle: 'medium' }) : 'Not set'}
-            </span>
-            {daysRemaining !== null && (
-              <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
-                {daysRemaining >= 0 ? `${daysRemaining}d left` : `${Math.abs(daysRemaining)}d past`}
-              </span>
-            )}
-          </span>
-        </span>
+        <Flag className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+        <span>{parseDay(targetDate) ? 'Target date' : 'Set a target date'}</span>
       </button>
 
       <Modal

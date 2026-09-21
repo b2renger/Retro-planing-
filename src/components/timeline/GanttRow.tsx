@@ -2,7 +2,7 @@ import React from 'react';
 import { Flame, Lock } from 'lucide-react';
 import type { Phase, Task } from '../../types';
 import type { GanttRow as ModelRow } from '../../services/export/gantt';
-import { barGeometry, formatDayRange, type DayInterval } from './scale';
+import { barGeometry, barLabelPlacement, formatDayRange, outsideLabelWidth, type DayInterval } from './scale';
 import type { TimelineRow } from './layout';
 import type { BarDrag } from './useBarDrag';
 import type { TimelineView } from './useTimelineScale';
@@ -44,6 +44,7 @@ export const PhaseBar: React.FC<PhaseBarProps> = ({ row, modelRow, phase, view, 
   return (
     <div
       className="absolute rounded-lg border-2 border-dashed"
+      title={label}
       style={{
         left: geometry.left,
         width: geometry.width,
@@ -114,6 +115,8 @@ export interface TaskBarProps {
   onSelect: (id: string) => void;
   onOpen: (id: string) => void;
   onNudge: (task: Task, days: number, mode: 'move' | 'resize-end') => void;
+  /** Clear pixels between this bar's right edge and the next bar on the same row. */
+  labelRoom: number;
 }
 
 /** One task bar: click to inspect, drag to move, edge handles to resize, arrows to nudge. */
@@ -131,6 +134,7 @@ export const TaskBar: React.FC<TaskBarProps> = ({
   onSelect,
   onOpen,
   onNudge,
+  labelRoom,
 }) => {
   const dragging = drag.preview?.id === task.id;
   const interval: DayInterval = dragging
@@ -168,6 +172,11 @@ export const TaskBar: React.FC<TaskBarProps> = ({
   const dates = formatDayRange(interval.start, interval.end, view.locale);
   const statusLabel = TASK_STATUS_LABELS[task.status];
   const showHandles = geometry.width >= MIN_WIDTH_FOR_HANDLES;
+  // A short bar has no room for its own name; the label then sits just past the bar instead of
+  // being clipped to a letter and an ellipsis.
+  const icons = critical || manualFlag ? 1 : 0;
+  const labelPlacement = barLabelPlacement(geometry.width, task.title, icons);
+  const outsideWidth = labelPlacement === 'outside' ? outsideLabelWidth(labelRoom, task.title) : 0;
 
   return (
     <div
@@ -196,8 +205,18 @@ export const TaskBar: React.FC<TaskBarProps> = ({
       >
         {critical && <Flame className="h-3 w-3 shrink-0 text-rose-600 dark:text-rose-400" />}
         {manualFlag && !critical && <Lock className="h-3 w-3 shrink-0 text-amber-600 dark:text-amber-400" />}
-        <span className="truncate">{task.title}</span>
+        {labelPlacement === 'inside' && <span className="truncate">{task.title}</span>}
       </button>
+      {outsideWidth > 0 && (
+        <span
+          aria-hidden="true"
+          title={task.title}
+          style={{ maxWidth: outsideWidth }}
+          className="pointer-events-none absolute left-full top-1/2 ml-1.5 inline-block -translate-y-1/2 truncate align-middle text-[11px] font-medium text-fg-muted"
+        >
+          {task.title}
+        </span>
+      )}
       {showHandles && (
         <>
           <span
@@ -240,7 +259,9 @@ export const RowLabel: React.FC<RowLabelProps> = ({ row, view, phase, groupLabel
     return (
       <div className="absolute inset-x-0 flex items-center gap-2 px-3" style={style}>
         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-        <span className="truncate text-xs font-bold text-fg">{groupLabel}</span>
+        <span className="truncate text-xs font-bold text-fg" title={groupLabel}>
+          {groupLabel}
+        </span>
         {buffer !== null && buffer > 0 && (
           <span className="shrink-0 rounded bg-elevated px-1 font-mono text-[10px] text-fg-muted">
             +{buffer}d buffer

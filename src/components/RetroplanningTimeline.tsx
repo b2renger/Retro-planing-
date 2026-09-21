@@ -101,8 +101,6 @@ export const RetroplanningTimeline: React.FC = () => {
     <div className="animate-fadeIn mx-auto w-full max-w-7xl space-y-4 p-3 sm:space-y-6 sm:p-6">
       <TimelineToolbar
         project={project}
-        health={health}
-        locale={view.locale}
         teamMembers={teamMembers}
         mode={mode}
         onModeChange={setMode}

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { AlertTriangle, BarChart3, CheckCircle2, Filter, Flame, Layers, Plus, ShieldCheck, Sparkles, Target } from 'lucide-react';
+import { BarChart3, Filter, Flame, Layers, Plus, Sparkles, Target } from 'lucide-react';
 import type { Project, User } from '../../types';
-import type { ProjectHealth } from '../../state/projectsReducer';
 import { parseDay } from '../../services/export/common';
 import { TargetDateControl, type TargetDateMode } from './TargetDateControl';
 import { ZOOM_LABELS, type TimelineZoom } from './scale';
@@ -12,8 +11,6 @@ export type TimelineMode = 'gantt' | 'runway' | 'workload';
 
 export interface TimelineToolbarProps {
   project: Project;
-  health: ProjectHealth;
-  locale: string;
   teamMembers: readonly User[];
   mode: TimelineMode;
   onModeChange: (mode: TimelineMode) => void;
@@ -36,27 +33,16 @@ const MODES: { id: TimelineMode; label: string; icon: React.ReactNode }[] = [
   { id: 'workload', label: 'Workload curve', icon: <BarChart3 className="h-3.5 w-3.5" /> },
 ];
 
-/** A single health figure. Nothing is rendered when the number cannot be computed. */
-const HealthChip: React.FC<{ icon: React.ReactNode; label: string; value: string; tone: string }> = ({
-  icon,
-  label,
-  value,
-  tone,
-}) => (
-  <div className="flex items-center gap-2.5 rounded-xl border border-line bg-elevated px-3.5 py-2">
-    <span className={`flex h-9 w-9 items-center justify-center rounded-xl border ${tone}`}>{icon}</span>
-    <span className="block">
-      <span className="block text-[10px] font-bold uppercase tracking-wider text-fg-muted">{label}</span>
-      <span className="block text-xs font-bold text-fg sm:text-sm">{value}</span>
-    </span>
-  </div>
-);
-
-/** Header controls: anchor, real health figures, modes, zoom, filters, milestone form. */
+/**
+ * Header controls: the delivery anchor, the critical-path toggle, the three modes, zoom, filters
+ * and the milestone form.
+ *
+ * Deliberately no health figures. Target delivery, slack, flagged critical and tasks done are in
+ * `ProjectHeader`, which is on screen on every tab; a second copy of them here only made the user
+ * read the same four numbers twice, stacked.
+ */
 export const TimelineToolbar: React.FC<TimelineToolbarProps> = ({
   project,
-  health,
-  locale,
   teamMembers,
   mode,
   onModeChange,
@@ -76,9 +62,6 @@ export const TimelineToolbar: React.FC<TimelineToolbarProps> = ({
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
 
-  const targetValid = Boolean(parseDay(project.targetDeliveryDate));
-  const hasSchedule = project.phases.length > 0 || project.tasks.length > 0;
-
   const submitMilestone = (e: React.FormEvent): void => {
     e.preventDefault();
     if (!title.trim() || !parseDay(date)) return;
@@ -92,50 +75,7 @@ export const TimelineToolbar: React.FC<TimelineToolbarProps> = ({
     <div className="rounded-2xl border border-line bg-card p-4 shadow-sm dark:shadow-xl sm:p-5">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div className="flex flex-wrap items-center gap-3">
-          <TargetDateControl
-            targetDate={project.targetDeliveryDate}
-            locale={locale}
-            daysRemaining={targetValid ? health.daysRemaining : null}
-            onApply={onApplyTargetDate}
-          />
-
-          {targetValid && hasSchedule && (
-            <HealthChip
-              icon={
-                health.scheduleEndsAfterTarget ? (
-                  <AlertTriangle className="h-4 w-4" />
-                ) : (
-                  <ShieldCheck className="h-4 w-4" />
-                )
-              }
-              label={health.scheduleEndsAfterTarget ? 'Overrun' : 'Slack'}
-              value={
-                health.scheduleEndsAfterTarget
-                  ? `${Math.abs(health.slackDays)}d past target`
-                  : `${health.slackDays}d before target`
-              }
-              tone={
-                health.scheduleEndsAfterTarget
-                  ? 'border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400'
-                  : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-              }
-            />
-          )}
-
-          {health.tasksTotal > 0 && (
-            <HealthChip
-              icon={<CheckCircle2 className="h-4 w-4" />}
-              label="Deliverables"
-              value={`${health.tasksDone}/${health.tasksTotal} done${
-                health.overdueTasks > 0 ? ` · ${health.overdueTasks} overdue` : ''
-              }`}
-              tone={
-                health.overdueTasks > 0
-                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                  : 'border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400'
-              }
-            />
-          )}
+          <TargetDateControl targetDate={project.targetDeliveryDate} onApply={onApplyTargetDate} />
 
           <button
             type="button"

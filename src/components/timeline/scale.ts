@@ -151,11 +151,76 @@ export interface AxisTick {
   x: number;
   /** Saturday or Sunday (only meaningful at day zoom). */
   isWeekend: boolean;
+  /**
+   * The tick that pins the left edge of the range rather than one of the regular cadence. It
+   * yields its label when the cadence needs the space.
+   */
+  edge: boolean;
+  /** Whether the label has room to be drawn. A tick always draws its grid line either way. */
+  showLabel: boolean;
+}
+
+/** Mean glyph width as a fraction of the font size, by face. Good enough for fitting decisions. */
+const GLYPH_RATIO = { mono: 0.62, sans: 0.55 } as const;
+
+/** Rough rendered width of `text` in pixels. Deliberately an estimate: no DOM is involved. */
+export function estimateTextWidth(
+  text: string,
+  fontSizePx: number,
+  face: keyof typeof GLYPH_RATIO = 'sans'
+): number {
+  if (!Number.isFinite(fontSizePx) || fontSizePx <= 0) return 0;
+  return text.length * fontSizePx * GLYPH_RATIO[face];
+}
+
+/** Font size of an axis label, and the horizontal padding around it, in pixels. */
+const AXIS_LABEL_FONT_PX = 10;
+const AXIS_LABEL_PADDING_PX = 8;
+/** Blank pixels required between two axis labels before both may be drawn. */
+export const MIN_LABEL_GAP_PX = 6;
+
+/** Width of the box an axis label occupies, padding included. */
+function axisLabelWidth(label: string): number {
+  return estimateTextWidth(label, AXIS_LABEL_FONT_PX, 'mono') + AXIS_LABEL_PADDING_PX;
+}
+
+/**
+ * Decides which ticks may show their label so that no two labels ever touch, at any zoom and in
+ * any locale. Cadence ticks claim their space first, left to right; a range-edge tick only keeps
+ * its label if room is still free there, which is what stops `Sep 13` and `Sep 14` colliding into
+ * one another at the left edge of a week-zoom axis.
+ */
+export function thinTickLabels<T extends { x: number; label: string; edge: boolean }>(
+  ticks: readonly T[],
+  minGap: number = MIN_LABEL_GAP_PX
+): (T & { showLabel: boolean })[] {
+  const boxes: { left: number; right: number }[] = [];
+  const shown = new Set<number>();
+
+  const place = (index: number): void => {
+    const tick = ticks[index];
+    const left = tick.x;
+    const right = left + axisLabelWidth(tick.label);
+    const clear = boxes.every((box) => left >= box.right + minGap || right + minGap <= box.left);
+    if (!clear) return;
+    boxes.push({ left, right });
+    shown.add(index);
+  };
+
+  ticks.forEach((tick, index) => {
+    if (!tick.edge) place(index);
+  });
+  ticks.forEach((tick, index) => {
+    if (tick.edge) place(index);
+  });
+
+  return ticks.map((tick, index) => ({ ...tick, showLabel: shown.has(index) }));
 }
 
 /**
  * Axis ticks for the visible range: one per day at day zoom, one per Monday at week zoom, one
- * per month at month zoom. The first column always carries a tick so the axis is never blank.
+ * per month at month zoom. The first column always carries a tick so the axis is never blank,
+ * and {@link thinTickLabels} decides which of them can afford to show their label.
  */
 export function axisTicks(
   fromKey: string,
@@ -169,38 +234,79 @@ export function axisTicks(
   if (!from || !to || to < from) return [];
 
   const ticks: AxisTick[] = [];
-  const push = (key: string, label: string): void => {
+  const push = (key: string, label: string, edge = false): void => {
     const x = xForDay(key, fromKey, pxPerDay);
     if (x === null) return;
     const d = parseDay(key) as Date;
     const weekday = getDay(d);
-    ticks.push({ key, label, x, isWeekend: weekday === 0 || weekday === 6 });
+    ticks.push({ key, label, x, isWeekend: weekday === 0 || weekday === 6, edge, showLabel: true });
   };
 
   if (zoom === 'day') {
     for (let d = from; d <= to; d = addDays(d, 1)) {
       push(dayKey(d), formatDay(dayKey(d), locale, { day: 'numeric' }));
     }
-    return ticks;
+    return thinTickLabels(ticks);
   }
 
   if (zoom === 'week') {
     let cursor = startOfWeek(from, { weekStartsOn: 1 });
     if (cursor < from) cursor = addDays(cursor, 7);
-    push(fromKey, formatDay(fromKey, locale, { day: 'numeric', month: 'short' }));
+    push(fromKey, formatDay(fromKey, locale, { day: 'numeric', month: 'short' }), true);
     for (let d = cursor; d <= to; d = addDays(d, 7)) {
       const key = dayKey(d);
       if (key !== fromKey) push(key, formatDay(key, locale, { day: 'numeric', month: 'short' }));
     }
-    return ticks;
+    return thinTickLabels(ticks);
   }
 
-  push(fromKey, formatDay(fromKey, locale, { month: 'short', year: 'numeric' }));
+  push(fromKey, formatDay(fromKey, locale, { month: 'short', year: 'numeric' }), true);
   let month = startOfMonth(from);
   while (month <= to) {
     const key = dayKey(month);
     if (key > fromKey) push(key, formatDay(key, locale, { month: 'short', year: 'numeric' }));
     month = startOfMonth(addDays(startOfMonth(month), 32));
   }
-  return ticks;
+  return thinTickLabels(ticks);
+}
+
+/** Font size of a bar label, the padding inside a bar, and the width an inline icon costs. */
+const BAR_LABEL_FONT_PX = 11;
+const BAR_LABEL_PADDING_PX = 12;
+const BAR_ICON_PX = 16;
+/** A bar with less room than this for text cannot show a readable run of its label. */
+export const MIN_INSIDE_LABEL_PX = 44;
+
+/**
+ * Where a task bar's label belongs. Inside the bar when the bar can hold either the whole label
+ * or at least a readable run of it; otherwise just outside its right edge, where nothing clips
+ * it — a one-day bar at month zoom is five pixels wide and would show no letter at all.
+ */
+export function barLabelPlacement(barWidth: number, label: string, icons = 0): 'inside' | 'outside' {
+  if (!Number.isFinite(barWidth)) return 'outside';
+  const available = barWidth - BAR_LABEL_PADDING_PX - icons * BAR_ICON_PX;
+  const full = estimateTextWidth(label, BAR_LABEL_FONT_PX);
+  return available >= Math.min(full, MIN_INSIDE_LABEL_PX) ? 'inside' : 'outside';
+}
+
+/** Blank pixels kept between an outside label and whatever comes next on the same row. */
+export const OUTSIDE_LABEL_MARGIN_PX = 6;
+/** Below this, an outside label is an ellipsis pressed against the next bar: draw none. */
+export const MIN_OUTSIDE_LABEL_PX = 28;
+/** However much room there is, an outside label never runs longer than this. */
+export const MAX_OUTSIDE_LABEL_PX = 220;
+
+/**
+ * How wide a label parked outside its bar may be, given the clear pixels between that bar and
+ * the next one on the same row. `0` means there is no room worth using — the bar keeps its
+ * tooltip and says nothing in the open, which beats two labels printed over each other.
+ */
+export function outsideLabelWidth(roomPx: number, label: string): number {
+  if (!Number.isFinite(roomPx)) return 0;
+  const usable = Math.min(
+    roomPx - OUTSIDE_LABEL_MARGIN_PX,
+    MAX_OUTSIDE_LABEL_PX,
+    estimateTextWidth(label, BAR_LABEL_FONT_PX)
+  );
+  return usable >= MIN_OUTSIDE_LABEL_PX ? Math.round(usable) : 0;
 }

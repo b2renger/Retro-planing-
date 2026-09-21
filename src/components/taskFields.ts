@@ -37,3 +37,23 @@ export const TASK_PRIORITY_LABELS: Readonly<Record<TaskPriority, string>> = {
  * stored on the phase (the Gantt paints bars from them), not UI styling.
  */
 export const PHASE_PALETTE: readonly string[] = ['#3B82F6', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B'];
+
+/**
+ * Chip styling for a phase colour, readable on both grounds.
+ *
+ * A phase colour is data, chosen for a bar on a chart, and several of them (emerald, amber)
+ * are far too light to read as 9px text on a white card. Mixing the colour toward the primary
+ * text token keeps the hue recognisable while the browser resolves the mix against whichever
+ * theme is live — darkening it in light mode, lightening it in dark mode.
+ */
+export function phaseChipStyle(color: string): {
+  backgroundColor: string;
+  color: string;
+  borderColor: string;
+} {
+  return {
+    backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`,
+    color: `color-mix(in srgb, ${color} 60%, var(--s-fg))`,
+    borderColor: `color-mix(in srgb, ${color} 30%, transparent)`,
+  };
+}

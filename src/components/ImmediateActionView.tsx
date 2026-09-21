@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { analyzeDependencies } from '../services/ai/tasks';
 import { resolveAssignee } from './assignee';
+import { phaseChipStyle } from './taskFields';
 
 export const ImmediateActionView: React.FC = () => {
   const {
@@ -267,11 +268,7 @@ export const ImmediateActionView: React.FC = () => {
                             {phase && (
                               <span
                                 className="text-[9px] font-medium px-1.5 py-0.2 rounded-full shrink-0"
-                                style={{
-                                  backgroundColor: `${phase.color}20`,
-                                  color: phase.color,
-                                  borderColor: `${phase.color}40`,
-                                }}
+                                style={phaseChipStyle(phase.color)}
                               >
                                 {phase.name}
                               </span>

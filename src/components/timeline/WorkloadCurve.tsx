@@ -54,7 +54,7 @@ export const WorkloadCurve: React.FC<WorkloadCurveProps> = ({ project, teamMembe
     const ratio = bucket.hours > 0 ? Math.round((bucket.doneHours / bucket.hours) * 100) : 0;
     return (
       <div key={bucket.id} className="space-y-2 rounded-xl border border-line bg-elevated p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             {bucket.color && (
               <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: bucket.color }} />

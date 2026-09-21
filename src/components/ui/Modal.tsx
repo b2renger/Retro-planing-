@@ -145,10 +145,16 @@ export const Modal: React.FC<ModalProps> = ({
             <div className="flex items-center gap-2 min-w-0">
               {icon}
               <div className="min-w-0">
-                <h2 id={titleId} className="text-sm font-semibold truncate">
+                <h2
+                  id={titleId}
+                  title={typeof title === 'string' ? title : undefined}
+                  className="text-sm font-semibold truncate"
+                >
                   {title}
                 </h2>
-                {subtitle && <p className="text-xs text-fg-muted truncate">{subtitle}</p>}
+                {/* Two lines, not one truncated one: these subtitles carry the project name and
+                    the state of the AI provider, which were being cut mid-word. */}
+                {subtitle && <p className="text-xs text-fg-muted line-clamp-2">{subtitle}</p>}
               </div>
             </div>
             <button
