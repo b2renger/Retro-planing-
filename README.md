@@ -52,16 +52,28 @@ npm run package:win      # NSIS installer, x64
 
 Builds land in `release/`.
 
-**First launch on macOS.** The app is signed ad-hoc, not notarized, because there is no Apple
-developer account behind it. macOS will refuse it on a double click. Right-click the app and choose
-Open, once. If it was downloaded rather than built locally, you may also need:
+### First launch on macOS — required, it will not open otherwise
+
+The app is signed ad-hoc, not notarized, because there is no paid Apple developer account behind it.
+Gatekeeper therefore **rejects it outright**: `spctl -a` returns `rejected`, and macOS shows a refusal
+dialog. This is verified behaviour on macOS 26, not a theoretical warning.
+
+On macOS 15 and later, right-clicking and choosing Open **no longer bypasses this** — Apple removed
+that path. Drag the app to Applications, then run once:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/RetroPlaningStudio.app
 ```
 
+The app then opens normally, every time. The signature itself is valid (`codesign --verify --deep
+--strict` passes); what it lacks is an Apple-issued Developer ID, which only a paid account provides.
+
+If macOS says the app is **damaged**, that is a different and more serious problem — a broken
+signature rather than a missing one. Report it rather than working around it.
+
 **On Windows**, SmartScreen will warn about an unknown publisher for the same reason. More Info, then
-Run anyway.
+Run anyway. Note that the Windows builds have never been launched by anyone — they are built and
+packaged, not tested.
 
 ---
 

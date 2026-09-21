@@ -275,9 +275,15 @@ come back.
 npm run package:mac     # or package:win
 ```
 
-**J1.** ⚠ Install from `release/`. On first launch macOS will refuse it — **right-click the app and
-choose Open**. It is signed ad-hoc, not notarized. If it says the app is *damaged*, that is a different
-and more serious problem: report it.
+**J1.** ⚠ Install from `release/`. macOS **will refuse to open it** — this is expected and verified.
+Right-click and Open does not help on macOS 15+. Run this once:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/RetroPlaningStudio.app
+```
+
+Then it opens normally. If macOS instead says the app is *damaged*, that is a broken signature rather
+than a missing one: report it.
 
 **J2.** Check the build for your architecture. On Apple Silicon use the arm64 build; the Intel build
 should also run under Rosetta.
