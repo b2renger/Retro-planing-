@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildAuthorizeUrl, codeChallengeS256, exchangeCode, generateCodeVerifier, isExpired, parseRedirect, PROVIDER_OAUTH, randomState, refreshTokens, runAuthFlow } from './oauth';
+import {
+  webCallbackUrl, buildAuthorizeUrl, codeChallengeS256, exchangeCode, generateCodeVerifier, isExpired, parseRedirect, PROVIDER_OAUTH, randomState, refreshTokens, runAuthFlow } from './oauth';
 import { CloudError } from './types';
 import { fetchCall, jsonResponse } from './testFixtures';
 
@@ -209,5 +210,23 @@ describe('runAuthFlow', () => {
     expect(body).toContain('client_secret=sec');
     expect(body).toContain('redirect_uri=http%3A%2F%2F127.0.0.1%3A4242%2Fcallback');
     expect(tokens).toMatchObject({ accessToken: 'desk', refreshToken: 'rt' });
+  });
+});
+
+describe('webCallbackUrl', () => {
+  it('resolves next to the app when it is served from the site root', () => {
+    expect(webCallbackUrl('https://plan.example.com/')).toBe('https://plan.example.com/oauth/callback.html');
+  });
+
+  it('keeps the sub-path when the app is served from one, as on GitHub Pages', () => {
+    expect(webCallbackUrl('https://b2renger.github.io/RetroPlaningStudio/')).toBe(
+      'https://b2renger.github.io/RetroPlaningStudio/oauth/callback.html'
+    );
+  });
+
+  it('resolves against a full page URL, not just an origin', () => {
+    expect(webCallbackUrl('https://b2renger.github.io/RetroPlaningStudio/index.html')).toBe(
+      'https://b2renger.github.io/RetroPlaningStudio/oauth/callback.html'
+    );
   });
 });

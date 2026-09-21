@@ -264,6 +264,21 @@ export const OAUTH_MESSAGE_TYPE = 'rps-oauth';
 /** Path (under the app origin) of the popup callback page. */
 export const WEB_CALLBACK_PATH = '/oauth/callback.html';
 
+/**
+ * Absolute URL of the popup callback page.
+ *
+ * Resolved against the document's base rather than `location.origin`, so the app keeps working when
+ * it is served from a sub-path — a GitHub Pages site at `/RetroPlaningStudio/` being the case that
+ * motivated this. Using the origin alone would register a redirect URI that 404s there.
+ */
+export function webCallbackUrl(baseHref?: string): string {
+  const fromDocument = typeof document !== 'undefined' ? document.baseURI : undefined;
+  const fromWindow =
+    typeof window !== 'undefined' ? window.location?.href || window.location?.origin : undefined;
+  const base = baseHref || fromDocument || fromWindow || 'http://localhost/';
+  return new URL('oauth/callback.html', base).href;
+}
+
 const WEB_FLOW_TIMEOUT_MS = 5 * 60 * 1000;
 
 function assertState(parsed: ParsedRedirect, expected: string): void {
@@ -370,7 +385,7 @@ function waitForPopupRedirect(authorizeUrl: string): Promise<string> {
 
 async function runWebFlow(providerId: CloudProviderId, cfg: CloudOAuthConfig): Promise<OAuthTokens> {
   const spec = PROVIDER_OAUTH[providerId];
-  const redirectUri = `${window.location.origin}${WEB_CALLBACK_PATH}`;
+  const redirectUri = webCallbackUrl();
   const state = randomState();
   const usePkce = spec.webResponseType === 'code';
   const verifier = usePkce ? generateCodeVerifier() : undefined;

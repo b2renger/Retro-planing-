@@ -6,7 +6,7 @@
 import { createGoogleDriveProvider } from '../services/cloud/googleDrive';
 import { docFileName } from '../services/cloud/layout';
 import { createOneDriveProvider } from '../services/cloud/oneDrive';
-import { PROVIDER_OAUTH, WEB_CALLBACK_PATH } from '../services/cloud/oauth';
+import { PROVIDER_OAUTH, WEB_CALLBACK_PATH, webCallbackUrl } from '../services/cloud/oauth';
 import { isLater, isSyncableDoc, type RemoteSnapshot, type SyncState, type SyncSummary } from '../services/cloud/syncEngine';
 import type { CloudOAuthConfig, CloudProvider, CloudProviderId } from '../services/cloud/types';
 import type { CloudSettings, Project, ProjectCloudLink } from '../types';
@@ -73,7 +73,7 @@ export function redirectAdvice(providerId: CloudProviderId, opts: { desktop?: bo
   }
   return {
     loopback: false,
-    value: `${origin}${WEB_CALLBACK_PATH}`,
+    value: opts.origin ? `${origin}${WEB_CALLBACK_PATH}` : webCallbackUrl(),
     detail:
       providerId === 'google'
         ? 'Create an OAuth client of type “Web application”, paste this string into “Authorized redirect URIs” exactly as shown, and add the origin above it under “Authorized JavaScript origins”.'
