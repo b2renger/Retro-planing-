@@ -1,7 +1,7 @@
 {
   "name": "retroplaningstudio",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "RetroPlaningStudio - retro-planning and design-ops studio: timeline, tasks, markdown docs, AI assistants, cloud sync and desktop builds.",
   "author": "b2renger",
