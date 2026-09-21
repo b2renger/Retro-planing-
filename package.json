@@ -22,7 +22,7 @@
     "verify:macsign": "node scripts/verify-mac-signature.cjs",
     "package:mac": "npm run build:all && electron-builder --mac --arm64 --x64 --publish never && node scripts/verify-mac-signature.cjs && npm run verify:launch",
     "package:win": "npm run build:all && electron-builder --win --x64 --publish never",
-    "package:all": "npm run build:all && electron-builder --mac --arm64 --x64 --win --x64 --publish never && node scripts/verify-mac-signature.cjs",
+    "package:all": "npm run build:all && electron-builder --mac --arm64 --x64 --win --x64 --publish never && node scripts/verify-mac-signature.cjs && npm run verify:launch",
     "package:dir": "npm run build:all && electron-builder --dir",
     "build:web": "vite build",
     "verify:launch": "node scripts/verify-launch.mjs"

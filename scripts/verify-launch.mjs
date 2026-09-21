@@ -11,6 +11,7 @@
  */
 import { _electron as electron } from 'playwright';
 import { existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 
 const fallback = 'release/mac-arm64/RetroPlaningStudio.app/Contents/MacOS/RetroPlaningStudio';
@@ -19,6 +20,16 @@ const target = path.resolve(process.argv[2] || fallback);
 if (!existsSync(target)) {
   console.error(`[verify-launch] binary not found: ${target}`);
   process.exit(1);
+}
+
+// The app takes a single-instance lock, so a copy left running from an earlier probe makes the next
+// launch quit immediately. That looks identical to a broken build, so check for it and say so.
+const running = spawnSync('pgrep', ['-f', target], { encoding: 'utf8' }).stdout.trim();
+if (running) {
+  console.error(`[verify-launch] an instance is already running (pid ${running.split('\n').join(', ')}).`);
+  console.error('[verify-launch] it holds the single-instance lock, so a new launch would exit at once.');
+  console.error(`[verify-launch] quit it, or: pkill -f ${JSON.stringify(target)}`);
+  process.exit(2);
 }
 
 const problems = [];
