@@ -643,3 +643,28 @@ request and no page-level horizontal scroll in either theme. Not committed, as i
 - Kanban columns are narrow enough at 1440 px that a long title still wraps to five or six lines.
 - `ProjectHeader` shows the raw ISO target date (`2026-11-20`); the toolbar used to show it
   formatted. Copy/format decision, not a defect.
+
+## 2026-09-21 05:00 — Final gate status (orchestrator)
+All three packages built from this tree and verified:
+- `release/RetroPlaningStudio-0.1.0-mac-arm64.dmg` 121 MB, `-mac-x64.dmg` 128 MB, `-win-x64.exe` 107 MB
+- `node scripts/verify-mac-signature.cjs` → OK, `Signature=adhoc`, valid on disk, satisfies its
+  Designated Requirement. The artlux trap (fuses flipped after an afterPack signature) is avoided
+  because electron-builder does the signing itself via `mac.identity: "-"`.
+- Gate: 514 tests / 43 files, `tsc --noEmit` clean, `vite build` clean, screenshot harness reports no
+  console errors, no failed requests, no page-level horizontal scroll in either theme.
+
+### The screenshot harness is the most useful thing added late
+`scripts/screenshots.mjs` — 38 states (7 views + 12 extra states incl. modals and the tutorial
+coachmark) × 2 themes. It found 10 defects no grep could: colliding axis ticks, duplicated metric
+strips, phase chips at ~2:1 contrast on white, bar labels welded together, the Gantt legend sized to
+the whole scroll range. **Run it after any visual change and LOOK at the PNGs.**
+
+### Still open, in rough priority order
+1. Nothing has been run on Windows; the installer builds but has never been launched.
+2. Markdown preview completeness — an agent is on it as of 04:55 (react-markdown, no innerHTML).
+3. Invitations are local-only; permissions are stored but never enforced. Both are labelled in the UI.
+4. No real-time collaboration; two people sync through the drive, not live.
+5. The leaked Firebase key remains in git history at 949b750 and 397bcaf — rotate it in Google Cloud.
+6. GitHub repo still named Retro-planing-; the owner must rename, then
+   `git remote set-url origin https://github.com/b2renger/RetroPlaningStudio.git`.
+7. Harness only covers 1440x900; hover/focus/animation and narrow windows unverified.
